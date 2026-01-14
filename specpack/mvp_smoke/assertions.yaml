@@ -1,0 +1,11 @@
+run:
+  cmd: "python3 -m src.run --date 2026-01-20 --top 10 --provider mock"
+  output_json: "outputs/report_2026-01-20_top10.json"
+  as_of: "2026-01-20"
+assertions:
+  top_n: 10
+  reason_contains:
+    - "命中主题"
+    - "评分构成"
+    - "命中路径"
+  theme_core_range: [3, 5]

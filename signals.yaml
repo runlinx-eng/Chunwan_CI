@@ -1,0 +1,73 @@
+# 主题信号配置文件
+# 用途：内容分类、热点监测、互动场景聚合
+# 核心方向：字节系（火山引擎+豆包+抖音）春晚互动，兼顾AI赋能价值与人类主导原则
+signals:
+  - id: signal_001
+    theme: AI云技术筑牢春晚直播底座
+    core_theme: AI云与互动基础设施
+    keywords: ["火山引擎AI云", "超高清直播", "亿级并发支撑", "AI画质优化", "弹性算力调度"]
+    priority: high
+    description: 聚焦火山引擎作为独家AI云合作伙伴，提供直播稳定性、高并发处理等核心技术支撑的场景
+
+  - id: signal_002
+    theme: 豆包AI陪看赋能实时互动
+    core_theme: AI互动与陪看体验
+    keywords: ["AI节目解读", "方言语音交互", "弹幕特效触发", "宠粉机位投票", "多语言实时翻译"]
+    priority: high
+    description: 突出豆包作为官方AI互动伙伴，提供陪看解析、语音互动、机位定制等直播场景服务
+
+  - id: signal_003
+    theme: 个性化AI年味内容共创
+    core_theme: 内容共创与数字资产
+    keywords: ["AI春联定制", "老照片AI焕新", "拜年视频生成", "年味海报设计", "手写签名叠加"]
+    priority: high
+    description: 覆盖AI辅助生成新春专属内容的场景，保留人类创意主导权，支持手动优化调整
+
+  - id: signal_004
+    theme: 跨屏协同与多端联动互动
+    core_theme: AI云与互动基础设施
+    keywords: ["电视手机绑定", "大屏看小屏存", "同步互动进度", "语音唤醒豆包", "多终端参与"]
+    priority: medium
+    description: 聚焦手机、电视等多终端跨屏协同玩法，提升家庭集体参与的便捷性
+
+  - id: signal_005
+    theme: 马年数字藏品全民申领
+    core_theme: 内容共创与数字资产
+    keywords: ["骐骥驰骋数字资产", "区块链确权", "口令申领", "任务解锁", "虚实融合权益"]
+    priority: high
+    description: 围绕春晚官方数字藏品的多渠道申领、分级权益及合规使用场景
+
+  - id: signal_006
+    theme: 预热期AI互动蓄力
+    core_theme: AI互动与陪看体验
+    keywords: ["老照片上传", "互动任务解锁", "春晚模式预约", "数字藏品资格锁定", "预创作内容"]
+    priority: medium
+    description: 覆盖除夕前老照片焕新、任务蓄力等预热玩法，为直播期互动铺垫
+
+  - id: signal_007
+    theme: 分时段核心互动彩蛋
+    core_theme: AI互动与陪看体验
+    keywords: ["AR实景寻福", "智能猜灯谜", "全球祝福合集", "零点口令互动", "盲盒抽取"]
+    priority: high
+    description: 聚焦直播分时段开放的重点互动玩法，含红包特效、数字藏品发放等核心福利场景
+
+  - id: signal_008
+    theme: 人机协同坚守互动安全合规
+    core_theme: 安全合规与理性参与
+    keywords: ["实名认证", "AI内容审核", "数据安全防护", "区块链存证", "拒绝代抢诈骗"]
+    priority: medium
+    description: 突出人类+AI双重把关的安全机制，覆盖身份核验、内容合规、账号保护等场景
+
+  - id: signal_009
+    theme: 理性参与不依赖AI互动
+    core_theme: 安全合规与理性参与
+    keywords: ["真人家庭互动", "手动筛选内容", "拒绝过度沉迷", "线下团圆时刻", "自主决策参与"]
+    priority: medium
+    description: 引导理性使用AI互动工具，留出真人交流时间，强调人类在互动选择中的核心地位
+
+  - id: signal_010
+    theme: 互动沉淀与二次创作延展
+    core_theme: 内容共创与数字资产
+    keywords: ["春晚互动报告", "数字藏品收藏", "内容分享传播", "二次创作权限", "年味记忆留存"]
+    priority: low
+    description: 覆盖直播后互动数据沉淀、数字藏品管理、内容二次传播等延展场景
