@@ -98,23 +98,37 @@ def main() -> None:
         price_df = provider.get_price_history(stocks, as_of, lookback_days=130, seed=seed)
 
         history_counts = price_df[price_df["date"] <= as_of].groupby("ticker").size()
-        min_history = 121 if provider.name == "snapshot" else 60
+        min_history = 61
         valid_tickers = history_counts[history_counts >= min_history].index
         insufficient_history_60 = int((history_counts < 61).sum())
         insufficient_history_min = int((history_counts < min_history).sum())
         price_df = price_df[price_df["ticker"].isin(valid_tickers)]
 
         indicator_df = compute_indicators(price_df, as_of)
+        issue_list = []
+        fallback_used = False
         if indicator_df.empty:
             report = {
                 "as_of": as_of.strftime("%Y-%m-%d"),
+                "data_date": as_of.strftime("%Y-%m-%d"),
                 "top_n": args.top,
                 "count": 0,
                 "results": [],
             }
         else:
             scored_df, hit_map = score_stocks(indicator_df, signals, theme_map)
-            report = build_report(scored_df, signals, hit_map, as_of, args.top)
+            primary = scored_df.sort_values("final_score", ascending=False)
+            selected = primary.head(args.top)
+            if len(selected) < args.top and len(scored_df) >= args.top:
+                remaining = scored_df[~scored_df["ticker"].isin(selected["ticker"])]
+                fallback = remaining.sort_values("technical_score", ascending=False).head(
+                    args.top - len(selected)
+                )
+                selected = pd.concat([selected, fallback], ignore_index=True)
+                issue_list.append("fallback_used:theme_insufficient")
+                fallback_used = True
+            report = build_report(selected, signals, hit_map, as_of, args.top)
+            report["data_date"] = as_of.strftime("%Y-%m-%d")
 
         report["meta"] = report.get("meta", {})
         report["meta"]["excluded"] = {"insufficient_history_60": insufficient_history_60}
@@ -123,9 +137,11 @@ def main() -> None:
         report["meta"]["min_history"] = min_history
         report["meta"]["universe_count"] = len(stocks)
         report["meta"]["scored_count"] = int(indicator_df.shape[0])
-        issue_list = []
         if indicator_df.empty:
             issue_list.append("no_candidates_after_filters")
+        if fallback_used:
+            report["meta"]["fallback_used"] = True
+            report["meta"]["fallback_reason"] = "theme_insufficient"
         report["meta"]["issue_list"] = issue_list
         report["issues"] = int(len(issue_list))
 

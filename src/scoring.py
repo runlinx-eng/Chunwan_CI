@@ -115,12 +115,12 @@ def score_stocks(
     indicator_df["momentum_60_rank"] = _rank_series(indicator_df["momentum_60"].fillna(0))
     indicator_df["volume_rank"] = _rank_series(indicator_df["avg_volume_20"].fillna(0))
 
-    indicator_df["final_score"] = (
-        indicator_df["theme_score"]
-        + 0.5 * indicator_df["momentum_20_rank"]
+    indicator_df["technical_score"] = (
+        0.5 * indicator_df["momentum_20_rank"]
         + 0.3 * indicator_df["momentum_60_rank"]
         + 0.2 * indicator_df["volume_rank"]
     )
+    indicator_df["final_score"] = indicator_df["theme_score"] + indicator_df["technical_score"]
 
     hit_map: Dict[str, List[Dict[str, object]]] = {}
     for ticker, signal_data in hit_details.items():
