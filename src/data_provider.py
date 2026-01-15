@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, List
+from typing import Callable, Iterable, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -287,8 +287,8 @@ class SnapshotProvider(DataProvider):
 
     def __init__(
         self,
-        as_of: pd.Timestamp | None = None,
-        snapshot_as_of: pd.Timestamp | None = None,
+        as_of: Optional[pd.Timestamp] = None,
+        snapshot_as_of: Optional[pd.Timestamp] = None,
         base_dir: str = "data/snapshots",
     ) -> None:
         self.as_of = as_of
@@ -378,8 +378,8 @@ class SnapshotProvider(DataProvider):
 
 def build_provider(
     name: str,
-    as_of: pd.Timestamp | None = None,
-    snapshot_as_of: pd.Timestamp | None = None,
+    as_of: Optional[pd.Timestamp] = None,
+    snapshot_as_of: Optional[pd.Timestamp] = None,
 ) -> DataProvider:
     if name == "mock":
         return LocalMockProvider()

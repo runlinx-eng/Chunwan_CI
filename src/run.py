@@ -9,20 +9,10 @@ import pandas as pd
 from .cache import load_cached, save_cached
 from .data_provider import build_provider, provider_seed
 from .report import build_report
-from .scoring import compute_indicators, score_stocks
+from .scoring import compute_indicators
 from .signals import load_signals, load_theme_industry_map
+from .theme_pipeline import DefaultConceptMapper, DefaultThemeExtractor, DefaultThemeScorer
 from .utils import parse_date, previous_trading_date, stable_hash
-
-
-def flatten_concepts(theme_map):
-    seen = []
-    for entries in theme_map.values():
-        for entry in entries:
-            if entry["type"] in ("industry", "concept"):
-                for value in entry["values"]:
-                    if value not in seen:
-                        seen.append(value)
-    return seen
 
 
 def read_text_hash(path: str) -> str:
@@ -57,7 +47,12 @@ def git_commit() -> str:
         return "unknown"
 
 
-def build_provenance(args, signals_hash: str, map_hash: str, snapshot_as_of: Optional[pd.Timestamp]) -> dict:
+def build_provenance(
+    args, signals_hash: str, map_hash: str, snapshot_as_of: Optional[pd.Timestamp]
+) -> dict:
+    manifest = {}
+    if args.provider == "snapshot" and args.snapshot_as_of:
+        manifest = read_manifest(snapshot_as_of)
     return {
         "args": {
             "date": args.date,
@@ -72,7 +67,7 @@ def build_provenance(args, signals_hash: str, map_hash: str, snapshot_as_of: Opt
         "git_commit": git_commit(),
         "signals_hash": signals_hash,
         "theme_map_hash": map_hash,
-        "manifest": read_manifest(snapshot_as_of),
+        "manifest": manifest,
     }
 
 
@@ -92,13 +87,22 @@ def main() -> None:
     parser.add_argument("--snapshot-as-of", help="Snapshot date YYYY-MM-DD for snapshot provider")
     args = parser.parse_args()
 
-    signals = load_signals(args.signals)
-    theme_map = load_theme_industry_map(args.theme_map)
-    industries = flatten_concepts(theme_map)
+    as_of = None
+    snapshot_as_of = None
 
     input_date = parse_date(args.date)
     as_of = previous_trading_date(input_date)
     snapshot_as_of = parse_date(args.snapshot_as_of) if args.snapshot_as_of else None
+
+    signals = load_signals(args.signals)
+    theme_map = load_theme_industry_map(args.theme_map)
+    extractor = DefaultThemeExtractor()
+    mapper = DefaultConceptMapper()
+    scorer = DefaultThemeScorer()
+
+    core_themes = extractor.extract(signals, as_of)
+    mapped_theme_map = mapper.map(signals, theme_map, core_themes)
+    industries = mapper.flatten(mapped_theme_map)
 
     signals_hash = read_text_hash(args.signals)
     map_hash = read_text_hash(args.theme_map)
@@ -156,7 +160,7 @@ def main() -> None:
                 "results": [],
             }
         else:
-            scored_df, hit_map = score_stocks(indicator_df, signals, theme_map)
+            scored_df, hit_map = scorer.score(indicator_df, signals, mapped_theme_map)
             primary = scored_df.sort_values("final_score", ascending=False)
             selected = primary.head(args.top)
             if len(selected) < args.top and len(scored_df) >= args.top:
