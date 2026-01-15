@@ -1,0 +1,18 @@
+{
+  "as_of": "2026-01-20",
+  "stats": {
+    "unique_tickers": 500,
+    "unique_concepts": 500,
+    "min_count": 1,
+    "rows_concept_membership": 501,
+    "rows_prices": 65001
+  },
+  "files": {
+    "concept_membership.csv": {
+      "sha256": "a534d279b58a4858b3d059a83b889751ed021ca20a68b8cf0e12de915dd345b8"
+    },
+    "prices.csv": {
+      "sha256": "11f7be23fdf29f7795a9e266b88da66c9d7b8500ed89978a94ec15e881d15604"
+    }
+  }
+}

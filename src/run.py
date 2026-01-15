@@ -1,6 +1,8 @@
 import argparse
 import json
+import subprocess
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 
@@ -34,6 +36,44 @@ def write_outputs(report: dict, output_prefix: Path) -> None:
         json.dump(report, f, ensure_ascii=False, indent=2)
     df = pd.json_normalize(report["results"])
     df.to_csv(output_prefix.with_suffix(".csv"), index=False)
+
+def read_manifest(snapshot_as_of: Optional[pd.Timestamp]) -> dict:
+    if snapshot_as_of is None:
+        return {}
+    manifest_path = Path("data/snapshots") / snapshot_as_of.strftime("%Y-%m-%d") / "manifest.json"
+    if not manifest_path.exists():
+        return {"path": str(manifest_path), "missing": True}
+    return {
+        "path": str(manifest_path),
+        "content": json.loads(manifest_path.read_text(encoding="utf-8")),
+        "hash": stable_hash([manifest_path.read_text(encoding="utf-8")]),
+    }
+
+
+def git_commit() -> str:
+    try:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    except Exception:
+        return "unknown"
+
+
+def build_provenance(args, signals_hash: str, map_hash: str, snapshot_as_of: Optional[pd.Timestamp]) -> dict:
+    return {
+        "args": {
+            "date": args.date,
+            "top": args.top,
+            "provider": args.provider,
+            "signals": args.signals,
+            "theme_map": args.theme_map,
+            "no_cache": args.no_cache,
+            "no_fallback": args.no_fallback,
+            "snapshot_as_of": args.snapshot_as_of,
+        },
+        "git_commit": git_commit(),
+        "signals_hash": signals_hash,
+        "theme_map_hash": map_hash,
+        "manifest": read_manifest(snapshot_as_of),
+    }
 
 
 def main() -> None:
@@ -153,6 +193,7 @@ def main() -> None:
         }
         save_cached(cache_key, indicator_df, report, meta)
 
+    report["provenance"] = build_provenance(args, signals_hash, map_hash, snapshot_as_of)
     output_prefix = Path("outputs") / f"report_{as_of.strftime('%Y-%m-%d')}_top{args.top}"
     write_outputs(report, output_prefix)
 
