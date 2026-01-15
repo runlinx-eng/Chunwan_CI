@@ -171,7 +171,16 @@ def main() -> None:
                 selected = pd.concat([selected, fallback], ignore_index=True)
                 issue_list.append("fallback_used:theme_insufficient")
                 fallback_used = True
-            report = build_report(selected, signals, hit_map, as_of, args.top, themes_used=core_themes)
+            report = build_report(
+                selected,
+                signals,
+                hit_map,
+                as_of,
+                args.top,
+                themes_used=core_themes,
+                provider=args.provider,
+                snapshot_as_of=args.snapshot_as_of,
+            )
             report["data_date"] = as_of.strftime("%Y-%m-%d")
 
         report["meta"] = report.get("meta", {})
