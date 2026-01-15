@@ -2,8 +2,9 @@
   "as_of": "2026-01-20",
   "stats": {
     "unique_tickers": 500,
-    "unique_concepts": 500,
-    "min_count": 1,
+    "unique_concepts": 10,
+    "min_concept_members": 50,
+    "min_price_bars": 130,
     "rows_concept_membership": 501,
     "rows_prices": 65001
   },
