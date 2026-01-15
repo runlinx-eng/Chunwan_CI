@@ -71,9 +71,16 @@ for row in results:
             raise AssertionError(f"missing field: {field}")
     assert row.get("data_date") <= as_of, "future data detected"
     reason = row.get("reason", "")
-    for token in conf["assertions"]["reason_contains"]:
-        if token not in reason:
-            raise AssertionError(f"reason missing token: {token}")
+    if isinstance(reason, dict):
+        for key in ("themes_used", "concept_hits", "why_in_top5"):
+            if key not in reason:
+                raise AssertionError(f"reason missing key: {key}")
+        if not reason.get("why_in_top5"):
+            raise AssertionError("reason why_in_top5 empty")
+    else:
+        for token in conf["assertions"]["reason_contains"]:
+            if token not in reason:
+                raise AssertionError(f"reason missing token: {token}")
     indicators = row.get("indicators", {})
     for key, value in indicators.items():
         if value is None:
