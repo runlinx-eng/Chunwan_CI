@@ -33,9 +33,16 @@ def read_manifest(snapshot_as_of: Optional[pd.Timestamp]) -> dict:
     manifest_path = Path("data/snapshots") / snapshot_as_of.strftime("%Y-%m-%d") / "manifest.json"
     if not manifest_path.exists():
         return {"path": str(manifest_path), "missing": True}
+    content = json.loads(manifest_path.read_text(encoding="utf-8"))
+    stats = content.get("stats", {})
+    if "min_concept_members" not in stats and "min_count" in stats:
+        stats["min_concept_members"] = stats.get("min_count")
+    if "min_price_bars" not in stats:
+        stats["min_price_bars"] = None
+    content["stats"] = stats
     return {
         "path": str(manifest_path),
-        "content": json.loads(manifest_path.read_text(encoding="utf-8")),
+        "content": content,
         "hash": stable_hash([manifest_path.read_text(encoding="utf-8")]),
     }
 
