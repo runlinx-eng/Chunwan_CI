@@ -75,6 +75,7 @@ def build_provenance(
             "no_cache": args.no_cache,
             "no_fallback": args.no_fallback,
             "snapshot_as_of": args.snapshot_as_of,
+            "theme_weight": float(args.theme_weight),
         },
         "git_commit": git_commit(),
         "signals_hash": signals_hash,
@@ -97,6 +98,12 @@ def main() -> None:
     parser.add_argument("--no-fallback", action="store_true", help="Fail when provider errors")
     parser.add_argument("--no-cache", action="store_true", help="Disable cache usage")
     parser.add_argument("--snapshot-as-of", help="Snapshot date YYYY-MM-DD for snapshot provider")
+    parser.add_argument(
+        "--theme-weight",
+        type=float,
+        default=1.0,
+        help="Theme weight multiplier (0 disables theme boost)",
+    )
     args = parser.parse_args()
 
     as_of = None
@@ -222,6 +229,10 @@ def main() -> None:
             }
         else:
             scored_df, hit_map = scorer.score(indicator_df, signals, mapped_theme_map)
+            if args.theme_weight == 0:
+                scored_df = scored_df.copy()
+                scored_df["theme_score"] = 0.0
+                scored_df["final_score"] = scored_df["technical_score"]
             primary = scored_df.sort_values("final_score", ascending=False)
             selected = primary.head(args.top)
             if len(selected) < args.top and len(scored_df) >= args.top:
