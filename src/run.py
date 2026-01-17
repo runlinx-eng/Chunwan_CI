@@ -7,11 +7,16 @@ from typing import Optional
 import pandas as pd
 
 from .cache import load_cached, save_cached
-from .data_provider import build_provider, provider_seed
+from .data_provider import StockInfo, build_provider, provider_seed
 from .report import build_report
 from .scoring import compute_indicators
 from .signals import load_signals, load_theme_industry_map
-from .theme_pipeline import DefaultConceptMapper, DefaultThemeExtractor, DefaultThemeScorer
+from .theme_pipeline import (
+    DefaultConceptMapper,
+    DefaultThemeExtractor,
+    DefaultThemeScorer,
+    build_snapshot_candidates,
+)
 from .utils import parse_date, previous_trading_date, stable_hash
 
 
@@ -144,7 +149,52 @@ def main() -> None:
                 raise
             provider = build_provider("mock", as_of=as_of)
 
-        stocks = provider.get_stock_universe(industries)
+        debug = {
+            "n_prices_tickers": 0,
+            "n_membership_tickers": 0,
+            "n_candidates_from_theme": 0,
+            "n_candidates_final": 0,
+            "candidate_source": "theme",
+        }
+        fallback_all_universe = False
+        if provider.name == "snapshot":
+            snapshot_date = snapshot_as_of or as_of
+            snapshot_dir = Path("data/snapshots") / snapshot_date.strftime("%Y-%m-%d")
+            candidates, debug, candidate_source, membership = build_snapshot_candidates(
+                mapped_theme_map, snapshot_dir
+            )
+            fallback_all_universe = candidate_source == "universe_fallback"
+            membership = membership.copy()
+            for col in ("ticker", "concept", "industry", "description", "name"):
+                if col not in membership.columns:
+                    membership[col] = ""
+                membership[col] = membership[col].astype(str).str.strip()
+            membership = membership.sort_values(["ticker", "concept"])
+            membership = membership.drop_duplicates(subset=["ticker"], keep="first")
+            membership_lookup = membership.set_index("ticker").to_dict(orient="index")
+            stocks = []
+            for ticker in candidates:
+                info = membership_lookup.get(ticker, {})
+                if fallback_all_universe:
+                    concept = ""
+                    industry = ""
+                    description = ""
+                else:
+                    concept = str(info.get("concept", ""))
+                    industry = str(info.get("industry", ""))
+                    description = str(info.get("description", ""))
+                name = str(info.get("name", "")) if info.get("name", "") else f"STOCK_{ticker}"
+                stocks.append(
+                    StockInfo(
+                        ticker=ticker,
+                        name=name,
+                        industry=industry,
+                        concept=concept,
+                        description=description,
+                    )
+                )
+        else:
+            stocks = provider.get_stock_universe(industries)
         seed = provider_seed(args.date, signals_hash)
         price_df = provider.get_price_history(stocks, as_of, lookback_days=130, seed=seed)
 
@@ -156,6 +206,10 @@ def main() -> None:
         price_df = price_df[price_df["ticker"].isin(valid_tickers)]
 
         indicator_df = compute_indicators(price_df, as_of)
+        if fallback_all_universe and not indicator_df.empty:
+            indicator_df["concept"] = ""
+            indicator_df["industry"] = ""
+            indicator_df["description"] = ""
         issue_list = []
         fallback_used = False
         if indicator_df.empty:
@@ -202,8 +256,11 @@ def main() -> None:
         if fallback_used:
             report["meta"]["fallback_used"] = True
             report["meta"]["fallback_reason"] = "theme_insufficient"
+        if fallback_all_universe:
+            issue_list.append("fallback_all_universe_no_theme_hits")
         report["meta"]["issue_list"] = issue_list
         report["issues"] = int(len(issue_list))
+        report["debug"] = debug
 
         meta = {
             "as_of": as_of.strftime("%Y-%m-%d"),

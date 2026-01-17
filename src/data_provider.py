@@ -311,10 +311,14 @@ class SnapshotProvider(DataProvider):
             raise FileNotFoundError(
                 f"Missing concept_membership.csv under {snapshot_dir}. Available snapshots: {available}"
             )
-        df = pd.read_csv(membership_path)
-        df["concept"] = df.get("concept", "")
-        df["industry"] = df.get("industry", df["concept"])
-        df["description"] = df.get("description", "")
+        df = pd.read_csv(
+            membership_path,
+            dtype={"ticker": str, "concept": str, "industry": str},
+        )
+        df["ticker"] = df["ticker"].astype(str).str.strip()
+        df["concept"] = df.get("concept", "").astype(str).str.strip()
+        df["industry"] = df.get("industry", df["concept"]).astype(str).str.strip()
+        df["description"] = df.get("description", "").astype(str).str.strip()
         return df
 
     def _load_prices(self, as_of: pd.Timestamp) -> pd.DataFrame:
@@ -323,9 +327,11 @@ class SnapshotProvider(DataProvider):
             path = snapshot_dir / f"prices.{suffix}"
             if path.exists():
                 if suffix == "csv":
-                    df = pd.read_csv(path)
+                    df = pd.read_csv(path, dtype={"ticker": str})
                 else:
                     df = pd.read_parquet(path)
+                if "ticker" in df.columns:
+                    df["ticker"] = df["ticker"].astype(str).str.strip()
                 df["date"] = pd.to_datetime(df["date"])
                 return df
         available = ", ".join(self._available_snapshots())
