@@ -2,7 +2,17 @@
 __pycache__/
 .cache/
 outputs/
+artifacts_logs/
 *.pyc
 
-# local logs
-artifacts_logs/
+# Snapshots: prices are large; keep manifest for audit
+data/snapshots/*/prices.csv
+!data/snapshots/*/manifest.json
+# Optional: ignore membership if repo policy requires
+# data/snapshots/*/concept_membership.csv
+
+# workflow
+# cache/output/logs already ignored above
+data/snapshots/**
+!data/snapshots/2026-01-16/
+!data/snapshots/2026-01-16/**
