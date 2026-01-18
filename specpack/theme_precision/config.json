@@ -3,9 +3,9 @@
   "delta_p95": 0,
   "delta_p99": 0,
   "delta_unique_count": 0,
-  "min_concept_hits_unique_set_enhanced": 1,
+  "min_concept_hits_unique_set_enhanced": 8,
   "min_theme_total_range_enhanced": 1.0,
   "min_theme_total_unique_enhanced": 2,
   "min_theme_hit_unique_set_enhanced": 2,
-  "min_theme_hit_unique_set_all": 2
+  "min_theme_hit_unique_set_all": 3
 }
