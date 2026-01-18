@@ -115,6 +115,7 @@ def _load_config(path: Path) -> Dict[str, float]:
             "min_theme_total_unique_enhanced": 1,
             "min_theme_hit_unique_set_enhanced": 2,
             "min_theme_hit_unique_set_all": 2,
+            "min_concept_hits_unique_set_all": 1,
         }
     raw = json.loads(path.read_text(encoding="utf-8"))
     return {
@@ -129,6 +130,7 @@ def _load_config(path: Path) -> Dict[str, float]:
         "min_theme_total_unique_enhanced": float(raw.get("min_theme_total_unique_enhanced", 1)),
         "min_theme_hit_unique_set_enhanced": float(raw.get("min_theme_hit_unique_set_enhanced", 2)),
         "min_theme_hit_unique_set_all": float(raw.get("min_theme_hit_unique_set_all", 2)),
+        "min_concept_hits_unique_set_all": float(raw.get("min_concept_hits_unique_set_all", 1)),
     }
 
 
@@ -319,6 +321,13 @@ def main() -> None:
         non_deg_failures.append("theme_total unique_set_count (all) missing")
     elif theme_hit_unique_set_all < config["min_theme_hit_unique_set_all"]:
         non_deg_failures.append("theme_total unique_set_count (all) below minimum")
+
+    all_concept_hits = _result_metric(_result_bucket(latest, "all"), "concept_hits")
+    concept_hits_unique_set_all = _stat_value(all_concept_hits, "unique_set_count")
+    if concept_hits_unique_set_all is None:
+        non_deg_failures.append("concept_hits unique_set_count (all) missing")
+    elif concept_hits_unique_set_all < config["min_concept_hits_unique_set_all"]:
+        non_deg_failures.append("concept_hits unique_set_count (all) below minimum")
 
     tech_theme_max = _stat_value(tech_theme_total, "max")
     if tech_theme_max is None:
