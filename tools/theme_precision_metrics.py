@@ -124,7 +124,7 @@ def _summarize_distribution(values: List[float]) -> Dict[str, Any]:
             "p95": None,
             "p99": None,
             "max": None,
-            "unique_count": 0,
+            "unique_value_count": 0,
         }
     ordered = sorted(values)
     return {
@@ -134,7 +134,7 @@ def _summarize_distribution(values: List[float]) -> Dict[str, Any]:
         "p95": _percentile(ordered, 0.95),
         "p99": _percentile(ordered, 0.99),
         "max": ordered[-1],
-        "unique_count": len(set(ordered)),
+        "unique_value_count": len(set(ordered)),
     }
 
 
@@ -147,6 +147,8 @@ def _build_metrics(report: Dict[str, Any], path: Path) -> Dict[str, Any]:
     concept_hits: List[str] = []
     themes_per_row: List[int] = []
     concepts_per_row: List[int] = []
+    themes_signature_per_row: List[str] = []
+    concepts_signature_per_row: List[str] = []
     included_rows = 0
 
     for row in results if isinstance(results, list) else []:
@@ -158,11 +160,13 @@ def _build_metrics(report: Dict[str, Any], path: Path) -> Dict[str, Any]:
         theme_totals.append(theme_total)
         row_themes = _extract_themes_used(row)
         themes_per_row.append(len(row_themes))
+        themes_signature_per_row.append(",".join(sorted(set(row_themes))) if row_themes else "")
         for theme in row_themes:
             if theme not in themes_used:
                 themes_used.append(theme)
         row_concepts = _extract_concept_hits(row)
         concepts_per_row.append(len(row_concepts))
+        concepts_signature_per_row.append(",".join(sorted(set(row_concepts))) if row_concepts else "")
         for concept in row_concepts:
             if concept not in concept_hits:
                 concept_hits.append(concept)
@@ -179,11 +183,13 @@ def _build_metrics(report: Dict[str, Any], path: Path) -> Dict[str, Any]:
             "unique_count": len(themes_used),
             "unique": themes_used,
             "per_result_counts": themes_per_row,
+            "per_result_signatures": themes_signature_per_row,
         },
         "concept_hits": {
             "unique_count": len(concept_hits),
             "unique": concept_hits,
             "per_result_counts": concepts_per_row,
+            "per_result_signatures": concepts_signature_per_row,
         },
     }
 
@@ -214,12 +220,19 @@ def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
         "enhanced": {"theme_total": [], "themes_used": [], "concept_hits": []},
         "tech_only": {"theme_total": [], "themes_used": [], "concept_hits": []},
     }
+    signatures: Dict[str, Dict[str, List[str]]] = {
+        "all": {"themes_used": [], "concept_hits": []},
+        "enhanced": {"themes_used": [], "concept_hits": []},
+        "tech_only": {"themes_used": [], "concept_hits": []},
+    }
 
     for report in reports:
         category = report.get("category")
         theme_totals = report.get("theme_total", {}).get("per_result_values", [])
         themes_counts = report.get("themes_used", {}).get("per_result_counts", [])
         concept_counts = report.get("concept_hits", {}).get("per_result_counts", [])
+        themes_signatures = report.get("themes_used", {}).get("per_result_signatures", [])
+        concept_signatures = report.get("concept_hits", {}).get("per_result_signatures", [])
 
         if isinstance(theme_totals, list):
             buckets["all"]["theme_total"].extend([float(v) for v in theme_totals if v is not None])
@@ -233,14 +246,30 @@ def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
             buckets["all"]["concept_hits"].extend([float(v) for v in concept_counts if v is not None])
             if category in ("enhanced", "tech_only"):
                 buckets[category]["concept_hits"].extend([float(v) for v in concept_counts if v is not None])
+        if isinstance(themes_signatures, list):
+            signatures["all"]["themes_used"].extend([str(v) for v in themes_signatures if v is not None])
+            if category in ("enhanced", "tech_only"):
+                signatures[category]["themes_used"].extend([str(v) for v in themes_signatures if v is not None])
+        if isinstance(concept_signatures, list):
+            signatures["all"]["concept_hits"].extend([str(v) for v in concept_signatures if v is not None])
+            if category in ("enhanced", "tech_only"):
+                signatures[category]["concept_hits"].extend([str(v) for v in concept_signatures if v is not None])
 
     summary: Dict[str, Any] = {}
     for bucket, values in buckets.items():
+        themes_unique_sets = {sig for sig in signatures[bucket]["themes_used"] if sig}
+        concept_unique_sets = {sig for sig in signatures[bucket]["concept_hits"] if sig}
         summary[bucket] = {
             "theme_total": _summarize_distribution(values["theme_total"]),
             "themes_used": _summarize_distribution(values["themes_used"]),
             "concept_hits": _summarize_distribution(values["concept_hits"]),
         }
+        summary[bucket]["themes_used"]["unique_set_count"] = (
+            len(themes_unique_sets) if themes_unique_sets else None
+        )
+        summary[bucket]["concept_hits"]["unique_set_count"] = (
+            len(concept_unique_sets) if concept_unique_sets else None
+        )
     return summary
 
 
