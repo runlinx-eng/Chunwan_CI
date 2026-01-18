@@ -32,6 +32,9 @@ def _theme_scores(report: Dict[str, Any]) -> List[float]:
 
 
 def _read_default_theme_map(repo_root: Path) -> str:
+    env_map = os.environ.get("THEME_MAP")
+    if env_map:
+        return env_map
     run_py = repo_root / "src" / "run.py"
     if not run_py.exists():
         return "theme_to_industry.csv"

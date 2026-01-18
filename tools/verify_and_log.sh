@@ -4,6 +4,19 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+if [ "${1:-}" = "--theme-map" ]; then
+  if [ -z "${2:-}" ]; then
+    echo "error: --theme-map requires a path"
+    exit 2
+  fi
+  export THEME_MAP="$2"
+  shift 2
+fi
+if [ "$#" -gt 0 ]; then
+  echo "error: unknown arguments: $*"
+  exit 2
+fi
+
 rm -rf .cache
 python3 -m pytest -q
 ./specpack/verify_all.sh
