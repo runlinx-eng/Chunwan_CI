@@ -140,17 +140,22 @@ def _parse_weight(row: Dict[str, Any]) -> Optional[float]:
 
 def _build_candidates(
     path: Path,
-) -> Tuple[List[str], str, List[str], List[Dict[str, Any]], bool]:
+) -> Tuple[List[str], str, List[str], List[Dict[str, Any]], bool, int, int, int]:
     with path.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         header = reader.fieldnames or []
         has_weight_column = any(col in header for col in WEIGHT_COLUMNS)
         schema, theme_col, term_cols = _detect_schema(header)
         rows: List[Dict[str, Any]] = []
+        row_count = 0
+        unique_themes: set = set()
+        unique_terms: set = set()
         for idx, row in enumerate(reader):
+            row_count += 1
             theme = str(row.get(theme_col, "")).strip()
             if not theme:
                 continue
+            unique_themes.add(theme)
             term_raw = _get_term_raw(row, term_cols, schema)
             if not term_raw or term_raw.lower() == "nan":
                 continue
@@ -159,6 +164,7 @@ def _build_candidates(
                 continue
             weight = _parse_weight(row)
             for term in terms:
+                unique_terms.add(term)
                 rows.append(
                     {
                         "row_index": idx,
@@ -168,7 +174,7 @@ def _build_candidates(
                         "weight": weight,
                     }
                 )
-        return header, theme_col, term_cols, rows, has_weight_column
+        return header, theme_col, term_cols, rows, has_weight_column, row_count, len(unique_themes), len(unique_terms)
 
 
 def _select_terms(
@@ -354,6 +360,13 @@ def _build_summary(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prune theme map to max 3 concepts per theme")
     parser.add_argument("--in", dest="input_path", default="", help="Input theme map path")
+    parser.add_argument("--verbose", action="store_true", help="Print inspect stats before/after pruning")
+    parser.add_argument(
+        "--inspect",
+        action="store_true",
+        dest="verbose",
+        help="Alias for --verbose",
+    )
     parser.add_argument(
         "--out",
         default="artifacts_metrics/theme_to_industry_pruned.csv",
@@ -366,7 +379,32 @@ def main() -> None:
     if not theme_map_path.exists():
         raise SystemExit(f"Theme map not found: {theme_map_path}")
 
-    header, theme_col, term_cols, candidates, has_weight_column = _build_candidates(theme_map_path)
+    if args.verbose:
+        print(f"input_path={theme_map_path.resolve()}")
+        try:
+            lines = theme_map_path.read_text(encoding="utf-8").splitlines()
+        except Exception:
+            lines = []
+        header_line = lines[0] if lines else ""
+        print(f"input_header_line: {header_line}")
+        for idx, line in enumerate(lines[1:6], start=1):
+            print(f"input_data_line_{idx}: {line}")
+
+    (
+        header,
+        theme_col,
+        term_cols,
+        candidates,
+        has_weight_column,
+        row_count,
+        unique_theme_count,
+        unique_term_count,
+    ) = _build_candidates(theme_map_path)
+    if args.verbose:
+        print(f"rows_read={row_count}")
+        print(f"unique_themes={unique_theme_count}")
+        print(f"unique_concepts={unique_term_count}")
+        print(f"has_weight_columns={has_weight_column}")
     selected, strategy = _select_terms(candidates, has_weight_column)
 
     out_path = Path(args.out)
@@ -384,6 +422,31 @@ def main() -> None:
     print(f"theme_map_path={theme_map_path}")
     print(f"output_path={out_path}")
     print(f"summary_path={summary_path}")
+    if args.verbose:
+        concept_freq: Dict[str, int] = {}
+        theme_terms: Dict[str, set] = {}
+        for theme, entries in selected.items():
+            theme_terms.setdefault(theme, set())
+            for entry in entries:
+                term = entry["term"]
+                theme_terms[theme].add(term)
+        for terms in theme_terms.values():
+            for term in terms:
+                concept_freq[term] = concept_freq.get(term, 0) + 1
+        histogram: Dict[str, int] = {}
+        for terms in theme_terms.values():
+            key = str(len(terms))
+            histogram[key] = histogram.get(key, 0) + 1
+        top_repeated = sorted(
+            [{"concept": term, "themes": count} for term, count in concept_freq.items()],
+            key=lambda x: (-x["themes"], x["concept"]),
+        )[:30]
+        unique_triplets = {
+            tuple(sorted(terms)) for terms in theme_terms.values()
+        }
+        print(f"concepts_per_theme_histogram={histogram}")
+        print(f"top_repeated_concepts={top_repeated}")
+        print(f"unique_triplets_count={len(unique_triplets)}")
 
 
 if __name__ == "__main__":
