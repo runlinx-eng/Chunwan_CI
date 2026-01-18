@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -12,10 +13,24 @@ def _load_report(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _read_default_theme_map(repo_root: Path) -> str:
+    run_py = repo_root / "src" / "run.py"
+    if not run_py.exists():
+        return "theme_to_industry.csv"
+    text = run_py.read_text(encoding="utf-8")
+    match = re.search(r"--theme-map\".*?default=[\"']([^\"']+)[\"']", text, re.S)
+    if match:
+        return match.group(1).strip()
+    return "theme_to_industry.csv"
+
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     outputs_dir = repo_root / "outputs"
     report_path = outputs_dir / "report_2026-01-16_top5.json"
+    default_map = _read_default_theme_map(repo_root)
+    theme_map_override = "theme_to_industry_em_2026-01-16.csv"
+    theme_map_path = theme_map_override or default_map
 
     if report_path.exists():
         report_path.unlink()
@@ -34,7 +49,7 @@ def main() -> None:
         "--snapshot-as-of",
         "2026-01-16",
         "--theme-map",
-        "theme_to_industry_em_2026-01-16.csv",
+        theme_map_path,
     ]
     env = os.environ.copy()
     env["PYTHONPATH"] = str(repo_root) + (
@@ -56,10 +71,10 @@ def main() -> None:
         raise AssertionError(
             "date mismatch: " f"{json.dumps(args, ensure_ascii=False, sort_keys=True)}"
         )
-    if "theme_to_industry_em_2026-01-16.csv" not in theme_map:
+    if Path(theme_map).name != Path(theme_map_path).name:
         raise AssertionError(
             "theme_map mismatch: "
-            f"{json.dumps(args, ensure_ascii=False, sort_keys=True)}"
+            f"expected={theme_map_path} args={json.dumps(args, ensure_ascii=False, sort_keys=True)}"
         )
     results = report.get("results", [])
     if len(results) != 5:

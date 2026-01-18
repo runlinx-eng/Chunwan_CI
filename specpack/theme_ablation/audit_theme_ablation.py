@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,17 @@ def _theme_scores(report: Dict[str, Any]) -> List[float]:
             except (TypeError, ValueError):
                 continue
     return scores
+
+
+def _read_default_theme_map(repo_root: Path) -> str:
+    run_py = repo_root / "src" / "run.py"
+    if not run_py.exists():
+        return "theme_to_industry.csv"
+    text = run_py.read_text(encoding="utf-8")
+    match = re.search(r"--theme-map\".*?default=[\"']([^\"']+)[\"']", text, re.S)
+    if match:
+        return match.group(1).strip()
+    return "theme_to_industry.csv"
 
 
 def _debug_payload(report: Dict[str, Any], repo_root: Path, base_report: Path) -> str:
@@ -78,6 +90,7 @@ def run_and_load(
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     date_str = "2026-01-20"
+    theme_map = _read_default_theme_map(repo_root)
     enhanced_cmd = [
         sys.executable,
         "-m",
@@ -92,7 +105,7 @@ def main() -> None:
         "--snapshot-as-of",
         date_str,
         "--theme-map",
-        "theme_to_industry.csv",
+        theme_map,
         "--theme-weight",
         "1",
         "--no-cache",
@@ -111,7 +124,7 @@ def main() -> None:
         "--snapshot-as-of",
         date_str,
         "--theme-map",
-        "theme_to_industry.csv",
+        theme_map,
         "--theme-weight",
         "0",
         "--no-cache",

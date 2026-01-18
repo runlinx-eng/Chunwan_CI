@@ -1,5 +1,6 @@
 import json
 import math
+import re
 import subprocess
 from pathlib import Path
 
@@ -64,12 +65,38 @@ def load_signal_core_map() -> dict:
     return mapping
 
 
-def load_core_theme_concepts(signal_to_core: dict) -> dict:
-    df = pd.read_csv("theme_to_industry.csv")
+def load_signal_theme_core_map() -> dict:
+    raw = yaml.safe_load(Path("signals.yaml").read_text(encoding="utf-8"))
+    mapping = {}
+    for item in raw.get("signals", []):
+        theme = item.get("theme", "")
+        core_theme = item.get("core_theme", theme)
+        if theme:
+            mapping[theme] = core_theme
+    return mapping
+
+
+def _read_default_theme_map(repo_root: Path) -> str:
+    run_py = repo_root / "src" / "run.py"
+    if not run_py.exists():
+        return "theme_to_industry.csv"
+    text = run_py.read_text(encoding="utf-8")
+    match = re.search(r"--theme-map\".*?default=[\"']([^\"']+)[\"']", text, re.S)
+    if match:
+        return match.group(1).strip()
+    return "theme_to_industry.csv"
+
+
+def load_core_theme_concepts(signal_to_core: dict, theme_to_core: dict, map_path: Path) -> dict:
+    df = pd.read_csv(map_path)
     core_map = {}
     for _, row in df.iterrows():
-        signal_id = str(row["主题ID"])
-        core_theme = signal_to_core.get(signal_id)
+        if "主题名称" in df.columns:
+            theme_name = str(row.get("主题名称", "")).strip()
+            core_theme = theme_to_core.get(theme_name)
+        else:
+            signal_id = str(row.get("主题ID"))
+            core_theme = signal_to_core.get(signal_id)
         if not core_theme:
             continue
         concepts = str(row.get("对应行业/概念", ""))
@@ -83,6 +110,7 @@ def load_core_theme_concepts(signal_to_core: dict) -> dict:
 
 
 def main() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
     conf = yaml.safe_load(Path("specpack/snapshot_replay/assertions.yaml").read_text(encoding="utf-8"))
     cmd = conf["run"]["cmd"]
     output_json = Path(conf["run"]["output_json"])
@@ -113,7 +141,11 @@ def main() -> None:
     check_report_fields(report)
 
     signal_to_core = load_signal_core_map()
-    core_to_concepts = load_core_theme_concepts(signal_to_core)
+    theme_to_core = load_signal_theme_core_map()
+    default_map_path = Path(_read_default_theme_map(repo_root))
+    if not default_map_path.is_absolute():
+        default_map_path = repo_root / default_map_path
+    core_to_concepts = load_core_theme_concepts(signal_to_core, theme_to_core, default_map_path)
 
     core_seen = set()
     for row in report.get("results", []):
