@@ -16,3 +16,4 @@ data/snapshots/*/prices.csv
 data/snapshots/**
 !data/snapshots/2026-01-16/
 !data/snapshots/2026-01-16/**
+notes/
