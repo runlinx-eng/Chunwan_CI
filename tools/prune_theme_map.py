@@ -180,6 +180,9 @@ def _build_candidates(
 def _select_terms(
     candidates: List[Dict[str, Any]],
     has_weight_column: bool,
+    min_concepts: int,
+    min_score: float,
+    lambda_penalty: float,
 ) -> Tuple[Dict[str, List[Dict[str, Any]]], str]:
     theme_candidates: Dict[str, Dict[str, Dict[str, Any]]] = {}
     theme_order: List[str] = []
@@ -214,17 +217,12 @@ def _select_terms(
     for theme, term_map in theme_candidates.items():
         for term in term_map:
             term_theme_counts[term] = term_theme_counts.get(term, 0) + 1
+    num_themes = len(theme_candidates)
 
     term_hash = {
         term: int(hashlib.md5(term.encode("utf-8")).hexdigest()[:8], 16)
         for term in term_theme_counts
     }
-
-    max_support = max(
-        (entry["local_support"] for term_map in theme_candidates.values() for entry in term_map.values()),
-        default=1.0,
-    )
-    lambda_penalty = max_support * 0.25
 
     selected: Dict[str, List[Dict[str, Any]]] = {theme: [] for theme in theme_candidates}
     selected_terms_global: Dict[str, int] = {}
@@ -249,8 +247,8 @@ def _select_terms(
                     continue
                 base_freq = term_theme_counts.get(term, 1)
                 selected_count = selected_terms_global.get(term, 0)
-                effective_freq = base_freq + selected_count
-                score = entry["local_support"] - (lambda_penalty * effective_freq)
+                penalty = lambda_penalty * (base_freq / max(1, num_themes))
+                score = entry["local_support"] - penalty
                 bias = (term_hash.get(term, 0) + theme_index.get(theme, 0)) % 1000000
                 key = (
                     -score,
@@ -267,7 +265,7 @@ def _select_terms(
                     best_score = score
             if best_entry is None:
                 break
-            if best_score is not None and best_score <= 0:
+            if len(selected[theme]) >= min_concepts and best_score is not None and best_score < min_score:
                 blocked_themes.add(theme)
                 continue
             selected[theme].append(best_entry)
@@ -376,6 +374,25 @@ def main() -> None:
         help="Alias for --verbose",
     )
     parser.add_argument(
+        "--min-concepts",
+        type=int,
+        default=1,
+        help="Minimum concepts per theme before applying stop rule",
+    )
+    parser.add_argument(
+        "--min-score",
+        type=float,
+        default=0.0,
+        help="Stop selecting additional concepts when best score < min-score",
+    )
+    parser.add_argument(
+        "--lambda",
+        dest="lambda_penalty",
+        type=float,
+        default=0.5,
+        help="Penalty multiplier for global theme frequency",
+    )
+    parser.add_argument(
         "--out",
         default="artifacts_metrics/theme_to_industry_pruned.csv",
         help="Output theme map path",
@@ -413,7 +430,13 @@ def main() -> None:
         print(f"unique_themes={unique_theme_count}")
         print(f"unique_concepts={unique_term_count}")
         print(f"has_weight_columns={has_weight_column}")
-    selected, strategy = _select_terms(candidates, has_weight_column)
+    selected, strategy = _select_terms(
+        candidates,
+        has_weight_column,
+        max(args.min_concepts, 1),
+        args.min_score,
+        args.lambda_penalty,
+    )
 
     out_path = Path(args.out)
     if not out_path.is_absolute():
