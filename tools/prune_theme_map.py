@@ -231,15 +231,19 @@ def _select_terms(
     max_per_theme = 3
 
     theme_index = {theme: idx for idx, theme in enumerate(theme_order)}
+    blocked_themes: set = set()
 
     for _ in range(max_per_theme):
         for theme in theme_order:
+            if theme in blocked_themes:
+                continue
             if len(selected[theme]) >= max_per_theme:
                 continue
             term_map = theme_candidates[theme]
             already = {item["term"] for item in selected[theme]}
             best_entry = None
             best_key = None
+            best_score = None
             for term, entry in term_map.items():
                 if term in already:
                     continue
@@ -260,8 +264,12 @@ def _select_terms(
                 if best_key is None or key < best_key:
                     best_key = key
                     best_entry = entry
+                    best_score = score
             if best_entry is None:
                 break
+            if best_score is not None and best_score <= 0:
+                blocked_themes.add(theme)
+                continue
             selected[theme].append(best_entry)
             selected_terms_global[best_entry["term"]] = selected_terms_global.get(best_entry["term"], 0) + 1
 
