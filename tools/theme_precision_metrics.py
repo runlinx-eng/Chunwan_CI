@@ -140,16 +140,22 @@ def _summarize_distribution(values: List[float]) -> Dict[str, Any]:
 
 def _build_metrics(report: Dict[str, Any], path: Path) -> Dict[str, Any]:
     results = report.get("results", [])
+    weight = _theme_weight(report)
+    category = _theme_category(weight)
     theme_totals: List[float] = []
     themes_used: List[str] = []
     concept_hits: List[str] = []
     themes_per_row: List[int] = []
     concepts_per_row: List[int] = []
+    included_rows = 0
 
     for row in results if isinstance(results, list) else []:
         theme_total = _score_theme_total(row)
-        if theme_total is not None:
-            theme_totals.append(theme_total)
+        if theme_total is None and category == "tech_only":
+            theme_total = 0.0
+        if theme_total is None:
+            continue
+        theme_totals.append(theme_total)
         row_themes = _extract_themes_used(row)
         themes_per_row.append(len(row_themes))
         for theme in row_themes:
@@ -160,15 +166,14 @@ def _build_metrics(report: Dict[str, Any], path: Path) -> Dict[str, Any]:
         for concept in row_concepts:
             if concept not in concept_hits:
                 concept_hits.append(concept)
-
-    weight = _theme_weight(report)
-    category = _theme_category(weight)
+        included_rows += 1
     return {
         "path": str(path),
         "as_of": report.get("as_of"),
         "theme_weight": weight,
         "category": category,
         "results_count": len(results) if isinstance(results, list) else 0,
+        "results_included": included_rows,
         "theme_total": _summarize_theme_totals(theme_totals),
         "themes_used": {
             "unique_count": len(themes_used),
