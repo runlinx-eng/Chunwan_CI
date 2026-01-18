@@ -1,5 +1,6 @@
 import argparse
 import csv
+import hashlib
 import json
 import os
 import re
@@ -139,10 +140,11 @@ def _parse_weight(row: Dict[str, Any]) -> Optional[float]:
 
 def _build_candidates(
     path: Path,
-) -> Tuple[List[str], str, List[str], List[Dict[str, Any]]]:
+) -> Tuple[List[str], str, List[str], List[Dict[str, Any]], bool]:
     with path.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
         header = reader.fieldnames or []
+        has_weight_column = any(col in header for col in WEIGHT_COLUMNS)
         schema, theme_col, term_cols = _detect_schema(header)
         rows: List[Dict[str, Any]] = []
         for idx, row in enumerate(reader):
@@ -166,28 +168,28 @@ def _build_candidates(
                         "weight": weight,
                     }
                 )
-        return header, theme_col, term_cols, rows
+        return header, theme_col, term_cols, rows, has_weight_column
 
 
 def _select_terms(
     candidates: List[Dict[str, Any]],
-    hit_counts: Dict[str, int],
+    has_weight_column: bool,
 ) -> Tuple[Dict[str, List[Dict[str, Any]]], str]:
-    use_hit = bool(hit_counts)
-    has_weight = any(item.get("weight") is not None for item in candidates)
-    use_coverage = use_hit or has_weight
     theme_candidates: Dict[str, Dict[str, Dict[str, Any]]] = {}
     theme_order: List[str] = []
 
     for item in candidates:
         theme = item["theme"]
         term = item["term"]
-        coverage_score = hit_counts.get(term, 0) if use_hit else (item.get("weight") or 0.0)
+        if has_weight_column:
+            local_support = float(item.get("weight") or 0.0)
+        else:
+            local_support = 1.0
         entry = {
             "term": term,
             "row": item["row"],
             "row_index": item["row_index"],
-            "coverage_score": float(coverage_score),
+            "local_support": float(local_support),
         }
         if theme not in theme_candidates:
             theme_candidates[theme] = {}
@@ -196,8 +198,8 @@ def _select_terms(
         if existing is None:
             theme_candidates[theme][term] = entry
         else:
-            if entry["coverage_score"] > existing["coverage_score"] or (
-                entry["coverage_score"] == existing["coverage_score"]
+            if entry["local_support"] > existing["local_support"] or (
+                entry["local_support"] == existing["local_support"]
                 and entry["row_index"] < existing["row_index"]
             ):
                 theme_candidates[theme][term] = entry
@@ -207,16 +209,22 @@ def _select_terms(
         for term in term_map:
             term_theme_counts[term] = term_theme_counts.get(term, 0) + 1
 
-    theme_max_coverage: Dict[str, float] = {}
-    for theme, term_map in theme_candidates.items():
-        max_value = max((entry["coverage_score"] for entry in term_map.values()), default=0.0)
-        theme_max_coverage[theme] = max_value if max_value > 0 else 0.0
+    term_hash = {
+        term: int(hashlib.md5(term.encode("utf-8")).hexdigest()[:8], 16)
+        for term in term_theme_counts
+    }
+
+    max_support = max(
+        (entry["local_support"] for term_map in theme_candidates.values() for entry in term_map.values()),
+        default=1.0,
+    )
+    lambda_penalty = max_support * 0.25
 
     selected: Dict[str, List[Dict[str, Any]]] = {theme: [] for theme in theme_candidates}
     selected_terms_global: Dict[str, int] = {}
     max_per_theme = 3
-    reuse_weight = 2.0
-    rarity_weight = 0.75
+
+    theme_index = {theme: idx for idx, theme in enumerate(theme_order)}
 
     for _ in range(max_per_theme):
         for theme in theme_order:
@@ -224,34 +232,34 @@ def _select_terms(
                 continue
             term_map = theme_candidates[theme]
             already = {item["term"] for item in selected[theme]}
-            options: List[Tuple[float, float, float, int, str, Dict[str, Any]]] = []
+            best_entry = None
+            best_key = None
             for term, entry in term_map.items():
                 if term in already:
                     continue
-                max_cov = theme_max_coverage.get(theme, 0.0)
-                coverage_norm = (entry["coverage_score"] / max_cov) if max_cov > 0 else 0.0
-                rarity_bonus = 1.0 / float(term_theme_counts.get(term, 1))
-                reuse_penalty = float(selected_terms_global.get(term, 0))
-                adjusted = (coverage_norm if use_coverage else 0.0) + (rarity_bonus * rarity_weight)
-                adjusted -= reuse_penalty * reuse_weight
-                options.append(
-                    (
-                        adjusted,
-                        coverage_norm,
-                        rarity_bonus,
-                        entry["row_index"],
-                        term,
-                        entry,
-                    )
+                base_freq = term_theme_counts.get(term, 1)
+                selected_count = selected_terms_global.get(term, 0)
+                effective_freq = base_freq + selected_count
+                score = entry["local_support"] - (lambda_penalty * effective_freq)
+                bias = (term_hash.get(term, 0) + theme_index.get(theme, 0)) % 1000000
+                key = (
+                    -score,
+                    -entry["local_support"],
+                    selected_count,
+                    base_freq,
+                    bias,
+                    entry["row_index"],
+                    term,
                 )
-            if not options:
-                continue
-            options.sort(key=lambda x: (-x[0], -x[1], -x[2], x[3], x[4]))
-            chosen = options[0][5]
-            selected[theme].append(chosen)
-            selected_terms_global[chosen["term"]] = selected_terms_global.get(chosen["term"], 0) + 1
+                if best_key is None or key < best_key:
+                    best_key = key
+                    best_entry = entry
+            if best_entry is None:
+                break
+            selected[theme].append(best_entry)
+            selected_terms_global[best_entry["term"]] = selected_terms_global.get(best_entry["term"], 0) + 1
 
-    strategy = "coverage_diversity" if use_coverage else "diversity_only"
+    strategy = "diversity_penalty"
     return selected, strategy
 
 
@@ -323,9 +331,13 @@ def _build_summary(
     for term in kept_terms_all:
         term_counts[term] = term_counts.get(term, 0) + 1
     top_repeated = sorted(
-        [{"term": term, "count": count} for term, count in term_counts.items()],
-        key=lambda x: (-x["count"], x["term"]),
-    )[:10]
+        [{"concept": term, "themes": count} for term, count in term_counts.items()],
+        key=lambda x: (-x["themes"], x["concept"]),
+    )[:20]
+    unique_triplets = {
+        tuple(sorted(item["term"] for item in selected.get(theme, [])))
+        for theme in selected
+    }
     summary["global"] = {
         "total_terms": total_terms,
         "unique_terms": unique_terms,
@@ -333,6 +345,9 @@ def _build_summary(
         "duplicate_ratio": (duplicate_terms / total_terms) if total_terms else 0.0,
         "top_repeated_terms": top_repeated,
     }
+    summary["concepts_per_theme_histogram"] = dict(summary["distribution"])
+    summary["top_repeated_concepts"] = top_repeated
+    summary["unique_triplets_count"] = len(unique_triplets)
     return summary
 
 
@@ -351,9 +366,8 @@ def main() -> None:
     if not theme_map_path.exists():
         raise SystemExit(f"Theme map not found: {theme_map_path}")
 
-    header, theme_col, term_cols, candidates = _build_candidates(theme_map_path)
-    hit_counts = _load_hit_counts(repo_root)
-    selected, strategy = _select_terms(candidates, hit_counts)
+    header, theme_col, term_cols, candidates, has_weight_column = _build_candidates(theme_map_path)
+    selected, strategy = _select_terms(candidates, has_weight_column)
 
     out_path = Path(args.out)
     if not out_path.is_absolute():
