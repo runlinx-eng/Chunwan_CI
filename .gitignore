@@ -17,3 +17,10 @@ data/snapshots/**
 !data/snapshots/2026-01-16/
 !data/snapshots/2026-01-16/**
 notes/
+
+# artifacts latest metrics (runtime)
+artifacts_metrics/theme_precision_latest.json
+artifacts_metrics/theme_map_prune_latest.json
+theme_precision_latest.json
+theme_map_prune_latest.json
+artifacts_logs/verify_*.txt

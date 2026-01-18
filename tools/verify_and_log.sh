@@ -8,6 +8,7 @@ rm -rf .cache
 python3 -m pytest -q
 ./specpack/verify_all.sh
 ./tools/capture_verify_log.sh
+python tools/theme_precision_metrics.py --out artifacts_metrics/theme_precision_latest.json
 
 echo "git_rev: $(git rev-parse HEAD)"
 if [ -d artifacts_logs ]; then

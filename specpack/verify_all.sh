@@ -9,5 +9,6 @@ bash specpack/concept_data_health/verify.sh
 bash specpack/real_snapshot_smoke/verify.sh
 bash specpack/real_theme_effectiveness/verify.sh
 bash specpack/theme_ablation/verify.sh
+bash specpack/theme_precision/verify.sh
 
 echo "[specpack] all packs passed"
