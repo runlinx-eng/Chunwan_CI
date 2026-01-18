@@ -77,7 +77,15 @@ def _score_theme_total(row: Dict[str, Any]) -> Optional[float]:
 
 def _summarize_theme_totals(values: List[float]) -> Dict[str, Any]:
     if not values:
-        return {"count": 0, "sum": 0.0, "avg": 0.0, "min": None, "max": None, "positive": 0}
+        return {
+            "count": 0,
+            "sum": 0.0,
+            "avg": 0.0,
+            "min": None,
+            "max": None,
+            "positive": 0,
+            "per_result_values": [],
+        }
     total = sum(values)
     return {
         "count": len(values),
@@ -86,6 +94,47 @@ def _summarize_theme_totals(values: List[float]) -> Dict[str, Any]:
         "min": min(values),
         "max": max(values),
         "positive": sum(1 for v in values if v > 0),
+        "per_result_values": values,
+    }
+
+
+def _percentile(values: List[float], q: float) -> Optional[float]:
+    if not values:
+        return None
+    if q <= 0:
+        return min(values)
+    if q >= 1:
+        return max(values)
+    ordered = sorted(values)
+    idx = (len(ordered) - 1) * q
+    lo = int(idx)
+    hi = min(lo + 1, len(ordered) - 1)
+    if lo == hi:
+        return ordered[lo]
+    frac = idx - lo
+    return ordered[lo] * (1 - frac) + ordered[hi] * frac
+
+
+def _summarize_distribution(values: List[float]) -> Dict[str, Any]:
+    if not values:
+        return {
+            "N": 0,
+            "min": None,
+            "p50": None,
+            "p95": None,
+            "p99": None,
+            "max": None,
+            "unique_count": 0,
+        }
+    ordered = sorted(values)
+    return {
+        "N": len(ordered),
+        "min": ordered[0],
+        "p50": _percentile(ordered, 0.5),
+        "p95": _percentile(ordered, 0.95),
+        "p99": _percentile(ordered, 0.99),
+        "max": ordered[-1],
+        "unique_count": len(set(ordered)),
     }
 
 
@@ -154,6 +203,42 @@ def _aggregate_by_category(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
     return summary
 
 
+def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
+    buckets: Dict[str, Dict[str, List[float]]] = {
+        "all": {"theme_total": [], "themes_used": [], "concept_hits": []},
+        "enhanced": {"theme_total": [], "themes_used": [], "concept_hits": []},
+        "tech_only": {"theme_total": [], "themes_used": [], "concept_hits": []},
+    }
+
+    for report in reports:
+        category = report.get("category")
+        theme_totals = report.get("theme_total", {}).get("per_result_values", [])
+        themes_counts = report.get("themes_used", {}).get("per_result_counts", [])
+        concept_counts = report.get("concept_hits", {}).get("per_result_counts", [])
+
+        if isinstance(theme_totals, list):
+            buckets["all"]["theme_total"].extend([float(v) for v in theme_totals if v is not None])
+            if category in ("enhanced", "tech_only"):
+                buckets[category]["theme_total"].extend([float(v) for v in theme_totals if v is not None])
+        if isinstance(themes_counts, list):
+            buckets["all"]["themes_used"].extend([float(v) for v in themes_counts if v is not None])
+            if category in ("enhanced", "tech_only"):
+                buckets[category]["themes_used"].extend([float(v) for v in themes_counts if v is not None])
+        if isinstance(concept_counts, list):
+            buckets["all"]["concept_hits"].extend([float(v) for v in concept_counts if v is not None])
+            if category in ("enhanced", "tech_only"):
+                buckets[category]["concept_hits"].extend([float(v) for v in concept_counts if v is not None])
+
+    summary: Dict[str, Any] = {}
+    for bucket, values in buckets.items():
+        summary[bucket] = {
+            "theme_total": _summarize_distribution(values["theme_total"]),
+            "themes_used": _summarize_distribution(values["themes_used"]),
+            "concept_hits": _summarize_distribution(values["concept_hits"]),
+        }
+    return summary
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compute theme precision metrics from reports")
     parser.add_argument("--out", default="", help="Output JSON path")
@@ -176,6 +261,7 @@ def main() -> None:
         "report_count": len(reports_metrics),
         "reports": reports_metrics,
         "by_category": _aggregate_by_category(reports_metrics),
+        "result_level": _aggregate_result_level(reports_metrics),
     }
 
     if args.out:
