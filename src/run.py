@@ -117,7 +117,7 @@ def main() -> None:
     parser.add_argument("--signals", default="signals.yaml", help="Signals YAML path")
     parser.add_argument(
         "--theme-map",
-        default="theme_to_industry.csv",
+        default="theme_to_industry_em_2026-01-20.csv",
         help="Theme to industry mapping CSV",
     )
     parser.add_argument("--provider", default="mock", help="Data provider: mock/akshare/snapshot")
@@ -168,26 +168,6 @@ def main() -> None:
         theme_map_path=Path(args.theme_map),
     )
     signals_for_scoring = signals
-    if signal_theme_key_map:
-        updated_signals = []
-        for signal in signals:
-            override = signal_theme_key_map.get(signal.id)
-            if override:
-                updated_signals.append(
-                    Signal(
-                        id=signal.id,
-                        theme=signal.theme,
-                        core_theme=override,
-                        keywords=signal.keywords,
-                        priority=signal.priority,
-                        description=signal.description,
-                        weight=signal.weight,
-                        phase=signal.phase,
-                    )
-                )
-            else:
-                updated_signals.append(signal)
-        signals_for_scoring = updated_signals
     industries = mapper.flatten(mapped_theme_map)
 
     signals_hash = read_text_hash(args.signals)
