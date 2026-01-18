@@ -34,4 +34,6 @@ if [ "$VERIFY_STATUS" -ne 0 ]; then
   exit "$VERIFY_STATUS"
 fi
 
+echo "git_rev: $(git rev-parse HEAD)" >> "$LOG"
+echo "latest_log: $LOG" >> "$LOG"
 echo "[verify] all gates passed" | tee -a "$LOG"
