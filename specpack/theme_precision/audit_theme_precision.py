@@ -110,10 +110,11 @@ def _load_config(path: Path) -> Dict[str, float]:
             "delta_p95": 0,
             "delta_p99": 0,
             "delta_unique_count": 0,
-            "min_themes_used_unique_set_enhanced": 1,
             "min_concept_hits_unique_set_enhanced": 1,
             "min_theme_total_range_enhanced": 0,
             "min_theme_total_unique_enhanced": 1,
+            "min_theme_hit_unique_set_enhanced": 2,
+            "min_theme_hit_unique_set_all": 2,
         }
     raw = json.loads(path.read_text(encoding="utf-8"))
     return {
@@ -121,14 +122,13 @@ def _load_config(path: Path) -> Dict[str, float]:
         "delta_p95": float(raw.get("delta_p95", 0)),
         "delta_p99": float(raw.get("delta_p99", 0)),
         "delta_unique_count": float(raw.get("delta_unique_count", 0)),
-        "min_themes_used_unique_set_enhanced": float(
-            raw.get("min_themes_used_unique_set_enhanced", 1)
-        ),
         "min_concept_hits_unique_set_enhanced": float(
             raw.get("min_concept_hits_unique_set_enhanced", 1)
         ),
         "min_theme_total_range_enhanced": float(raw.get("min_theme_total_range_enhanced", 0)),
         "min_theme_total_unique_enhanced": float(raw.get("min_theme_total_unique_enhanced", 1)),
+        "min_theme_hit_unique_set_enhanced": float(raw.get("min_theme_hit_unique_set_enhanced", 2)),
+        "min_theme_hit_unique_set_all": float(raw.get("min_theme_hit_unique_set_all", 2)),
     }
 
 
@@ -286,12 +286,6 @@ def main() -> None:
     enhanced_concept_hits = _result_metric(enhanced_result, "concept_hits")
     tech_theme_total = _result_metric(tech_result, "theme_total")
 
-    themes_used_unique_set = _stat_value(enhanced_themes_used, "unique_set_count")
-    if themes_used_unique_set is None:
-        non_deg_failures.append("themes_used unique_set_count missing")
-    elif themes_used_unique_set < config["min_themes_used_unique_set_enhanced"]:
-        non_deg_failures.append("themes_used unique_set_count below minimum")
-
     concept_hits_unique_set = _stat_value(enhanced_concept_hits, "unique_set_count")
     if concept_hits_unique_set is not None and concept_hits_unique_set < config[
         "min_concept_hits_unique_set_enhanced"
@@ -312,6 +306,19 @@ def main() -> None:
         non_deg_failures.append("theme_total unique_value_count missing")
     elif theme_total_unique < config["min_theme_total_unique_enhanced"]:
         non_deg_failures.append("theme_total unique_value_count below minimum")
+
+    theme_hit_unique_set = _stat_value(enhanced_theme_total, "unique_set_count")
+    if theme_hit_unique_set is None:
+        non_deg_failures.append("theme_total unique_set_count missing")
+    elif theme_hit_unique_set < config["min_theme_hit_unique_set_enhanced"]:
+        non_deg_failures.append("theme_total unique_set_count below minimum")
+
+    all_theme_total = _result_metric(_result_bucket(latest, "all"), "theme_total")
+    theme_hit_unique_set_all = _stat_value(all_theme_total, "unique_set_count")
+    if theme_hit_unique_set_all is None:
+        non_deg_failures.append("theme_total unique_set_count (all) missing")
+    elif theme_hit_unique_set_all < config["min_theme_hit_unique_set_all"]:
+        non_deg_failures.append("theme_total unique_set_count (all) below minimum")
 
     tech_theme_max = _stat_value(tech_theme_total, "max")
     if tech_theme_max is None:
