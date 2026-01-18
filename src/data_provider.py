@@ -11,6 +11,11 @@ import time
 from .utils import stable_hash, trading_calendar
 
 
+def normalize_ticker(x) -> str:
+    s = str(x).strip()
+    return s.zfill(6) if s.isdigit() else s
+
+
 @dataclass(frozen=True)
 class StockInfo:
     ticker: str
@@ -315,7 +320,7 @@ class SnapshotProvider(DataProvider):
             membership_path,
             dtype={"ticker": str, "concept": str, "industry": str},
         )
-        df["ticker"] = df["ticker"].astype(str).str.strip()
+        df["ticker"] = df["ticker"].map(normalize_ticker)
         df["concept"] = df.get("concept", "").astype(str).str.strip()
         df["industry"] = df.get("industry", df["concept"]).astype(str).str.strip()
         df["description"] = df.get("description", "").astype(str).str.strip()
@@ -331,7 +336,7 @@ class SnapshotProvider(DataProvider):
                 else:
                     df = pd.read_parquet(path)
                 if "ticker" in df.columns:
-                    df["ticker"] = df["ticker"].astype(str).str.strip()
+                    df["ticker"] = df["ticker"].map(normalize_ticker)
                 df["date"] = pd.to_datetime(df["date"])
                 return df
         available = ", ".join(self._available_snapshots())
@@ -369,7 +374,7 @@ class SnapshotProvider(DataProvider):
         snapshot_date = self.snapshot_as_of or end_date
         prices = self._load_prices(snapshot_date)
         membership = self._load_membership(snapshot_date)
-        tickers = {stock.ticker for stock in stocks}
+        tickers = {normalize_ticker(stock.ticker) for stock in stocks}
         prices = prices[prices["ticker"].isin(tickers)]
         prices = prices[prices["date"] <= end_date].sort_values(["ticker", "date"])
         prices = prices.groupby("ticker").tail(lookback_days)
