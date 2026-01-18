@@ -105,14 +105,69 @@ def _top_offenders(reports: List[Dict[str, Any]], limit: int = 3) -> List[Dict[s
 
 def _load_config(path: Path) -> Dict[str, float]:
     if not path.exists():
-        return {"delta_p50": 0, "delta_p95": 0, "delta_p99": 0, "delta_unique_count": 0}
+        return {
+            "delta_p50": 0,
+            "delta_p95": 0,
+            "delta_p99": 0,
+            "delta_unique_count": 0,
+            "min_themes_used_unique_enhanced": 1,
+            "min_concept_hits_unique_enhanced": 1,
+            "min_theme_total_range_enhanced": 0,
+            "min_theme_total_unique_enhanced": 1,
+        }
     raw = json.loads(path.read_text(encoding="utf-8"))
     return {
         "delta_p50": float(raw.get("delta_p50", 0)),
         "delta_p95": float(raw.get("delta_p95", 0)),
         "delta_p99": float(raw.get("delta_p99", 0)),
         "delta_unique_count": float(raw.get("delta_unique_count", 0)),
+        "min_themes_used_unique_enhanced": float(raw.get("min_themes_used_unique_enhanced", 1)),
+        "min_concept_hits_unique_enhanced": float(raw.get("min_concept_hits_unique_enhanced", 1)),
+        "min_theme_total_range_enhanced": float(raw.get("min_theme_total_range_enhanced", 0)),
+        "min_theme_total_unique_enhanced": float(raw.get("min_theme_total_unique_enhanced", 1)),
     }
+
+
+def _result_bucket(metrics: Dict[str, Any], category: str) -> Dict[str, Any]:
+    result_level = metrics.get("result_level", {})
+    if not isinstance(result_level, dict):
+        return {}
+    bucket = result_level.get(category, {})
+    return bucket if isinstance(bucket, dict) else {}
+
+
+def _result_metric(bucket: Dict[str, Any], metric: str) -> Dict[str, Any]:
+    stats = bucket.get(metric, {})
+    return stats if isinstance(stats, dict) else {}
+
+
+def _stat_value(stats: Dict[str, Any], key: str) -> Optional[float]:
+    value = stats.get(key)
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _summarize_result_level(metrics: Dict[str, Any]) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    summary: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for category in ("all", "enhanced", "tech_only"):
+        bucket = _result_bucket(metrics, category)
+        metric_summary: Dict[str, Dict[str, Any]] = {}
+        for metric in ("theme_total", "themes_used", "concept_hits"):
+            stats = _result_metric(bucket, metric)
+            metric_summary[metric] = {
+                "min": stats.get("min"),
+                "p50": stats.get("p50"),
+                "p95": stats.get("p95"),
+                "p99": stats.get("p99"),
+                "max": stats.get("max"),
+                "unique_count": stats.get("unique_count"),
+            }
+        summary[category] = metric_summary
+    return summary
 
 
 def main() -> None:
@@ -150,6 +205,9 @@ def main() -> None:
     enhanced_base = _extract_reports(baseline, "enhanced")
     enhanced_latest = _extract_reports(latest, "enhanced")
     tech_latest = _extract_reports(latest, "tech_only")
+    result_summary = _summarize_result_level(latest)
+    enhanced_result = _result_bucket(latest, "enhanced")
+    tech_result = _result_bucket(latest, "tech_only")
 
     if not enhanced_base:
         raise AssertionError("baseline enhanced reports missing")
@@ -157,6 +215,10 @@ def main() -> None:
         raise AssertionError("latest enhanced reports missing")
     if not tech_latest:
         raise AssertionError("latest tech_only reports missing")
+    if not enhanced_result:
+        raise AssertionError("latest result_level enhanced missing")
+    if not tech_result:
+        raise AssertionError("latest result_level tech_only missing")
 
     tech_violations = _techonly_violations(tech_latest)
     if tech_violations:
@@ -210,13 +272,59 @@ def main() -> None:
         raise AssertionError(
             "theme_precision failures: "
             f"{failures}; latest={metrics_latest}; baseline={metrics_base}; "
-            f"top_offenders={offenders}"
+            f"top_offenders={offenders}; result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
+        )
+
+    non_deg_failures = []
+    enhanced_theme_total = _result_metric(enhanced_result, "theme_total")
+    enhanced_themes_used = _result_metric(enhanced_result, "themes_used")
+    enhanced_concept_hits = _result_metric(enhanced_result, "concept_hits")
+    tech_theme_total = _result_metric(tech_result, "theme_total")
+
+    themes_used_unique = _stat_value(enhanced_themes_used, "unique_count")
+    if themes_used_unique is None:
+        non_deg_failures.append("themes_used unique_count missing")
+    elif themes_used_unique < config["min_themes_used_unique_enhanced"]:
+        non_deg_failures.append("themes_used unique_count below minimum")
+
+    concept_hits_unique = _stat_value(enhanced_concept_hits, "unique_count")
+    if concept_hits_unique is None:
+        non_deg_failures.append("concept_hits unique_count missing")
+    elif concept_hits_unique < config["min_concept_hits_unique_enhanced"]:
+        non_deg_failures.append("concept_hits unique_count below minimum")
+
+    theme_total_min = _stat_value(enhanced_theme_total, "min")
+    theme_total_max = _stat_value(enhanced_theme_total, "max")
+    if theme_total_min is None or theme_total_max is None:
+        non_deg_failures.append("theme_total range missing")
+    else:
+        theme_total_range = theme_total_max - theme_total_min
+        if theme_total_range < config["min_theme_total_range_enhanced"]:
+            non_deg_failures.append("theme_total range below minimum")
+
+    theme_total_unique = _stat_value(enhanced_theme_total, "unique_count")
+    if theme_total_unique is None:
+        non_deg_failures.append("theme_total unique_count missing")
+    elif theme_total_unique < config["min_theme_total_unique_enhanced"]:
+        non_deg_failures.append("theme_total unique_count below minimum")
+
+    tech_theme_max = _stat_value(tech_theme_total, "max")
+    if tech_theme_max is None:
+        non_deg_failures.append("tech_only theme_total max missing")
+    elif abs(tech_theme_max) > 1e-9:
+        non_deg_failures.append("tech_only theme_total max not zero")
+
+    if non_deg_failures:
+        raise AssertionError(
+            "theme_precision non-degeneracy failures: "
+            f"{non_deg_failures}; result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
         )
 
     print(
         "[theme_precision] ok: "
         f"latest={metrics_latest}; baseline={metrics_base}; "
-        f"positive_latest={latest_positive}; positive_baseline={base_positive}"
+        f"positive_latest={latest_positive}; positive_baseline={base_positive}; "
+        f"result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
     )
 
 
