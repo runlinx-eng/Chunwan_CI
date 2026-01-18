@@ -200,7 +200,7 @@ def _build_metrics(report: Dict[str, Any], path: Path) -> Dict[str, Any]:
             if concept not in concept_hits:
                 concept_hits.append(concept)
         included_rows += 1
-    return {
+    metrics = {
         "path": str(path),
         "as_of": report.get("as_of"),
         "theme_weight": weight,
