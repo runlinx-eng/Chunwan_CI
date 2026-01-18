@@ -31,6 +31,7 @@ def main() -> None:
         default_map = match.group(1).strip() if match else "theme_to_industry.csv"
     else:
         default_map = "theme_to_industry.csv"
+    # This pack replays snapshot 2026-01-16; pin theme map to the same snapshot to keep gate semantics stable.
     theme_map = "theme_to_industry_em_2026-01-16.csv" or default_map
 
     cmd = (

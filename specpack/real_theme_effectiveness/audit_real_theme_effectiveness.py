@@ -29,6 +29,7 @@ def main() -> None:
     outputs_dir = repo_root / "outputs"
     report_path = outputs_dir / "report_2026-01-16_top5.json"
     default_map = _read_default_theme_map(repo_root)
+    # This pack replays snapshot 2026-01-16; pin theme map to the same snapshot to keep gate semantics stable.
     theme_map_override = "theme_to_industry_em_2026-01-16.csv"
     theme_map_path = theme_map_override or default_map
 
