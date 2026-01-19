@@ -188,18 +188,20 @@ def _summarize_result_level(metrics: Dict[str, Any]) -> Dict[str, Dict[str, Dict
     return summary
 
 
-def _bucket_report_count(
-    metrics: Dict[str, Any], category: str, fallback_n: Optional[float]
-) -> Optional[float]:
-    if category == "all":
-        count = len(_extract_reports(metrics, "enhanced")) + len(
-            _extract_reports(metrics, "tech_only")
-        )
-    else:
-        count = len(_extract_reports(metrics, category))
-    if count <= 0 and fallback_n is not None:
-        count = int(fallback_n)
-    return float(count) if count > 0 else None
+def _bucket_theme_total_count(metrics: Dict[str, Any], category: str) -> float:
+    reports = metrics.get("reports", [])
+    if not isinstance(reports, list):
+        return 0.0
+    total = 0
+    for report in reports:
+        if not isinstance(report, dict):
+            continue
+        if category != "all" and report.get("category") != category:
+            continue
+        theme_totals = report.get("theme_total", {}).get("per_result_values", [])
+        if isinstance(theme_totals, list):
+            total += sum(1 for v in theme_totals if v is not None)
+    return float(total)
 
 
 def _ensure_unique_ratio(bucket: Dict[str, Any], bucket_n: Optional[float]) -> Optional[float]:
@@ -208,8 +210,6 @@ def _ensure_unique_ratio(bucket: Dict[str, Any], bucket_n: Optional[float]) -> O
     theme_total = _result_metric(bucket, "theme_total")
     if not theme_total:
         return None
-    if bucket_n is not None:
-        bucket["N"] = bucket_n
     if bucket_n is None or bucket_n <= 0:
         theme_total["unique_value_ratio"] = 0.0
         return theme_total.get("unique_value_ratio")
@@ -326,11 +326,16 @@ def main() -> None:
             f"top_offenders={offenders}; result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
         )
 
-    fallback_n = metrics_latest.get("N")
     all_bucket = _result_bucket(latest, "all")
-    enhanced_bucket_n = _bucket_report_count(latest, "enhanced", fallback_n)
-    tech_bucket_n = _bucket_report_count(latest, "tech_only", fallback_n)
-    all_bucket_n = _bucket_report_count(latest, "all", fallback_n)
+    enhanced_bucket_n = _bucket_theme_total_count(latest, "enhanced")
+    tech_bucket_n = _bucket_theme_total_count(latest, "tech_only")
+    all_bucket_n = _bucket_theme_total_count(latest, "all")
+    if isinstance(enhanced_result, dict):
+        enhanced_result["N"] = enhanced_bucket_n
+    if isinstance(tech_result, dict):
+        tech_result["N"] = tech_bucket_n
+    if isinstance(all_bucket, dict):
+        all_bucket["N"] = all_bucket_n
     enhanced_unique_ratio = _ensure_unique_ratio(enhanced_result, enhanced_bucket_n)
     _ensure_unique_ratio(tech_result, tech_bucket_n)
     all_unique_ratio = _ensure_unique_ratio(all_bucket, all_bucket_n)
