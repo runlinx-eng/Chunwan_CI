@@ -37,6 +37,67 @@ def write_outputs(report: dict, output_prefix: Path) -> None:
     df = pd.json_normalize(report["results"])
     df.to_csv(output_prefix.with_suffix(".csv"), index=False)
 
+
+def _mode_label(theme_weight: float) -> str:
+    return "tech_only" if abs(theme_weight) < 1e-12 else "enhanced"
+
+
+def _candidate_entry(row: dict, mode: str, snapshot_id: str) -> dict:
+    reason_struct = row.get("reason_struct", {}) if isinstance(row.get("reason_struct"), dict) else {}
+    return {
+        "item_id": row.get("ticker", ""),
+        "ticker": row.get("ticker", ""),
+        "mode": mode,
+        "final_score": row.get("final_score"),
+        "score_breakdown": row.get("score_breakdown", {}),
+        "data_date": row.get("data_date"),
+        "snapshot_id": snapshot_id,
+        "theme_hits": row.get("theme_hits", []) or [],
+        "concept_hits": reason_struct.get("concept_hits", []) or [],
+    }
+
+
+def write_candidates(report: dict, mode: str, output_path: Path, snapshot_id: str) -> None:
+    results = report.get("results", [])
+    if not isinstance(results, list):
+        results = []
+
+    new_entries = [_candidate_entry(row, mode, snapshot_id) for row in results]
+    existing_entries = []
+    if output_path.exists():
+        for line in output_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(entry, dict):
+                existing_entries.append(entry)
+
+    merged = [entry for entry in existing_entries if entry.get("mode") != mode]
+    merged.extend(new_entries)
+
+    mode_order = {"enhanced": 0, "tech_only": 1, "all": 2}
+
+    def sort_key(entry: dict) -> tuple:
+        mode_value = mode_order.get(entry.get("mode"), 9)
+        score = entry.get("final_score")
+        try:
+            score_value = float(score)
+        except (TypeError, ValueError):
+            score_value = float("-inf")
+        item_id = str(entry.get("item_id") or entry.get("ticker") or "")
+        return (mode_value, -score_value, item_id)
+
+    merged = sorted(merged, key=sort_key)
+    if merged:
+        content = "\n".join(json.dumps(entry, ensure_ascii=False) for entry in merged) + "\n"
+    else:
+        content = ""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content, encoding="utf-8")
+
 def read_manifest(snapshot_as_of: Optional[pd.Timestamp]) -> dict:
     if snapshot_as_of is None:
         return {}
@@ -138,6 +199,7 @@ def main() -> None:
     membership_terms_by_ticker = {}
     price_df = None
     indicator_df = pd.DataFrame()
+    candidates_report = None
     n_membership_rows = None
     n_membership_unique_tickers = None
     n_membership_unique_concepts = None
@@ -366,7 +428,18 @@ def main() -> None:
                 provider=args.provider,
                 snapshot_as_of=args.snapshot_as_of,
             )
+            candidates_report = build_report(
+                scored_df,
+                signals,
+                hit_map,
+                as_of,
+                int(len(scored_df)),
+                themes_used=core_themes,
+                provider=args.provider,
+                snapshot_as_of=args.snapshot_as_of,
+            )
             report["data_date"] = as_of.strftime("%Y-%m-%d")
+            candidates_report["data_date"] = as_of.strftime("%Y-%m-%d")
 
         report["meta"] = report.get("meta", {})
         report["meta"]["excluded"] = {"insufficient_history_60": insufficient_history_60}
@@ -456,6 +529,12 @@ def main() -> None:
             if "sample_terms" in debug:
                 debug_data["theme_map_sample_terms"] = debug["sample_terms"]
         report["debug"] = debug_data
+        if candidates_report:
+            snapshot_id = args.snapshot_as_of or as_of.strftime("%Y-%m-%d")
+            candidates_path = Path("artifacts_metrics") / "screener_candidates_latest.jsonl"
+            write_candidates(
+                candidates_report, _mode_label(args.theme_weight), candidates_path, snapshot_id
+            )
 
         meta = {
             "as_of": as_of.strftime("%Y-%m-%d"),

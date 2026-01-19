@@ -201,36 +201,6 @@ def _load_entries(path: Path) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, 
     return [], None
 
 
-def _discover_output_source(outputs_dir: Path) -> Optional[Tuple[Path, List[Dict[str, Any]], Dict[str, Any]]]:
-    candidates = sorted(outputs_dir.glob("report_*_top*.json"), key=lambda p: p.stat().st_mtime)
-    best_path = None
-    best_entries: List[Dict[str, Any]] = []
-    best_report: Optional[Dict[str, Any]] = None
-    best_count = -1
-    best_mtime = 0.0
-
-    for path in candidates:
-        try:
-            report = _load_json(path)
-        except Exception:
-            continue
-        results = report.get("results") if isinstance(report, dict) else None
-        if not isinstance(results, list):
-            continue
-        filtered = [row for row in results if isinstance(row, dict) and _entry_has_final_score(row)]
-        if not filtered:
-            continue
-        count = len(filtered)
-        mtime = path.stat().st_mtime
-        if count > best_count or (count == best_count and mtime > best_mtime):
-            best_path, best_entries, best_report = path, filtered, report
-            best_count, best_mtime = count, mtime
-
-    if best_path is None or best_report is None:
-        return None
-    return best_path, best_entries, best_report
-
-
 def _discover_source_in_metrics(metrics_dir: Path) -> Tuple[Path, List[Dict[str, Any]], Optional[Dict[str, Any]]]:
     best_path: Optional[Path] = None
     best_entries: List[Dict[str, Any]] = []
@@ -287,11 +257,11 @@ def main() -> None:
 
     repo_root = Path(__file__).resolve().parents[1]
     metrics_dir = repo_root / "artifacts_metrics"
-    outputs_dir = repo_root / "outputs"
-
     if args.source_path:
         if "screener_topn_latest" in str(args.source_path):
             raise ValueError("source_path cannot be screener_topn_latest* artifacts")
+        if "outputs/report_" in str(args.source_path):
+            raise ValueError("source_path cannot be outputs/report_* artifacts")
         source_path = Path(args.source_path)
         if not source_path.is_absolute():
             source_path = repo_root / source_path
@@ -300,9 +270,13 @@ def main() -> None:
         if not entries:
             raise ValueError(f"source has no qualifying entries: {source_path}")
     else:
-        output_source = _discover_output_source(outputs_dir)
-        if output_source is not None:
-            source_path, entries, meta = output_source
+        candidates_path = metrics_dir / "screener_candidates_latest.jsonl"
+        if candidates_path.exists():
+            source_path = candidates_path
+            entries, meta = _load_entries(candidates_path)
+            entries = [row for row in entries if isinstance(row, dict) and _entry_has_final_score(row)]
+            if not entries:
+                raise ValueError(f"source has no qualifying entries: {source_path}")
         else:
             source_path, entries, meta = _discover_source_in_metrics(metrics_dir)
 
