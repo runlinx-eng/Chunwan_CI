@@ -29,6 +29,7 @@ artifacts_metrics/screener_topn_latest_enhanced.jsonl
 artifacts_metrics/screener_topn_latest_tech_only.jsonl
 artifacts_metrics/screener_topn_latest_meta.json
 artifacts_metrics/screener_candidates_latest.jsonl
+artifacts_metrics/screener_coverage_latest.json
 theme_precision_latest.json
 theme_map_prune_latest.json
 artifacts_logs/verify_*.txt
