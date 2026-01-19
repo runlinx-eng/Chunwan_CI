@@ -12,8 +12,24 @@ def _load_json(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _discover_reports(outputs_dir: Path) -> List[Path]:
-    return sorted(outputs_dir.glob("report_*_top*.json"), key=lambda p: p.stat().st_mtime)
+def _load_jsonl(path: Path) -> List[Dict[str, Any]]:
+    entries: List[Dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict):
+            entries.append(row)
+    return entries
+
+
+def _discover_reports(metrics_dir: Path) -> List[Path]:
+    jsonl_paths = sorted(metrics_dir.rglob("*.jsonl"))
+    json_paths = sorted(metrics_dir.rglob("*.json"))
+    return jsonl_paths + json_paths
 
 
 def _theme_weight(report: Dict[str, Any]) -> Optional[float]:
@@ -36,6 +52,11 @@ def _score_from_row(row: Dict[str, Any]) -> Tuple[Optional[float], str]:
     if "final_score" in row:
         try:
             return float(row["final_score"]), "final_score"
+        except (TypeError, ValueError):
+            pass
+    if "score_total" in row:
+        try:
+            return float(row["score_total"]), str(row.get("score_total_source") or "score_total")
         except (TypeError, ValueError):
             pass
     breakdown = row.get("score_breakdown")
@@ -84,11 +105,14 @@ def _concept_hits(row: Dict[str, Any]) -> List[Dict[str, Any]]:
     return []
 
 
-def _snapshot_id(report: Dict[str, Any], report_path: Path) -> str:
-    args = report.get("provenance", {}).get("args", {})
-    snapshot = args.get("snapshot_as_of") or args.get("snapshot_asof") or args.get("snapshot")
-    if snapshot:
-        return str(snapshot)
+def _snapshot_id(report: Optional[Dict[str, Any]], report_path: Path, row: Dict[str, Any]) -> str:
+    if "snapshot_id" in row:
+        return str(row.get("snapshot_id"))
+    if report:
+        args = report.get("provenance", {}).get("args", {})
+        snapshot = args.get("snapshot_as_of") or args.get("snapshot_asof") or args.get("snapshot")
+        if snapshot:
+            return str(snapshot)
     return f"source:{report_path}"
 
 
@@ -103,9 +127,12 @@ def _theme_map_from_metrics(metrics_path: Path) -> Optional[Tuple[str, str]]:
     return None
 
 
-def _theme_map_fallback(repo_root: Path, report: Dict[str, Any]) -> Tuple[str, str]:
-    args = report.get("provenance", {}).get("args", {})
-    theme_map = args.get("theme_map") or os.environ.get("THEME_MAP")
+def _theme_map_fallback(repo_root: Path, report: Optional[Dict[str, Any]]) -> Tuple[str, str]:
+    theme_map = None
+    if report:
+        args = report.get("provenance", {}).get("args", {})
+        theme_map = args.get("theme_map")
+    theme_map = theme_map or os.environ.get("THEME_MAP")
     if theme_map:
         path = Path(theme_map)
         theme_map_path = str(path if path.is_absolute() else repo_root / path)
@@ -134,23 +161,65 @@ def _parse_modes(value: str) -> List[str]:
     return seen
 
 
-def _latest_by_mode(
-    entries: List[Tuple[Path, Dict[str, Any], Optional[float]]],
-    mode: str,
-    manual_all: Optional[Tuple[Path, Dict[str, Any], Optional[float]]],
-) -> Optional[Tuple[Path, Dict[str, Any], Optional[float]]]:
-    if not entries and manual_all is None:
-        return None
-    if mode == "all":
-        return manual_all or entries[-1]
+def _entry_has_final_score(entry: Dict[str, Any]) -> bool:
+    if "final_score" in entry:
+        return True
+    return entry.get("score_total_source") == "final_score"
 
-    selected = []
-    for path, report, weight in entries:
-        if mode == "enhanced" and weight is not None and abs(weight) >= 1e-12:
-            selected.append((path, report, weight))
-        if mode == "tech_only" and weight is not None and abs(weight) < 1e-12:
-            selected.append((path, report, weight))
-    return selected[-1] if selected else None
+
+def _load_entries(path: Path) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    if path.suffix == ".jsonl":
+        return _load_jsonl(path), None
+    if path.suffix == ".json":
+        data = _load_json(path)
+        if isinstance(data, list):
+            return [item for item in data if isinstance(item, dict)], None
+        if isinstance(data, dict):
+            results = data.get("results")
+            if isinstance(results, list):
+                return [item for item in results if isinstance(item, dict)], data
+        return [], None
+    return [], None
+
+
+def _discover_source(metrics_dir: Path) -> Tuple[Path, List[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    best_path: Optional[Path] = None
+    best_entries: List[Dict[str, Any]] = []
+    best_meta: Optional[Dict[str, Any]] = None
+    best_count = -1
+    best_suffix = ""
+
+    for path in _discover_reports(metrics_dir):
+        entries, meta = _load_entries(path)
+        if not entries:
+            continue
+        filtered = [row for row in entries if _entry_has_final_score(row)]
+        if not filtered:
+            continue
+        count = len(filtered)
+        suffix = path.suffix
+        if count > best_count:
+            best_path, best_entries, best_meta = path, filtered, meta
+            best_count, best_suffix = count, suffix
+        elif count == best_count:
+            if suffix == ".jsonl" and best_suffix != ".jsonl":
+                best_path, best_entries, best_meta = path, filtered, meta
+                best_suffix = suffix
+            elif suffix == best_suffix and best_path and str(path) < str(best_path):
+                best_path, best_entries, best_meta = path, filtered, meta
+
+    if best_path is None:
+        raise FileNotFoundError(f"no suitable source found in {metrics_dir}")
+    return best_path, best_entries, best_meta
+
+
+def _entry_mode(entry: Dict[str, Any], fallback_mode: Optional[str]) -> str:
+    mode = entry.get("mode")
+    if isinstance(mode, str) and mode in {"all", "enhanced", "tech_only"}:
+        return mode
+    if fallback_mode:
+        return fallback_mode
+    return "all"
 
 
 def main() -> None:
@@ -158,41 +227,37 @@ def main() -> None:
     parser.add_argument("--top-n", type=int, default=50)
     parser.add_argument("--modes", default="all,enhanced,tech_only")
     parser.add_argument("--out-dir", default="artifacts_metrics")
-    parser.add_argument("--input", default=None)
+    parser.add_argument("--source-path", default=None)
     parser.add_argument("--latest-log", default=None)
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
-    outputs_dir = repo_root / "outputs"
-    reports = _discover_reports(outputs_dir)
-    if not reports and not args.input:
-        raise FileNotFoundError(f"no report json found in {outputs_dir}")
+    metrics_dir = repo_root / "artifacts_metrics"
 
-    entries: List[Tuple[Path, Dict[str, Any], Optional[float]]] = []
-    for path in reports:
-        report = _load_json(path)
-        entries.append((path, report, _theme_weight(report)))
-
-    manual_all: Optional[Tuple[Path, Dict[str, Any], Optional[float]]] = None
-    if args.input:
-        report_path = Path(args.input)
-        if not report_path.is_absolute():
-            report_path = repo_root / report_path
-        report = _load_json(report_path)
-        manual_all = (report_path, report, _theme_weight(report))
+    if args.source_path:
+        source_path = Path(args.source_path)
+        if not source_path.is_absolute():
+            source_path = repo_root / source_path
+        entries, meta = _load_entries(source_path)
+        entries = [row for row in entries if _entry_has_final_score(row)]
+        if not entries:
+            raise ValueError(f"source has no qualifying entries: {source_path}")
+    else:
+        source_path, entries, meta = _discover_source(metrics_dir)
 
     mode_list = _parse_modes(args.modes)
     for mode in mode_list:
         if mode not in {"all", "enhanced", "tech_only"}:
             raise ValueError(f"unsupported mode: {mode}")
 
+    fallback_mode = _mode_from_weight(_theme_weight(meta)) if meta else None
+
     metrics_path = repo_root / "artifacts_metrics" / "theme_map_sparsity_latest.json"
     map_info = _theme_map_from_metrics(metrics_path)
     if map_info:
         theme_map_path, theme_map_sha = map_info
     else:
-        fallback_report = manual_all[1] if manual_all else (entries[-1][1] if entries else {})
-        theme_map_path, theme_map_sha = _theme_map_fallback(repo_root, fallback_report)
+        theme_map_path, theme_map_sha = _theme_map_fallback(repo_root, meta)
 
     git_rev = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
@@ -204,30 +269,27 @@ def main() -> None:
         out_dir = repo_root / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    counts: Dict[str, int] = {}
+    source_total_counts: Dict[str, int] = {mode: 0 for mode in mode_list}
+    for row in entries:
+        row_mode = _entry_mode(row, fallback_mode)
+        if row_mode in source_total_counts:
+            source_total_counts[row_mode] += 1
+
+    exported_counts: Dict[str, int] = {mode: 0 for mode in mode_list}
     sort_key = "final_score"
     snapshot_id = ""
-    modes_present: List[str] = []
 
     for mode in mode_list:
-        selection = _latest_by_mode(entries, mode, manual_all)
-        if selection is None:
-            if mode == "all":
-                continue
-            raise FileNotFoundError(f"no report found for mode '{mode}'")
-        report_path, report, weight = selection
-        results = report.get("results", [])
-        if not isinstance(results, list) or not results:
-            raise ValueError(f"report has no results: {report_path}")
+        bucket: List[Dict[str, Any]] = []
+        for row in entries:
+            row_mode = _entry_mode(row, fallback_mode)
+            if row_mode == mode:
+                bucket.append(row)
+        max_items = min(args.top_n, len(bucket))
+        exported_counts[mode] = max_items
 
-        max_items = min(args.top_n, len(results))
-        if not snapshot_id:
-            snapshot_id = _snapshot_id(report, report_path)
-
-        mode_name = "all" if mode == "all" else _mode_from_weight(weight)
-        modes_present.append(mode_name)
         items: List[str] = []
-        for idx, row in enumerate(results[:max_items], start=1):
+        for idx, row in enumerate(bucket[:max_items], start=1):
             score_total, score_source = _score_from_row(row)
             if score_total is None:
                 score_total = 0.0
@@ -238,27 +300,29 @@ def main() -> None:
                 "schema_version": 1,
                 "rank": idx,
                 "item_id": str(row.get("ticker") or row.get("symbol") or row.get("name") or ""),
-                "mode": mode_name,
+                "mode": mode,
                 "score_total": score_total,
                 "score_total_source": score_source,
                 "score_breakdown": _score_breakdown(row),
                 "theme_hits": _theme_hits(row),
                 "concept_hits": _concept_hits(row),
-                "snapshot_id": _snapshot_id(report, report_path),
+                "snapshot_id": _snapshot_id(meta, source_path, row),
                 "theme_map_path": theme_map_path,
                 "theme_map_sha256": theme_map_sha,
                 "git_rev": git_rev,
                 "latest_log_path": latest_log,
             }
-            if mode_name == "tech_only":
+            if mode == "tech_only":
                 item["theme_hits_scoring_applied"] = False
             items.append(json.dumps(item, ensure_ascii=False))
 
-        out_path = out_dir / f"screener_topn_latest_{mode_name}.jsonl"
-        out_path.write_text("\n".join(items) + "\n", encoding="utf-8")
-        counts[mode_name] = max_items
+            if not snapshot_id:
+                snapshot_id = item["snapshot_id"]
 
-    meta = {
+        out_path = out_dir / f"screener_topn_latest_{mode}.jsonl"
+        out_path.write_text("\n".join(items) + "\n", encoding="utf-8")
+
+    meta_payload = {
         "git_rev": git_rev,
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "snapshot_id": snapshot_id,
@@ -267,16 +331,19 @@ def main() -> None:
         "latest_log_path": latest_log,
         "top_n": args.top_n,
         "sort_key": sort_key,
-        "modes_present": modes_present,
-        "counts": counts,
+        "modes_present": mode_list,
+        "source_path": str(source_path),
+        "source_total_counts": source_total_counts,
+        "exported_counts": exported_counts,
+        "counts": exported_counts,
     }
     meta_path = out_dir / "screener_topn_latest_meta.json"
-    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(
         "[screener_topn] written_meta={meta} modes={modes} top_n={top_n} sort_key={sort_key}".format(
             meta=meta_path,
-            modes=",".join(modes_present),
+            modes=",".join(mode_list),
             top_n=args.top_n,
             sort_key=sort_key,
         )
