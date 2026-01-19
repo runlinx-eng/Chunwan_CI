@@ -26,6 +26,7 @@ python tools/prune_theme_map.py \
 
 bash tools/verify_and_log.sh --theme-map artifacts_metrics/theme_to_industry_pruned.csv
 python tools/build_regression_matrix.py
+python tools/export_screener_topn.py --top-n 50
 
 latest_log="$(ls -t artifacts_logs/verify_*.txt | head -n 1)"
 echo "latest_log: ${latest_log}"
