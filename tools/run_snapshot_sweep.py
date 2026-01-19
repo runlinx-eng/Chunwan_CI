@@ -111,6 +111,12 @@ def _run(cmd: List[str], env: Dict[str, str]) -> None:
     subprocess.check_call(cmd, cwd=REPO_ROOT, env=env)
 
 
+def _load_json(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        raise FileNotFoundError(f"missing json: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run snapshot sweep regression matrix")
     parser.add_argument("--snapshots", default="", help="comma-separated snapshot ids")
@@ -149,8 +155,8 @@ def main() -> int:
             if not theme_map_path.exists():
                 raise FileNotFoundError(f"theme map not found: {theme_map_path}")
             theme_map_sha = _sha256_file(theme_map_path)
-            entry["theme_map_path"] = str(theme_map_path)
-            entry["theme_map_sha256"] = theme_map_sha
+            entry["default_theme_map_path"] = str(theme_map_path)
+            entry["default_theme_map_sha256"] = theme_map_sha
             entry["theme_map_fallback"] = fallback
 
             env = os.environ.copy()
@@ -191,12 +197,43 @@ def main() -> int:
             )
 
             regression_path = REPO_ROOT / "artifacts_metrics" / "regression_matrix_latest.json"
-            regression = json.loads(regression_path.read_text(encoding="utf-8"))
+            regression = _load_json(regression_path)
             entry["git_rev"] = regression.get("git_rev")
             entry["latest_log_path"] = regression.get("latest_log_path")
             entry["theme_precision_summary"] = regression.get("theme_precision_summary")
-            entry["screener_coverage_summary"] = regression.get("screener_coverage_summary")
+            entry["global_coverage_summary"] = regression.get("screener_coverage_summary")
             entry["screener_topn_meta"] = regression.get("screener_topn_meta")
+
+            topn_meta_path = REPO_ROOT / "artifacts_metrics" / "screener_topn_latest_meta.json"
+            candidates_meta_path = (
+                REPO_ROOT / "artifacts_metrics" / "screener_candidates_latest_meta.json"
+            )
+            topn_meta = _load_json(topn_meta_path)
+            candidates_meta = _load_json(candidates_meta_path)
+
+            entry["active_theme_map_path"] = topn_meta.get("theme_map_path")
+            entry["active_theme_map_sha256"] = topn_meta.get("theme_map_sha256")
+            entry["active_latest_log_path"] = topn_meta.get("latest_log_path")
+            entry["active_git_rev"] = topn_meta.get("git_rev")
+
+            pool_output = candidates_meta.get("output", {}) if isinstance(candidates_meta, dict) else {}
+            pool_summary = {
+                "rows": pool_output.get("rows"),
+                "mode_distribution": pool_output.get("mode_distribution", {}),
+            }
+            entry["pool_coverage_summary"] = pool_summary
+
+            source_counts = topn_meta.get("source_total_counts", {})
+            if entry["active_theme_map_sha256"] != topn_meta.get("theme_map_sha256"):
+                raise ValueError("active_theme_map_sha256 mismatch with screener_topn_meta")
+            if pool_summary.get("rows") != source_counts.get("all"):
+                raise ValueError("pool_coverage_summary.rows mismatch with screener_topn_meta")
+            pool_modes = pool_summary.get("mode_distribution", {})
+            for mode_key in ("enhanced", "tech_only"):
+                if pool_modes.get(mode_key) != source_counts.get(mode_key):
+                    raise ValueError(
+                        f"pool_coverage_summary.{mode_key} mismatch with screener_topn_meta"
+                    )
         except Exception as exc:
             failures += 1
             entry["error"] = str(exc)
