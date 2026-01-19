@@ -242,9 +242,25 @@ def _entry_mode(entry: Dict[str, Any], fallback_mode: Optional[str]) -> str:
     mode = entry.get("mode")
     if isinstance(mode, str) and mode in ALL_MODES:
         return mode
-    if fallback_mode:
-        return fallback_mode
-    return "all"
+    raise ValueError(f"missing/invalid mode; expected one of {ALL_MODES}")
+
+
+def _validate_entries(entries: List[Dict[str, Any]]) -> None:
+    missing = [row for row in entries if "mode" not in row]
+    if missing:
+        raise ValueError(f"missing mode in entries; expected one of {ALL_MODES}")
+    invalid = {row.get("mode") for row in entries if row.get("mode") not in ALL_MODES}
+    if invalid:
+        raise ValueError(f"invalid mode values {sorted(invalid)}; expected {ALL_MODES}")
+
+
+def _mode_distribution(entries: List[Dict[str, Any]]) -> Dict[str, int]:
+    counts = {mode: 0 for mode in ALL_MODES}
+    for row in entries:
+        mode = row.get("mode")
+        if isinstance(mode, str) and mode in counts:
+            counts[mode] += 1
+    return counts
 
 
 def _extract_sort_value(row: Dict[str, Any], sort_key: str) -> Optional[float]:
@@ -306,7 +322,20 @@ def main() -> None:
         if mode not in ALL_MODES:
             raise ValueError(f"unsupported mode: {mode}")
 
-    fallback_mode = _mode_from_weight(_theme_weight(meta)) if meta else None
+    _validate_entries(entries)
+    sort_probe = [_extract_sort_value(row, args.sort_key) for row in entries]
+    if not any(value is not None for value in sort_probe):
+        sample = entries[0] if entries else {}
+        sample_keys = sorted(sample.keys())
+        breakdown = sample.get("score_breakdown")
+        breakdown_keys = []
+        if isinstance(breakdown, dict):
+            breakdown_keys = [f"score_breakdown.{key}" for key in sorted(breakdown.keys())]
+        raise ValueError(
+            "missing sortable field; "
+            f"sort_key={args.sort_key}; sample_keys={sample_keys}; "
+            f"sample_breakdown_keys={breakdown_keys}"
+        )
 
     metrics_path = repo_root / "artifacts_metrics" / "theme_map_sparsity_latest.json"
     map_info = _theme_map_from_metrics(metrics_path)
@@ -325,12 +354,13 @@ def main() -> None:
         out_dir = repo_root / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    source_total_counts: Dict[str, int] = {mode: 0 for mode in ALL_MODES}
-    for row in entries:
-        source_total_counts["all"] += 1
-        row_mode = _entry_mode(row, fallback_mode)
-        if row_mode in {"enhanced", "tech_only"}:
-            source_total_counts[row_mode] += 1
+    mode_distribution = _mode_distribution(entries)
+    mode_distribution["all"] = len(entries)
+    source_total_counts = dict(mode_distribution)
+    input_format = "jsonl" if source_path.suffix == ".jsonl" else "json"
+    input_modes_present = sorted(
+        {row.get("mode") for row in entries if isinstance(row.get("mode"), str)}
+    )
 
     exported_counts: Dict[str, int] = {mode: 0 for mode in ALL_MODES}
     sort_key = args.sort_key
@@ -340,7 +370,7 @@ def main() -> None:
         if mode == "all":
             bucket = entries
         else:
-            bucket = [row for row in entries if _entry_mode(row, fallback_mode) == mode]
+            bucket = [row for row in entries if _entry_mode(row, None) == mode]
         if sort_key != "final_score":
             bucket = sorted(
                 bucket,
@@ -395,10 +425,14 @@ def main() -> None:
         "theme_map_path": theme_map_path,
         "theme_map_sha256": theme_map_sha,
         "latest_log_path": latest_log,
+        "schema_version": 1,
+        "input_format": input_format,
         "top_n": args.top_n,
         "sort_key": sort_key,
         "modes_present": mode_list,
         "source_path": str(source_path.resolve()),
+        "input_modes_present": input_modes_present,
+        "mode_distribution": mode_distribution,
         "source_total_counts": source_total_counts,
         "exported_counts": exported_counts,
         "counts": exported_counts,
