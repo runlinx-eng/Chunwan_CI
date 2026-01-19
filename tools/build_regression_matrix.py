@@ -95,6 +95,24 @@ def main() -> None:
     if theme_precision_summary is not None:
         payload["theme_precision_summary"] = theme_precision_summary
 
+    if isinstance(screener_meta, dict):
+        if payload.get("snapshot_id") is None:
+            snapshot_id = screener_meta.get("snapshot_id")
+            if snapshot_id:
+                payload["snapshot_id"] = snapshot_id
+        if payload.get("theme_map_path") is None:
+            theme_map_path = screener_meta.get("theme_map_path")
+            if theme_map_path:
+                payload["theme_map_path"] = theme_map_path
+        if payload.get("theme_map_sha256") is None:
+            theme_map_sha256 = screener_meta.get("theme_map_sha256")
+            if theme_map_sha256:
+                payload["theme_map_sha256"] = theme_map_sha256
+        if payload.get("latest_log_path") is None:
+            latest_log_path = screener_meta.get("latest_log_path")
+            if latest_log_path:
+                payload["latest_log_path"] = latest_log_path
+
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[regression_matrix] written={out_path}")
 
