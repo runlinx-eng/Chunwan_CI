@@ -56,8 +56,11 @@ if [ ! -f "$latest_log_path" ]; then
   exit 1
 fi
 
-AUDIT_TAG="${AUDIT_TAG:-$(date +"%Y%m%d")}"
-backup_dir="backups/audit_${AUDIT_TAG}"
+if [ -n "${AUDIT_TAG:-}" ]; then
+  backup_dir="backups/${AUDIT_TAG}"
+else
+  backup_dir="backups/audit_$(date +"%Y%m%d")"
+fi
 mkdir -p "$backup_dir"
 
 cp "$meta_path" "$backup_dir/"

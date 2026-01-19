@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 ALL_MODES = ["all", "enhanced", "tech_only"]
+SUPPORTED_SOURCE_SUFFIXES = {".jsonl", ".json", ".csv"}
 EXCLUDED_SOURCE_HINTS = {
     "screener_topn_latest",
     "theme_precision",
@@ -275,15 +276,20 @@ def main() -> None:
     if args.source_path:
         if "screener_topn_latest" in str(args.source_path):
             raise ValueError("source_path cannot be screener_topn_latest* artifacts")
-        if "outputs/report_" in str(args.source_path):
-            raise ValueError("source_path cannot be outputs/report_* artifacts")
         source_path = Path(args.source_path)
+        if source_path.suffix not in SUPPORTED_SOURCE_SUFFIXES:
+            raise ValueError(
+                "unsupported source_path format; use .jsonl/.json/.csv or convert to jsonl first"
+            )
         if not source_path.is_absolute():
             source_path = repo_root / source_path
         entries, meta = _load_entries(source_path)
         entries = [row for row in entries if isinstance(row, dict) and _entry_has_final_score(row)]
         if not entries:
-            raise ValueError(f"source has no qualifying entries: {source_path}")
+            raise ValueError(
+                f"source has no qualifying entries: {source_path}; "
+                "ensure rows contain final_score or convert to jsonl"
+            )
     else:
         candidates_path = metrics_dir / "screener_candidates_latest.jsonl"
         if candidates_path.exists():

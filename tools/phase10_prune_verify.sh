@@ -28,10 +28,12 @@ bash tools/verify_and_log.sh --theme-map artifacts_metrics/theme_to_industry_pru
 python tools/build_regression_matrix.py
 EXPORT_TOP_N="${TOP_N:-50}"
 EXPORT_SORT_KEY="${SORT_KEY:-final_score}"
-python tools/export_screener_topn.py \
-  --top-n "${EXPORT_TOP_N}" \
-  --sort-key "${EXPORT_SORT_KEY}" \
-  --modes all,enhanced,tech_only
+EXPORT_SOURCE_PATH="${CANDIDATES_PATH:-}"
+export_cmd=(python tools/export_screener_topn.py --top-n "${EXPORT_TOP_N}" --sort-key "${EXPORT_SORT_KEY}" --modes all,enhanced,tech_only)
+if [ -n "${EXPORT_SOURCE_PATH}" ]; then
+  export_cmd+=(--source-path "${EXPORT_SOURCE_PATH}")
+fi
+"${export_cmd[@]}"
 
 latest_log="$(ls -t artifacts_logs/verify_*.txt | head -n 1)"
 echo "latest_log: ${latest_log}"
