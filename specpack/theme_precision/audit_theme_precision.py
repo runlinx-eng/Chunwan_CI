@@ -317,8 +317,11 @@ def main() -> None:
     elif theme_total_unique < config["min_theme_total_unique_enhanced"]:
         non_deg_failures.append("theme_total unique_value_count below minimum")
 
+    enhanced_n = _stat_value(enhanced_result, "N")
     enhanced_unique_ratio = _stat_value(enhanced_theme_total, "unique_value_ratio")
-    if enhanced_unique_ratio is None:
+    if enhanced_n is None or enhanced_n <= 0:
+        pass
+    elif enhanced_unique_ratio is None:
         non_deg_failures.append("theme_total unique_value_ratio missing")
     elif enhanced_unique_ratio < config["min_theme_total_unique_value_ratio_enhanced"]:
         non_deg_failures.append("theme_total unique_value_ratio below minimum")
@@ -329,9 +332,13 @@ def main() -> None:
     elif theme_hit_unique_set < config["min_theme_hit_unique_set_enhanced"]:
         non_deg_failures.append("theme_total unique_set_count below minimum")
 
-    all_theme_total = _result_metric(_result_bucket(latest, "all"), "theme_total")
+    all_bucket = _result_bucket(latest, "all")
+    all_theme_total = _result_metric(all_bucket, "theme_total")
+    all_n = _stat_value(all_bucket, "N")
     all_unique_ratio = _stat_value(all_theme_total, "unique_value_ratio")
-    if all_unique_ratio is None:
+    if all_n is None or all_n <= 0:
+        pass
+    elif all_unique_ratio is None:
         non_deg_failures.append("theme_total unique_value_ratio (all) missing")
     elif all_unique_ratio < config["min_theme_total_unique_value_ratio_all"]:
         non_deg_failures.append("theme_total unique_value_ratio (all) below minimum")

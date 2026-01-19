@@ -305,15 +305,11 @@ def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
             len(theme_total_unique_sets) if theme_total_unique_sets else None
         )
         theme_total_unique = theme_total_summary.get("unique_value_count")
-        theme_total_n = theme_total_summary.get("N")
-        if theme_total_n:
-            theme_total_summary["unique_value_ratio"] = (
-                float(theme_total_unique) / float(theme_total_n)
-                if theme_total_unique is not None
-                else None
-            )
+        theme_total_n = theme_total_summary.get("N") or 0
+        if theme_total_n > 0 and theme_total_unique is not None:
+            theme_total_summary["unique_value_ratio"] = float(theme_total_unique) / float(theme_total_n)
         else:
-            theme_total_summary["unique_value_ratio"] = None
+            theme_total_summary["unique_value_ratio"] = 0.0
         themes_used_summary = _summarize_distribution(values["themes_used"])
         themes_used_summary["unique_set_count"] = (
             len(themes_unique_sets) if themes_unique_sets else None
@@ -323,6 +319,7 @@ def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
             len(concept_unique_sets) if concept_unique_sets else None
         )
         summary[bucket] = {
+            "N": theme_total_n,
             "theme_total": theme_total_summary,
             "themes_used": themes_used_summary,
             "concept_hits": concept_hits_summary,
