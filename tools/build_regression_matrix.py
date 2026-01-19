@@ -48,6 +48,33 @@ def main() -> None:
         if screener_meta_path.exists()
         else None
     )
+    theme_precision_summary = None
+    try:
+        result_level = theme_precision.get("result_level", {})
+        if isinstance(result_level, dict):
+            def _extract_ratio(bucket_key: str) -> Optional[Dict[str, Any]]:
+                bucket = result_level.get(bucket_key, {})
+                if not isinstance(bucket, dict):
+                    return None
+                theme_total = bucket.get("theme_total", {})
+                if not isinstance(theme_total, dict):
+                    return None
+                ratio = theme_total.get("unique_value_ratio")
+                n_value = theme_total.get("N")
+                if n_value is None:
+                    n_value = bucket.get("N")
+                if ratio is None and n_value is None:
+                    return None
+                return {"N": n_value, "unique_value_ratio": ratio}
+
+            theme_precision_summary = {
+                "all": _extract_ratio("all"),
+                "enhanced": _extract_ratio("enhanced"),
+            }
+            if theme_precision_summary["all"] is None and theme_precision_summary["enhanced"] is None:
+                theme_precision_summary = None
+    except Exception:
+        theme_precision_summary = None
 
     payload = {
         "git_rev": _git_rev(repo_root),
@@ -59,6 +86,8 @@ def main() -> None:
         payload["theme_map_prune"] = theme_map_prune
     if screener_meta is not None:
         payload["screener_topn_meta"] = screener_meta
+    if theme_precision_summary is not None:
+        payload["theme_precision_summary"] = theme_precision_summary
 
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[regression_matrix] written={out_path}")
