@@ -42,6 +42,12 @@ def main() -> None:
         if theme_map_prune_path.exists()
         else None
     )
+    screener_meta_path = metrics_dir / "screener_topn_latest_meta.json"
+    screener_meta = (
+        json.loads(screener_meta_path.read_text(encoding="utf-8"))
+        if screener_meta_path.exists()
+        else None
+    )
 
     payload = {
         "git_rev": _git_rev(repo_root),
@@ -51,6 +57,8 @@ def main() -> None:
     }
     if theme_map_prune is not None:
         payload["theme_map_prune"] = theme_map_prune
+    if screener_meta is not None:
+        payload["screener_topn_meta"] = screener_meta
 
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[regression_matrix] written={out_path}")
