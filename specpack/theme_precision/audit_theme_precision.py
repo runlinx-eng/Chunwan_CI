@@ -188,37 +188,36 @@ def _summarize_result_level(metrics: Dict[str, Any]) -> Dict[str, Dict[str, Dict
     return summary
 
 
-def _global_result_count(metrics: Dict[str, Any]) -> Optional[float]:
-    reports = metrics.get("reports", [])
-    if not isinstance(reports, list):
-        return None
-    total = 0
-    for report in reports:
-        if isinstance(report, dict):
-            total += int(report.get("results_included", 0) or 0)
-    return float(total) if total > 0 else None
+def _bucket_report_count(
+    metrics: Dict[str, Any], category: str, fallback_n: Optional[float]
+) -> Optional[float]:
+    if category == "all":
+        count = len(_extract_reports(metrics, "enhanced")) + len(
+            _extract_reports(metrics, "tech_only")
+        )
+    else:
+        count = len(_extract_reports(metrics, category))
+    if count <= 0 and fallback_n is not None:
+        count = int(fallback_n)
+    return float(count) if count > 0 else None
 
 
-def _ensure_unique_ratio(bucket: Dict[str, Any], fallback_n: Optional[float]) -> Optional[float]:
+def _ensure_unique_ratio(bucket: Dict[str, Any], bucket_n: Optional[float]) -> Optional[float]:
     if not isinstance(bucket, dict):
         return None
     theme_total = _result_metric(bucket, "theme_total")
     if not theme_total:
         return None
-    bucket_n = bucket.get("N")
-    if bucket_n is None:
-        bucket_n = theme_total.get("N")
-        if bucket_n is not None:
-            bucket["N"] = bucket_n
-    if bucket_n is None and fallback_n is not None:
-        bucket_n = fallback_n
+    if bucket_n is not None:
         bucket["N"] = bucket_n
-    if theme_total.get("unique_value_ratio") is None:
-        unique_count = theme_total.get("unique_value_count")
-        if bucket_n and unique_count is not None:
-            theme_total["unique_value_ratio"] = float(unique_count) / float(bucket_n)
-        else:
-            theme_total["unique_value_ratio"] = 0.0
+    if bucket_n is None or bucket_n <= 0:
+        theme_total["unique_value_ratio"] = 0.0
+        return theme_total.get("unique_value_ratio")
+    unique_count = theme_total.get("unique_value_count")
+    if unique_count is None:
+        theme_total["unique_value_ratio"] = 0.0
+    else:
+        theme_total["unique_value_ratio"] = float(unique_count) / float(bucket_n)
     return theme_total.get("unique_value_ratio")
 
 
@@ -327,10 +326,14 @@ def main() -> None:
             f"top_offenders={offenders}; result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
         )
 
-    fallback_n = _global_result_count(latest)
+    fallback_n = metrics_latest.get("N")
     all_bucket = _result_bucket(latest, "all")
-    enhanced_unique_ratio = _ensure_unique_ratio(enhanced_result, fallback_n)
-    all_unique_ratio = _ensure_unique_ratio(all_bucket, fallback_n)
+    enhanced_bucket_n = _bucket_report_count(latest, "enhanced", fallback_n)
+    tech_bucket_n = _bucket_report_count(latest, "tech_only", fallback_n)
+    all_bucket_n = _bucket_report_count(latest, "all", fallback_n)
+    enhanced_unique_ratio = _ensure_unique_ratio(enhanced_result, enhanced_bucket_n)
+    _ensure_unique_ratio(tech_result, tech_bucket_n)
+    all_unique_ratio = _ensure_unique_ratio(all_bucket, all_bucket_n)
     result_summary = _summarize_result_level(latest)
 
     non_deg_failures = []
