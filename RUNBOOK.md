@@ -25,7 +25,8 @@ SORT_KEY=score_total TOP_N=10 bash tools/phase10_prune_verify.sh
 
 ## Generate Candidates
 ```bash
-python tools/build_screener_candidates.py
+python tools/build_screener_candidates.py --snapshot-id 2026-01-20 \
+  --theme-map theme_to_industry_em_2026-01-20.csv
 ```
 
 ## Artifacts & Checks
