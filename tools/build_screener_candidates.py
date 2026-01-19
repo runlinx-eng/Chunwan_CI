@@ -27,16 +27,15 @@ def _mode_distribution(entries: List[Dict[str, Any]]) -> Dict[str, int]:
 
 
 def _theme_map_info(repo_root: Path, override: Optional[str]) -> Tuple[Path, str]:
-    if override:
+    env_map = os.environ.get("THEME_MAP")
+    if env_map:
+        path = Path(env_map)
+        theme_map_path = path if path.is_absolute() else repo_root / path
+    elif override:
         path = Path(override)
         theme_map_path = path if path.is_absolute() else repo_root / path
     else:
-        env_map = os.environ.get("THEME_MAP")
-        if env_map:
-            path = Path(env_map)
-            theme_map_path = path if path.is_absolute() else repo_root / path
-        else:
-            theme_map_path = repo_root / "theme_to_industry_em_2026-01-20.csv"
+        theme_map_path = repo_root / "theme_to_industry_em_2026-01-20.csv"
     sha = hashlib.sha256(theme_map_path.read_bytes()).hexdigest()
     return theme_map_path, sha
 

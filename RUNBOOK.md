@@ -16,6 +16,7 @@ git status --porcelain
 # must be empty
 bash tools/phase10_prune_verify.sh
 ```
+THEME_MAP controls the theme map input for a run; the one-click flow auto-points it to the pruned map.
 
 ## Common Parameters
 ```bash
