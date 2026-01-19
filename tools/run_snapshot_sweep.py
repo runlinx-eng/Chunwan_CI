@@ -210,6 +210,7 @@ def main() -> int:
     results: List[Dict[str, Any]] = []
     snapshots_requested = list(snapshots)
     failures = 0
+    snapshots_skipped = 0
     regressions: List[Dict[str, Any]] = []
     last_active_sha: Optional[str] = None
 
@@ -235,9 +236,28 @@ def main() -> int:
                     snapshot_id,
                     "--input-pool",
                     str(pool_path),
+                    "--on-empty-pool",
+                    "skip",
                 ],
                 env,
             )
+
+            candidates_meta_path = (
+                REPO_ROOT / "artifacts_metrics" / "screener_candidates_latest_meta.json"
+            )
+            candidates_meta = _load_json(candidates_meta_path)
+            pool_output = candidates_meta.get("output", {}) if isinstance(candidates_meta, dict) else {}
+            pool_summary = {
+                "rows": pool_output.get("rows"),
+                "mode_distribution": pool_output.get("mode_distribution", {}),
+            }
+            entry["pool_coverage_summary"] = pool_summary
+            if pool_output.get("rows") == 0 or candidates_meta.get("reason") == "empty_pool":
+                entry["warnings"].append("empty_pool_for_snapshot")
+                snapshots_skipped += 1
+                results.append(entry)
+                continue
+
             _run(
                 [
                     sys.executable,
@@ -270,23 +290,12 @@ def main() -> int:
             entry["screener_topn_meta"] = regression.get("screener_topn_meta")
 
             topn_meta_path = REPO_ROOT / "artifacts_metrics" / "screener_topn_latest_meta.json"
-            candidates_meta_path = (
-                REPO_ROOT / "artifacts_metrics" / "screener_candidates_latest_meta.json"
-            )
             topn_meta = _load_json(topn_meta_path)
-            candidates_meta = _load_json(candidates_meta_path)
 
             entry["active_theme_map_path"] = topn_meta.get("theme_map_path")
             entry["active_theme_map_sha256"] = topn_meta.get("theme_map_sha256")
             entry["active_latest_log_path"] = topn_meta.get("latest_log_path")
             entry["active_git_rev"] = topn_meta.get("git_rev")
-
-            pool_output = candidates_meta.get("output", {}) if isinstance(candidates_meta, dict) else {}
-            pool_summary = {
-                "rows": pool_output.get("rows"),
-                "mode_distribution": pool_output.get("mode_distribution", {}),
-            }
-            entry["pool_coverage_summary"] = pool_summary
 
             source_counts = topn_meta.get("source_total_counts", {})
             if entry["active_theme_map_sha256"] != topn_meta.get("theme_map_sha256"):
@@ -340,13 +349,14 @@ def main() -> int:
             )
 
     failed_count = sum(1 for entry in results if entry.get("errors"))
-    success_count = len(results) - failed_count
+    success_count = len(results) - failed_count - snapshots_skipped
     payload = {
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "input_pool": pool_meta,
         "snapshots_requested": snapshots_requested,
         "snapshots_succeeded": success_count,
         "snapshots_failed": failed_count,
+        "snapshots_skipped": snapshots_skipped,
         "regressions": regressions,
         "snapshots": results,
     }

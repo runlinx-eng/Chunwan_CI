@@ -172,6 +172,12 @@ def main() -> None:
     )
     parser.add_argument("--modes", default="enhanced,tech_only", help="modes to include")
     parser.add_argument("--theme-map", default="", help="theme map path override")
+    parser.add_argument(
+        "--on-empty-pool",
+        default="fail",
+        choices=["fail", "skip", "empty"],
+        help="behavior when input pool yields no candidates",
+    )
     parser.add_argument("--input-pool", default="", help="optional input pool path")
     args = parser.parse_args()
 
@@ -201,6 +207,7 @@ def main() -> None:
         raise ValueError(f"no candidates remain after filtering modes {modes}")
 
     input_pool_meta: Optional[Dict[str, Any]] = None
+    reason: Optional[str] = None
     if args.input_pool:
         pool_path = Path(args.input_pool)
         if not pool_path.is_absolute():
@@ -214,14 +221,46 @@ def main() -> None:
             for row in filtered
             if str(row.get("item_id") or row.get("ticker") or "").strip() in pool_set
         ]
-        if not filtered:
-            raise ValueError(f"no candidates match input pool: {pool_path}")
         input_pool_meta = {
             "path": str(pool_path.resolve()),
             "rows": pool_rows,
             "sha256": _sha256_file(pool_path),
             "id_field": pool_id_field,
         }
+
+    if not filtered and args.input_pool:
+        if args.on_empty_pool == "fail":
+            raise ValueError(f"no candidates match input pool: {input_pool_meta['path']}")
+        reason = "empty_pool"
+        git_rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
+        latest_log_path = _latest_log(REPO_ROOT)
+        empty_distribution = _mode_distribution([])
+        output_meta = {
+            "git_rev": git_rev,
+            "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "snapshot_id": snapshot_id,
+            "theme_map_path": str(theme_map_path),
+            "theme_map_sha256": theme_map_sha256,
+            "latest_log_path": latest_log_path,
+            "source": {
+                "provider": "snapshot",
+                "snapshot_id": snapshot_id,
+            },
+            "input_pool": input_pool_meta,
+            "output": {
+                "path": str(out_path.resolve()),
+                "rows": 0,
+                "mode_distribution": empty_distribution,
+            },
+            "modes": modes,
+            "reason": reason,
+        }
+        meta_path = REPO_ROOT / "artifacts_metrics" / "screener_candidates_latest_meta.json"
+        meta_path.parent.mkdir(parents=True, exist_ok=True)
+        meta_path.write_text(json.dumps(output_meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        if args.on_empty_pool == "empty":
+            write_candidates_entries([], out_path)
+        return
 
     write_candidates_entries(filtered, out_path)
 
@@ -246,6 +285,7 @@ def main() -> None:
             "mode_distribution": _mode_distribution(filtered),
         },
         "modes": modes,
+        "reason": reason,
     }
     meta_path = REPO_ROOT / "artifacts_metrics" / "screener_candidates_latest_meta.json"
     meta_path.parent.mkdir(parents=True, exist_ok=True)
