@@ -95,6 +95,25 @@ def _load_input_pool(path: Path) -> Dict[str, Any]:
 
 
 def _read_snapshots(args: argparse.Namespace) -> List[str]:
+    if args.discover_latest:
+        snapshots_dir = REPO_ROOT / "data" / "snapshots"
+        if not snapshots_dir.exists():
+            raise FileNotFoundError(
+                "snapshots directory not found; use --snapshots or --snapshots-file"
+            )
+        candidates = []
+        for path in snapshots_dir.iterdir():
+            if not path.is_dir():
+                continue
+            name = path.name
+            if re.match(r"^\d{4}-\d{2}-\d{2}$", name):
+                candidates.append(name)
+        if not candidates:
+            raise ValueError(
+                "no snapshot directories found; use --snapshots or --snapshots-file"
+            )
+        candidates = sorted(candidates, reverse=True)
+        return candidates[: args.discover_latest]
     if args.snapshots:
         return [item.strip() for item in args.snapshots.split(",") if item.strip()]
     if args.snapshots_file:
@@ -121,6 +140,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run snapshot sweep regression matrix")
     parser.add_argument("--snapshots", default="", help="comma-separated snapshot ids")
     parser.add_argument("--snapshots-file", default="", help="file with snapshot ids per line")
+    parser.add_argument("--discover-latest", type=int, default=0, help="auto-discover latest N")
     parser.add_argument("--input-pool", required=True, help="input pool path for comparability")
     parser.add_argument("--top-n", type=int, default=10, help="top n for export")
     parser.add_argument("--sort-key", default="final_score", help="sort key for export")
@@ -146,6 +166,7 @@ def main() -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     results: List[Dict[str, Any]] = []
+    snapshots_requested = list(snapshots)
     failures = 0
 
     for snapshot_id in snapshots:
@@ -242,6 +263,9 @@ def main() -> int:
     payload = {
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "input_pool": pool_meta,
+        "snapshots_requested": snapshots_requested,
+        "snapshots_succeeded": len(snapshots_requested) - failures,
+        "snapshots_failed": failures,
         "snapshots": results,
     }
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
