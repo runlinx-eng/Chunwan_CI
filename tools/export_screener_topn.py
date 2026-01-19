@@ -246,9 +246,24 @@ def _entry_mode(entry: Dict[str, Any], fallback_mode: Optional[str]) -> str:
     return "all"
 
 
+def _extract_sort_value(row: Dict[str, Any], sort_key: str) -> Optional[float]:
+    value: Any = row
+    for part in sort_key.split("."):
+        if isinstance(value, dict):
+            value = value.get(part)
+        else:
+            value = None
+            break
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--top-n", type=int, default=50)
+    parser.add_argument("--sort-key", default="final_score")
     parser.add_argument("--modes", default="all,enhanced,tech_only")
     parser.add_argument("--out-dir", default="artifacts_metrics")
     parser.add_argument("--source-path", default=None)
@@ -312,7 +327,7 @@ def main() -> None:
             source_total_counts[row_mode] += 1
 
     exported_counts: Dict[str, int] = {mode: 0 for mode in ALL_MODES}
-    sort_key = "final_score"
+    sort_key = args.sort_key
     snapshot_id = ""
 
     for mode in mode_list:
@@ -320,6 +335,15 @@ def main() -> None:
             bucket = entries
         else:
             bucket = [row for row in entries if _entry_mode(row, fallback_mode) == mode]
+        if sort_key != "final_score":
+            bucket = sorted(
+                bucket,
+                key=lambda row: (
+                    _extract_sort_value(row, sort_key) is None,
+                    -float(_extract_sort_value(row, sort_key) or 0.0),
+                    str(row.get("ticker") or row.get("symbol") or row.get("name") or ""),
+                ),
+            )
         max_items = min(args.top_n, len(bucket))
         exported_counts[mode] = max_items
 
@@ -329,8 +353,6 @@ def main() -> None:
             if score_total is None:
                 score_total = 0.0
                 score_source = "fallback_zero"
-            if score_source != "final_score":
-                sort_key = score_source
             item = {
                 "schema_version": 1,
                 "rank": idx,
