@@ -188,37 +188,17 @@ def _summarize_result_level(metrics: Dict[str, Any]) -> Dict[str, Dict[str, Dict
     return summary
 
 
-def _bucket_theme_total_count(metrics: Dict[str, Any], category: str) -> float:
-    reports = metrics.get("reports", [])
-    if not isinstance(reports, list):
-        return 0.0
-    total = 0
-    for report in reports:
-        if not isinstance(report, dict):
-            continue
-        if category != "all" and report.get("category") != category:
-            continue
-        theme_totals = report.get("theme_total", {}).get("per_result_values", [])
-        if isinstance(theme_totals, list):
-            total += sum(1 for v in theme_totals if v is not None)
-    return float(total)
-
-
-def _ensure_unique_ratio(bucket: Dict[str, Any], bucket_n: Optional[float]) -> Optional[float]:
-    if not isinstance(bucket, dict):
+def _ensure_theme_total_ratio(stats: Dict[str, Any]) -> Optional[float]:
+    if not isinstance(stats, dict):
         return None
-    theme_total = _result_metric(bucket, "theme_total")
-    if not theme_total:
-        return None
-    if bucket_n is None or bucket_n <= 0:
-        theme_total["unique_value_ratio"] = 0.0
-        return theme_total.get("unique_value_ratio")
-    unique_count = theme_total.get("unique_value_count")
-    if unique_count is None:
-        theme_total["unique_value_ratio"] = 0.0
-    else:
-        theme_total["unique_value_ratio"] = float(unique_count) / float(bucket_n)
-    return theme_total.get("unique_value_ratio")
+    if stats.get("unique_value_ratio") is None:
+        n_value = stats.get("N")
+        unique_value = stats.get("unique_value_count")
+        if n_value and unique_value is not None:
+            stats["unique_value_ratio"] = float(unique_value) / float(n_value)
+        else:
+            stats["unique_value_ratio"] = 0.0
+    return stats.get("unique_value_ratio")
 
 
 def main() -> None:
@@ -327,18 +307,13 @@ def main() -> None:
         )
 
     all_bucket = _result_bucket(latest, "all")
-    enhanced_bucket_n = _bucket_theme_total_count(latest, "enhanced")
-    tech_bucket_n = _bucket_theme_total_count(latest, "tech_only")
-    all_bucket_n = _bucket_theme_total_count(latest, "all")
-    if isinstance(enhanced_result, dict):
-        enhanced_result["N"] = enhanced_bucket_n
-    if isinstance(tech_result, dict):
-        tech_result["N"] = tech_bucket_n
-    if isinstance(all_bucket, dict):
-        all_bucket["N"] = all_bucket_n
-    enhanced_unique_ratio = _ensure_unique_ratio(enhanced_result, enhanced_bucket_n)
-    _ensure_unique_ratio(tech_result, tech_bucket_n)
-    all_unique_ratio = _ensure_unique_ratio(all_bucket, all_bucket_n)
+    for bucket in (enhanced_result, tech_result, all_bucket):
+        theme_total_stats = _result_metric(bucket, "theme_total")
+        if isinstance(bucket, dict) and isinstance(theme_total_stats, dict) and "N" in theme_total_stats:
+            bucket["N"] = theme_total_stats.get("N")
+    enhanced_unique_ratio = _ensure_theme_total_ratio(_result_metric(enhanced_result, "theme_total"))
+    _ensure_theme_total_ratio(_result_metric(tech_result, "theme_total"))
+    all_unique_ratio = _ensure_theme_total_ratio(_result_metric(all_bucket, "theme_total"))
     result_summary = _summarize_result_level(latest)
 
     non_deg_failures = []

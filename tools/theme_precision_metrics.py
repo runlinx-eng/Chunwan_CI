@@ -259,7 +259,12 @@ def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     for report in reports:
         category = report.get("category")
-        theme_totals = report.get("theme_total", {}).get("per_result_values", [])
+        theme_totals = []
+        theme_total_block = report.get("theme_total", {})
+        avg_value = theme_total_block.get("avg") if isinstance(theme_total_block, dict) else None
+        count_value = theme_total_block.get("count") if isinstance(theme_total_block, dict) else None
+        if avg_value is not None and count_value:
+            theme_totals = [avg_value]
         theme_total_signatures = report.get("theme_total", {}).get("per_result_signatures", [])
         themes_counts = report.get("themes_used", {}).get("per_result_counts", [])
         concept_counts = report.get("concept_hits", {}).get("per_result_counts", [])
