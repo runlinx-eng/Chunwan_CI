@@ -9,6 +9,6 @@
   "min_theme_hit_unique_set_enhanced": 2,
   "min_theme_hit_unique_set_all": 3,
   "min_concept_hits_unique_set_all": 10,
-  "min_theme_total_unique_value_ratio_enhanced": 0.02,
-  "min_theme_total_unique_value_ratio_all": 0.02
+  "min_theme_total_unique_value_ratio_enhanced": 0.06,
+  "min_theme_total_unique_value_ratio_all": 0.06
 }
