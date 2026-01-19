@@ -136,6 +136,27 @@ def _load_json(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _load_theme_precision_thresholds(repo_root: Path) -> Dict[str, float]:
+    config_path = repo_root / "specpack" / "theme_precision" / "config.json"
+    if not config_path.exists():
+        return {}
+    try:
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    thresholds = {}
+    for key in (
+        "min_theme_total_unique_value_ratio_enhanced",
+        "min_theme_total_unique_value_ratio_all",
+    ):
+        if key in payload:
+            try:
+                thresholds[key] = float(payload[key])
+            except (TypeError, ValueError):
+                continue
+    return thresholds
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run snapshot sweep regression matrix")
     parser.add_argument("--snapshots", default="", help="comma-separated snapshot ids")
@@ -144,6 +165,19 @@ def main() -> int:
     parser.add_argument("--input-pool", required=True, help="input pool path for comparability")
     parser.add_argument("--top-n", type=int, default=10, help="top n for export")
     parser.add_argument("--sort-key", default="final_score", help="sort key for export")
+    parser.add_argument("--gate", action="store_true", help="enable regression gate")
+    parser.add_argument(
+        "--min-theme-unique-ratio-enhanced",
+        type=float,
+        default=None,
+        help="minimum enhanced theme unique ratio",
+    )
+    parser.add_argument(
+        "--min-theme-unique-ratio-all",
+        type=float,
+        default=None,
+        help="minimum all theme unique ratio",
+    )
     parser.add_argument(
         "--out-path",
         default="artifacts_metrics/regression_matrix_timeseries_latest.json",
@@ -160,6 +194,14 @@ def main() -> int:
         pool_path = REPO_ROOT / pool_path
     pool_meta = _load_input_pool(pool_path)
 
+    thresholds = _load_theme_precision_thresholds(REPO_ROOT)
+    min_ratio_enhanced = args.min_theme_unique_ratio_enhanced
+    if min_ratio_enhanced is None:
+        min_ratio_enhanced = thresholds.get("min_theme_total_unique_value_ratio_enhanced", 0.02)
+    min_ratio_all = args.min_theme_unique_ratio_all
+    if min_ratio_all is None:
+        min_ratio_all = thresholds.get("min_theme_total_unique_value_ratio_all", 0.02)
+
     out_path = Path(args.out_path)
     if not out_path.is_absolute():
         out_path = REPO_ROOT / out_path
@@ -168,9 +210,11 @@ def main() -> int:
     results: List[Dict[str, Any]] = []
     snapshots_requested = list(snapshots)
     failures = 0
+    regressions: List[Dict[str, Any]] = []
+    last_active_sha: Optional[str] = None
 
     for snapshot_id in snapshots:
-        entry: Dict[str, Any] = {"snapshot_id": snapshot_id}
+        entry: Dict[str, Any] = {"snapshot_id": snapshot_id, "warnings": [], "errors": []}
         try:
             theme_map_path, fallback = _resolve_theme_map(REPO_ROOT, snapshot_id)
             if not theme_map_path.exists():
@@ -246,31 +290,71 @@ def main() -> int:
 
             source_counts = topn_meta.get("source_total_counts", {})
             if entry["active_theme_map_sha256"] != topn_meta.get("theme_map_sha256"):
-                raise ValueError("active_theme_map_sha256 mismatch with screener_topn_meta")
+                entry["errors"].append("active_theme_map_sha256_mismatch")
             if pool_summary.get("rows") != source_counts.get("all"):
-                raise ValueError("pool_coverage_summary.rows mismatch with screener_topn_meta")
+                entry["errors"].append("pool_rows_mismatch_topn_source_counts")
             pool_modes = pool_summary.get("mode_distribution", {})
             for mode_key in ("enhanced", "tech_only"):
                 if pool_modes.get(mode_key) != source_counts.get(mode_key):
-                    raise ValueError(
-                        f"pool_coverage_summary.{mode_key} mismatch with screener_topn_meta"
-                    )
+                    entry["errors"].append("pool_mode_distribution_mismatch")
+                    break
+
+            summary = entry.get("theme_precision_summary") or {}
+            enhanced_ratio = summary.get("enhanced", {}).get("unique_value_ratio")
+            all_ratio = summary.get("all", {}).get("unique_value_ratio")
+            if enhanced_ratio is not None and enhanced_ratio < min_ratio_enhanced:
+                entry["errors"].append("theme_precision_enhanced_unique_ratio_below_min")
+            if all_ratio is not None and all_ratio < min_ratio_all:
+                entry["errors"].append("theme_precision_all_unique_ratio_below_min")
+
+            modes = candidates_meta.get("modes") if isinstance(candidates_meta, dict) else None
+            if not isinstance(modes, list) or not modes:
+                modes = ["enhanced", "tech_only"]
+            expected_rows = pool_meta.get("rows", 0) * len(modes)
+            pool_rows = pool_summary.get("rows")
+            if isinstance(pool_rows, int) and expected_rows:
+                if pool_rows < expected_rows:
+                    entry["warnings"].append("pool_rows_less_than_expected")
+                elif pool_rows > expected_rows:
+                    entry["errors"].append("pool_rows_greater_than_expected")
+
+            active_sha = entry.get("active_theme_map_sha256")
+            if active_sha and last_active_sha and active_sha != last_active_sha:
+                entry["warnings"].append("active_theme_map_changed")
+            if not entry["errors"]:
+                if active_sha:
+                    last_active_sha = active_sha
         except Exception as exc:
             failures += 1
             entry["error"] = str(exc)
+            entry["errors"].append(str(exc))
         results.append(entry)
+        if entry["errors"]:
+            regressions.append(
+                {
+                    "snapshot_id": snapshot_id,
+                    "errors": list(entry["errors"]),
+                    "active_theme_map_sha256": entry.get("active_theme_map_sha256"),
+                    "active_latest_log_path": entry.get("active_latest_log_path"),
+                }
+            )
 
+    failed_count = sum(1 for entry in results if entry.get("errors"))
+    success_count = len(results) - failed_count
     payload = {
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "input_pool": pool_meta,
         "snapshots_requested": snapshots_requested,
-        "snapshots_succeeded": len(snapshots_requested) - failures,
-        "snapshots_failed": failures,
+        "snapshots_succeeded": success_count,
+        "snapshots_failed": failed_count,
+        "regressions": regressions,
         "snapshots": results,
     }
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     if failures:
+        return 1
+    if args.gate and regressions:
         return 1
     return 0
 
