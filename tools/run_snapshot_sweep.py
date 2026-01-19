@@ -363,6 +363,58 @@ def main() -> int:
     }
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    print("[snapshot_sweep] BEGIN")
+    print(f"created_at={payload.get('created_at')}")
+    print("snapshots_requested=" + ",".join(snapshots_requested))
+    print(f"snapshots_succeeded={success_count}")
+    print(f"snapshots_failed={failed_count}")
+    print(f"snapshots_skipped={snapshots_skipped}")
+    print(f"regressions_count={len(regressions)}")
+    summary_map = {entry.get("snapshot_id"): entry for entry in results}
+    for snapshot_id in snapshots_requested:
+        entry = summary_map.get(snapshot_id, {})
+        warnings = entry.get("warnings") if isinstance(entry.get("warnings"), list) else []
+        errors = entry.get("errors") if isinstance(entry.get("errors"), list) else []
+        status = "ok"
+        if errors:
+            status = "failed"
+        elif "empty_pool_for_snapshot" in warnings:
+            status = "skipped"
+        pool_summary = entry.get("pool_coverage_summary", {}) if isinstance(entry.get("pool_coverage_summary"), dict) else {}
+        theme_summary = entry.get("theme_precision_summary", {}) if isinstance(entry.get("theme_precision_summary"), dict) else {}
+        enhanced_ratio = None
+        all_ratio = None
+        if isinstance(theme_summary.get("enhanced"), dict):
+            enhanced_ratio = theme_summary["enhanced"].get("unique_value_ratio")
+        if isinstance(theme_summary.get("all"), dict):
+            all_ratio = theme_summary["all"].get("unique_value_ratio")
+        pool_rows = pool_summary.get("rows")
+        line = (
+            f"snapshot_id={snapshot_id} "
+            f"status={status} "
+            f"active_git_rev={entry.get('active_git_rev') or 'null'} "
+            f"active_theme_map_sha256={entry.get('active_theme_map_sha256') or 'null'} "
+            f"enhanced_unique_value_ratio={enhanced_ratio if enhanced_ratio is not None else 'null'} "
+            f"all_unique_value_ratio={all_ratio if all_ratio is not None else 'null'} "
+            f"pool_rows={pool_rows if pool_rows is not None else 'null'} "
+            f"warnings_count={len(warnings)} "
+            f"errors_count={len(errors)}"
+        )
+        print(line)
+    if regressions:
+        for regression in regressions:
+            snapshot_id = regression.get("snapshot_id")
+            errors = regression.get("errors", [])
+            if not isinstance(errors, list):
+                errors = [str(errors)]
+            print(
+                "regression_snapshot_id={snapshot_id} errors={errors}".format(
+                    snapshot_id=snapshot_id,
+                    errors=",".join(errors),
+                )
+            )
+    print("[snapshot_sweep] END")
+
     if failures:
         return 1
     if args.gate and regressions:
