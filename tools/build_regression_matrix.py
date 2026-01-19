@@ -3,7 +3,7 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 def _load_json(path: Path) -> Dict[str, Any]:
@@ -34,7 +34,11 @@ def main() -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     metrics_dir = repo_root / "artifacts_metrics"
-    theme_precision = _load_json(metrics_dir / "theme_precision_latest.json")
+    theme_precision = None
+    try:
+        theme_precision = _load_json(metrics_dir / "theme_precision_latest.json")
+    except FileNotFoundError:
+        theme_precision = None
     theme_map_sparsity = _load_json(metrics_dir / "theme_map_sparsity_latest.json")
     theme_map_prune_path = metrics_dir / "theme_map_prune_latest.json"
     theme_map_prune = (
@@ -49,32 +53,26 @@ def main() -> None:
         else None
     )
     theme_precision_summary = None
-    try:
+    if isinstance(theme_precision, dict):
         result_level = theme_precision.get("result_level", {})
         if isinstance(result_level, dict):
-            def _extract_ratio(bucket_key: str) -> Optional[Dict[str, Any]]:
+            def _extract_ratio(bucket_key: str) -> Dict[str, Any]:
                 bucket = result_level.get(bucket_key, {})
                 if not isinstance(bucket, dict):
-                    return None
+                    return {"N": None, "unique_value_ratio": None}
                 theme_total = bucket.get("theme_total", {})
                 if not isinstance(theme_total, dict):
-                    return None
+                    return {"N": None, "unique_value_ratio": None}
                 ratio = theme_total.get("unique_value_ratio")
                 n_value = theme_total.get("N")
                 if n_value is None:
                     n_value = bucket.get("N")
-                if ratio is None and n_value is None:
-                    return None
                 return {"N": n_value, "unique_value_ratio": ratio}
 
             theme_precision_summary = {
                 "all": _extract_ratio("all"),
                 "enhanced": _extract_ratio("enhanced"),
             }
-            if theme_precision_summary["all"] is None and theme_precision_summary["enhanced"] is None:
-                theme_precision_summary = None
-    except Exception:
-        theme_precision_summary = None
 
     payload = {
         "git_rev": _git_rev(repo_root),
