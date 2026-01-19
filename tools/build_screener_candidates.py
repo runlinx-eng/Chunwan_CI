@@ -1,4 +1,5 @@
 import argparse
+import csv
 import hashlib
 import json
 import os
@@ -48,6 +49,72 @@ def _latest_log(repo_root: Path) -> Optional[str]:
     if not logs:
         return None
     return str(logs[-1])
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _load_input_pool(path: Path) -> Tuple[List[str], int, str]:
+    if not path.exists():
+        raise FileNotFoundError(f"input pool not found: {path}")
+    suffix = path.suffix.lower()
+    ids: List[str] = []
+    row_count = 0
+    has_item_id = False
+    has_ticker = False
+
+    if suffix == ".jsonl":
+        for idx, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if not line.strip():
+                continue
+            row_count += 1
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"invalid jsonl at line {idx}: {exc}") from exc
+            if not isinstance(row, dict):
+                raise ValueError(f"jsonl line {idx} must be an object")
+            value = row.get("item_id")
+            if value:
+                has_item_id = True
+            else:
+                value = row.get("ticker")
+                if value:
+                    has_ticker = True
+            if not value:
+                raise ValueError(f"jsonl line {idx} missing item_id or ticker")
+            ids.append(str(value).strip())
+    elif suffix == ".csv":
+        with path.open("r", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            fieldnames = reader.fieldnames or []
+            if "item_id" in fieldnames:
+                id_field = "item_id"
+            elif "ticker" in fieldnames:
+                id_field = "ticker"
+            else:
+                raise ValueError(
+                    f"input pool csv missing item_id or ticker columns; found {fieldnames}"
+                )
+            if id_field == "item_id":
+                has_item_id = True
+            else:
+                has_ticker = True
+            for idx, row in enumerate(reader, start=2):
+                row_count += 1
+                value = row.get(id_field, "")
+                if not value:
+                    raise ValueError(f"csv row {idx} missing {id_field}")
+                ids.append(str(value).strip())
+    else:
+        raise ValueError("unsupported input pool format; use .jsonl or .csv")
+
+    if row_count == 0:
+        raise ValueError(f"input pool has no rows: {path}")
+
+    id_field = "item_id" if has_item_id else "ticker"
+    return ids, row_count, id_field
 
 
 def _validate_modes(modes: List[str]) -> None:
@@ -105,6 +172,7 @@ def main() -> None:
     )
     parser.add_argument("--modes", default="enhanced,tech_only", help="modes to include")
     parser.add_argument("--theme-map", default="", help="theme map path override")
+    parser.add_argument("--input-pool", default="", help="optional input pool path")
     args = parser.parse_args()
 
     out_path = Path(args.out_path)
@@ -132,6 +200,29 @@ def main() -> None:
     if not filtered:
         raise ValueError(f"no candidates remain after filtering modes {modes}")
 
+    input_pool_meta: Optional[Dict[str, Any]] = None
+    if args.input_pool:
+        pool_path = Path(args.input_pool)
+        if not pool_path.is_absolute():
+            pool_path = REPO_ROOT / pool_path
+        pool_ids, pool_rows, pool_id_field = _load_input_pool(pool_path)
+        pool_set = {value for value in pool_ids if value}
+        if not pool_set:
+            raise ValueError(f"input pool has no usable ids: {pool_path}")
+        filtered = [
+            row
+            for row in filtered
+            if str(row.get("item_id") or row.get("ticker") or "").strip() in pool_set
+        ]
+        if not filtered:
+            raise ValueError(f"no candidates match input pool: {pool_path}")
+        input_pool_meta = {
+            "path": str(pool_path.resolve()),
+            "rows": pool_rows,
+            "sha256": _sha256_file(pool_path),
+            "id_field": pool_id_field,
+        }
+
     write_candidates_entries(filtered, out_path)
 
     git_rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
@@ -148,6 +239,7 @@ def main() -> None:
             "provider": "snapshot",
             "snapshot_id": snapshot_id,
         },
+        "input_pool": input_pool_meta,
         "output": {
             "path": str(out_path.resolve()),
             "rows": len(filtered),

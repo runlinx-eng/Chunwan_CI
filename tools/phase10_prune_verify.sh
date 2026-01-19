@@ -28,7 +28,11 @@ export THEME_MAP="artifacts_metrics/theme_to_industry_pruned.csv"
 bash tools/verify_and_log.sh --theme-map "${THEME_MAP}"
 python tools/build_regression_matrix.py
 if [ -z "${CANDIDATES_PATH:-}" ]; then
-  python tools/build_screener_candidates.py
+  build_cmd=(python tools/build_screener_candidates.py)
+  if [ -n "${INPUT_POOL:-}" ]; then
+    build_cmd+=(--input-pool "${INPUT_POOL}")
+  fi
+  "${build_cmd[@]}"
 fi
 EXPORT_TOP_N="${TOP_N:-50}"
 EXPORT_SORT_KEY="${SORT_KEY:-final_score}"

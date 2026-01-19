@@ -22,6 +22,7 @@ THEME_MAP controls the theme map input for a run; the one-click flow auto-points
 ```bash
 TOP_N=10 bash tools/phase10_prune_verify.sh
 SORT_KEY=score_total TOP_N=10 bash tools/phase10_prune_verify.sh
+INPUT_POOL=./inputs/pool.csv TOP_N=10 bash tools/phase10_prune_verify.sh
 ```
 
 ## Generate Candidates
