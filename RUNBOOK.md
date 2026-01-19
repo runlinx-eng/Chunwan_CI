@@ -23,6 +23,11 @@ TOP_N=10 bash tools/phase10_prune_verify.sh
 SORT_KEY=score_total TOP_N=10 bash tools/phase10_prune_verify.sh
 ```
 
+## Generate Candidates
+```bash
+python tools/build_screener_candidates.py
+```
+
 ## Artifacts & Checks
 ```bash
 # TopN buckets

@@ -26,6 +26,9 @@ python tools/prune_theme_map.py \
 
 bash tools/verify_and_log.sh --theme-map artifacts_metrics/theme_to_industry_pruned.csv
 python tools/build_regression_matrix.py
+if [ -z "${CANDIDATES_PATH:-}" ]; then
+  python tools/build_screener_candidates.py
+fi
 EXPORT_TOP_N="${TOP_N:-50}"
 EXPORT_SORT_KEY="${SORT_KEY:-final_score}"
 EXPORT_SOURCE_PATH="${CANDIDATES_PATH:-}"
