@@ -44,26 +44,31 @@ def main() -> None:
     total = len(entries)
     enhanced_count = sum(1 for row in entries if row.get("mode") == "enhanced")
     tech_only_count = sum(1 for row in entries if row.get("mode") == "tech_only")
-    all_count = sum(1 for row in entries if row.get("mode") == "all")
+    all_mode_count = sum(1 for row in entries if row.get("mode") == "all")
+    derived_all_count = enhanced_count + tech_only_count
 
     print(
         f"[screener_coverage] total={total} enhanced={enhanced_count} "
-        f"tech_only={tech_only_count} all={all_count}"
+        f"tech_only={tech_only_count} derived_all={derived_all_count} "
+        f"all_mode_lines={all_mode_count}"
     )
 
     if enhanced_count <= 0:
         raise AssertionError("enhanced_count must be > 0")
     if tech_only_count <= 0:
         raise AssertionError("tech_only_count must be > 0")
-    if all_count != enhanced_count + tech_only_count:
-        raise AssertionError("all_count must equal enhanced_count + tech_only_count")
+    if total != derived_all_count:
+        raise AssertionError("total_count must equal enhanced_count + tech_only_count")
+    if all_mode_count > 0:
+        raise AssertionError("mode=all rows are not allowed in candidates")
 
     metrics = {
         "counts": {
             "total": total,
             "enhanced": enhanced_count,
             "tech_only": tech_only_count,
-            "all": all_count,
+            "all_mode": all_mode_count,
+            "derived_all": derived_all_count,
         },
         "git_rev": _git_rev(repo_root),
         "snapshot_id": _snapshot_id(entries),
