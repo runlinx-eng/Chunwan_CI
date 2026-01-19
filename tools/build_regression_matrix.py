@@ -52,6 +52,12 @@ def main() -> None:
         if screener_meta_path.exists()
         else None
     )
+    screener_coverage_path = metrics_dir / "screener_coverage_latest.json"
+    screener_coverage = (
+        json.loads(screener_coverage_path.read_text(encoding="utf-8"))
+        if screener_coverage_path.exists()
+        else None
+    )
     theme_precision_summary = None
     if isinstance(theme_precision, dict):
         result_level = theme_precision.get("result_level", {})
@@ -84,6 +90,8 @@ def main() -> None:
         payload["theme_map_prune"] = theme_map_prune
     if screener_meta is not None:
         payload["screener_topn_meta"] = screener_meta
+    if screener_coverage is not None:
+        payload["screener_coverage_summary"] = screener_coverage.get("counts", screener_coverage)
     if theme_precision_summary is not None:
         payload["theme_precision_summary"] = theme_precision_summary
 
