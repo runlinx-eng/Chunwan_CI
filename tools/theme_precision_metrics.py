@@ -304,6 +304,16 @@ def _aggregate_result_level(reports: List[Dict[str, Any]]) -> Dict[str, Any]:
         theme_total_summary["unique_set_count"] = (
             len(theme_total_unique_sets) if theme_total_unique_sets else None
         )
+        theme_total_unique = theme_total_summary.get("unique_value_count")
+        theme_total_n = theme_total_summary.get("N")
+        if theme_total_n:
+            theme_total_summary["unique_value_ratio"] = (
+                float(theme_total_unique) / float(theme_total_n)
+                if theme_total_unique is not None
+                else None
+            )
+        else:
+            theme_total_summary["unique_value_ratio"] = None
         themes_used_summary = _summarize_distribution(values["themes_used"])
         themes_used_summary["unique_set_count"] = (
             len(themes_unique_sets) if themes_unique_sets else None

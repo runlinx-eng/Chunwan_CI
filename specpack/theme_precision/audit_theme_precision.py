@@ -116,6 +116,8 @@ def _load_config(path: Path) -> Dict[str, float]:
             "min_theme_hit_unique_set_enhanced": 2,
             "min_theme_hit_unique_set_all": 2,
             "min_concept_hits_unique_set_all": 1,
+            "min_theme_total_unique_value_ratio_enhanced": 0.02,
+            "min_theme_total_unique_value_ratio_all": 0.02,
         }
     raw = json.loads(path.read_text(encoding="utf-8"))
     return {
@@ -131,6 +133,12 @@ def _load_config(path: Path) -> Dict[str, float]:
         "min_theme_hit_unique_set_enhanced": float(raw.get("min_theme_hit_unique_set_enhanced", 2)),
         "min_theme_hit_unique_set_all": float(raw.get("min_theme_hit_unique_set_all", 2)),
         "min_concept_hits_unique_set_all": float(raw.get("min_concept_hits_unique_set_all", 1)),
+        "min_theme_total_unique_value_ratio_enhanced": float(
+            raw.get("min_theme_total_unique_value_ratio_enhanced", 0.02)
+        ),
+        "min_theme_total_unique_value_ratio_all": float(
+            raw.get("min_theme_total_unique_value_ratio_all", 0.02)
+        ),
     }
 
 
@@ -309,6 +317,12 @@ def main() -> None:
     elif theme_total_unique < config["min_theme_total_unique_enhanced"]:
         non_deg_failures.append("theme_total unique_value_count below minimum")
 
+    enhanced_unique_ratio = _stat_value(enhanced_theme_total, "unique_value_ratio")
+    if enhanced_unique_ratio is None:
+        non_deg_failures.append("theme_total unique_value_ratio missing")
+    elif enhanced_unique_ratio < config["min_theme_total_unique_value_ratio_enhanced"]:
+        non_deg_failures.append("theme_total unique_value_ratio below minimum")
+
     theme_hit_unique_set = _stat_value(enhanced_theme_total, "unique_set_count")
     if theme_hit_unique_set is None:
         non_deg_failures.append("theme_total unique_set_count missing")
@@ -316,6 +330,11 @@ def main() -> None:
         non_deg_failures.append("theme_total unique_set_count below minimum")
 
     all_theme_total = _result_metric(_result_bucket(latest, "all"), "theme_total")
+    all_unique_ratio = _stat_value(all_theme_total, "unique_value_ratio")
+    if all_unique_ratio is None:
+        non_deg_failures.append("theme_total unique_value_ratio (all) missing")
+    elif all_unique_ratio < config["min_theme_total_unique_value_ratio_all"]:
+        non_deg_failures.append("theme_total unique_value_ratio (all) below minimum")
     theme_hit_unique_set_all = _stat_value(all_theme_total, "unique_set_count")
     if theme_hit_unique_set_all is None:
         non_deg_failures.append("theme_total unique_set_count (all) missing")
@@ -345,6 +364,8 @@ def main() -> None:
         "[theme_precision] ok: "
         f"latest={metrics_latest}; baseline={metrics_base}; "
         f"positive_latest={latest_positive}; positive_baseline={base_positive}; "
+        f"all_theme_total_unique_value_ratio={all_unique_ratio}; "
+        f"enhanced_theme_total_unique_value_ratio={enhanced_unique_ratio}; "
         f"result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
     )
 
