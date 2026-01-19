@@ -37,6 +37,8 @@ python tools/build_screener_candidates.py --snapshot-id 2026-01-20 \
 wc -l artifacts_metrics/screener_topn_latest_all.jsonl \
   artifacts_metrics/screener_topn_latest_enhanced.jsonl \
   artifacts_metrics/screener_topn_latest_tech_only.jsonl
+# Contract: each TopN row includes schema_version=1
+python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_all.jsonl
 
 # Meta fields
 cat artifacts_metrics/screener_topn_latest_meta.json

@@ -42,6 +42,9 @@ if [ -n "${EXPORT_SOURCE_PATH}" ]; then
   export_cmd+=(--source-path "${EXPORT_SOURCE_PATH}")
 fi
 "${export_cmd[@]}"
+python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_all.jsonl
+python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_enhanced.jsonl
+python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_tech_only.jsonl
 
 latest_log="$(ls -t artifacts_logs/verify_*.txt | head -n 1)"
 echo "latest_log: ${latest_log}"
