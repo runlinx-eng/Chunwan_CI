@@ -38,7 +38,7 @@ wc -l artifacts_metrics/screener_topn_latest_all.jsonl \
   artifacts_metrics/screener_topn_latest_enhanced.jsonl \
   artifacts_metrics/screener_topn_latest_tech_only.jsonl
 # Contract: each TopN row includes schema_version=1
-python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_all.jsonl
+./.venv/bin/python tools/validate_screener_topn.py
 
 # Meta fields
 cat artifacts_metrics/screener_topn_latest_meta.json

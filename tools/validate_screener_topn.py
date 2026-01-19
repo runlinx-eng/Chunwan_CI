@@ -43,17 +43,7 @@ def _missing_fields(row: Dict[str, Any]) -> List[str]:
     return missing
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate screener topn jsonl schema")
-    parser.add_argument(
-        "--path",
-        default="artifacts_metrics/screener_topn_latest_all.jsonl",
-        help="jsonl path to validate",
-    )
-    args = parser.parse_args()
-    path = Path(args.path)
-    if not path.exists():
-        raise FileNotFoundError(f"topn jsonl not found: {path}")
+def _validate_path(path: Path) -> int:
     entries = _load_jsonl(path)
     if not entries:
         raise ValueError(f"topn jsonl has no entries: {path}")
@@ -66,6 +56,36 @@ def main() -> None:
                     sample=json.dumps(row, ensure_ascii=False),
                 )
             )
+    print(f"[validate_screener_topn] ok: path={path} rows={len(entries)}")
+    return len(entries)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Validate screener topn jsonl schema")
+    parser.add_argument(
+        "--path",
+        help="jsonl path to validate (if omitted, validate default three buckets)",
+    )
+    args = parser.parse_args()
+    if args.path:
+        path = Path(args.path)
+        if not path.exists():
+            raise FileNotFoundError(f"topn jsonl not found: {path}")
+        _validate_path(path)
+        return
+
+    default_paths = [
+        Path("artifacts_metrics/screener_topn_latest_all.jsonl"),
+        Path("artifacts_metrics/screener_topn_latest_enhanced.jsonl"),
+        Path("artifacts_metrics/screener_topn_latest_tech_only.jsonl"),
+    ]
+    missing = [str(path) for path in default_paths if not path.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "missing topn jsonl files: {paths}".format(paths=", ".join(missing))
+        )
+    for path in default_paths:
+        _validate_path(path)
 
 
 if __name__ == "__main__":
