@@ -180,9 +180,46 @@ def _summarize_result_level(metrics: Dict[str, Any]) -> Dict[str, Dict[str, Dict
                 "max": stats.get("max"),
                 "unique_value_count": stats.get("unique_value_count"),
                 "unique_set_count": stats.get("unique_set_count"),
+                "unique_value_ratio": stats.get("unique_value_ratio"),
             }
+        if isinstance(bucket, dict) and "N" in bucket:
+            metric_summary["N"] = bucket.get("N")
         summary[category] = metric_summary
     return summary
+
+
+def _global_result_count(metrics: Dict[str, Any]) -> Optional[float]:
+    reports = metrics.get("reports", [])
+    if not isinstance(reports, list):
+        return None
+    total = 0
+    for report in reports:
+        if isinstance(report, dict):
+            total += int(report.get("results_included", 0) or 0)
+    return float(total) if total > 0 else None
+
+
+def _ensure_unique_ratio(bucket: Dict[str, Any], fallback_n: Optional[float]) -> Optional[float]:
+    if not isinstance(bucket, dict):
+        return None
+    theme_total = _result_metric(bucket, "theme_total")
+    if not theme_total:
+        return None
+    bucket_n = bucket.get("N")
+    if bucket_n is None:
+        bucket_n = theme_total.get("N")
+        if bucket_n is not None:
+            bucket["N"] = bucket_n
+    if bucket_n is None and fallback_n is not None:
+        bucket_n = fallback_n
+        bucket["N"] = bucket_n
+    if theme_total.get("unique_value_ratio") is None:
+        unique_count = theme_total.get("unique_value_count")
+        if bucket_n and unique_count is not None:
+            theme_total["unique_value_ratio"] = float(unique_count) / float(bucket_n)
+        else:
+            theme_total["unique_value_ratio"] = 0.0
+    return theme_total.get("unique_value_ratio")
 
 
 def main() -> None:
@@ -290,6 +327,12 @@ def main() -> None:
             f"top_offenders={offenders}; result_level={json.dumps(result_summary, ensure_ascii=False, sort_keys=True)}"
         )
 
+    fallback_n = _global_result_count(latest)
+    all_bucket = _result_bucket(latest, "all")
+    enhanced_unique_ratio = _ensure_unique_ratio(enhanced_result, fallback_n)
+    all_unique_ratio = _ensure_unique_ratio(all_bucket, fallback_n)
+    result_summary = _summarize_result_level(latest)
+
     non_deg_failures = []
     enhanced_theme_total = _result_metric(enhanced_result, "theme_total")
     enhanced_themes_used = _result_metric(enhanced_result, "themes_used")
@@ -318,7 +361,6 @@ def main() -> None:
         non_deg_failures.append("theme_total unique_value_count below minimum")
 
     enhanced_n = _stat_value(enhanced_result, "N")
-    enhanced_unique_ratio = _stat_value(enhanced_theme_total, "unique_value_ratio")
     if enhanced_n is None or enhanced_n <= 0:
         pass
     elif enhanced_unique_ratio is None:
@@ -332,10 +374,8 @@ def main() -> None:
     elif theme_hit_unique_set < config["min_theme_hit_unique_set_enhanced"]:
         non_deg_failures.append("theme_total unique_set_count below minimum")
 
-    all_bucket = _result_bucket(latest, "all")
     all_theme_total = _result_metric(all_bucket, "theme_total")
     all_n = _stat_value(all_bucket, "N")
-    all_unique_ratio = _stat_value(all_theme_total, "unique_value_ratio")
     if all_n is None or all_n <= 0:
         pass
     elif all_unique_ratio is None:
