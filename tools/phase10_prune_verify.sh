@@ -25,6 +25,7 @@ python tools/prune_theme_map.py \
   --min-concepts 1
 
 bash tools/verify_and_log.sh --theme-map artifacts_metrics/theme_to_industry_pruned.csv
+python tools/build_regression_matrix.py
 
 latest_log="$(ls -t artifacts_logs/verify_*.txt | head -n 1)"
 echo "latest_log: ${latest_log}"
