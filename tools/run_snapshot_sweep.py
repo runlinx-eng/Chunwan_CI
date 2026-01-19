@@ -162,7 +162,7 @@ def main() -> int:
     parser.add_argument("--snapshots", default="", help="comma-separated snapshot ids")
     parser.add_argument("--snapshots-file", default="", help="file with snapshot ids per line")
     parser.add_argument("--discover-latest", type=int, default=0, help="auto-discover latest N")
-    parser.add_argument("--input-pool", required=True, help="input pool path for comparability")
+    parser.add_argument("--input-pool", default="", help="optional input pool path")
     parser.add_argument("--top-n", type=int, default=10, help="top n for export")
     parser.add_argument("--sort-key", default="final_score", help="sort key for export")
     parser.add_argument("--gate", action="store_true", help="enable regression gate")
@@ -189,10 +189,14 @@ def main() -> int:
     if not snapshots:
         raise ValueError("no snapshots provided")
 
-    pool_path = Path(args.input_pool)
-    if not pool_path.is_absolute():
-        pool_path = REPO_ROOT / pool_path
-    pool_meta = _load_input_pool(pool_path)
+    pool_path: Optional[Path] = None
+    if args.input_pool:
+        pool_path = Path(args.input_pool)
+        if not pool_path.is_absolute():
+            pool_path = REPO_ROOT / pool_path
+        pool_meta = _load_input_pool(pool_path)
+    else:
+        pool_meta = {"strategy": "snapshot_universe"}
 
     thresholds = _load_theme_precision_thresholds(REPO_ROOT)
     min_ratio_enhanced = args.min_theme_unique_ratio_enhanced
@@ -228,19 +232,15 @@ def main() -> int:
             env = os.environ.copy()
             env["THEME_MAP"] = str(theme_map_path)
 
-            _run(
-                [
-                    sys.executable,
-                    "tools/build_screener_candidates.py",
-                    "--snapshot-id",
-                    snapshot_id,
-                    "--input-pool",
-                    str(pool_path),
-                    "--on-empty-pool",
-                    "skip",
-                ],
-                env,
-            )
+            build_cmd = [
+                sys.executable,
+                "tools/build_screener_candidates.py",
+                "--snapshot-id",
+                snapshot_id,
+            ]
+            if pool_path is not None:
+                build_cmd += ["--input-pool", str(pool_path), "--on-empty-pool", "skip"]
+            _run(build_cmd, env)
 
             candidates_meta_path = (
                 REPO_ROOT / "artifacts_metrics" / "screener_candidates_latest_meta.json"
@@ -316,16 +316,17 @@ def main() -> int:
             if all_ratio is not None and all_ratio < min_ratio_all:
                 entry["errors"].append("theme_precision_all_unique_ratio_below_min")
 
-            modes = candidates_meta.get("modes") if isinstance(candidates_meta, dict) else None
-            if not isinstance(modes, list) or not modes:
-                modes = ["enhanced", "tech_only"]
-            expected_rows = pool_meta.get("rows", 0) * len(modes)
-            pool_rows = pool_summary.get("rows")
-            if isinstance(pool_rows, int) and expected_rows:
-                if pool_rows < expected_rows:
-                    entry["warnings"].append("pool_rows_less_than_expected")
-                elif pool_rows > expected_rows:
-                    entry["errors"].append("pool_rows_greater_than_expected")
+            if args.input_pool:
+                modes = candidates_meta.get("modes") if isinstance(candidates_meta, dict) else None
+                if not isinstance(modes, list) or not modes:
+                    modes = ["enhanced", "tech_only"]
+                expected_rows = pool_meta.get("rows", 0) * len(modes)
+                pool_rows = pool_summary.get("rows")
+                if isinstance(pool_rows, int) and expected_rows:
+                    if pool_rows < expected_rows:
+                        entry["warnings"].append("pool_rows_less_than_expected")
+                    elif pool_rows > expected_rows:
+                        entry["errors"].append("pool_rows_greater_than_expected")
 
             active_sha = entry.get("active_theme_map_sha256")
             if active_sha and last_active_sha and active_sha != last_active_sha:

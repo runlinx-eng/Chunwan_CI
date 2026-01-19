@@ -28,7 +28,10 @@ INPUT_POOL=./inputs/pool.csv TOP_N=10 bash tools/phase10_prune_verify.sh
 ./.venv/bin/python tools/run_snapshot_sweep.py --discover-latest 2 \
   --input-pool /private/tmp/pool_20.csv --top-n 10 --gate
 ```
-If a fixed pool has zero overlap in a snapshot, sweep will mark it as skipped; use per-snapshot pools or a shared id space for comparability.
+```bash
+./.venv/bin/python tools/run_snapshot_sweep.py --discover-latest 2 --top-n 10 --gate
+```
+If a fixed pool has zero overlap in a snapshot, sweep will mark it as skipped; use universe mode when snapshots don’t overlap, and fixed pools only for a shared identifier space.
 
 ## Generate Candidates
 ```bash
