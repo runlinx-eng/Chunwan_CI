@@ -17,6 +17,8 @@ git status --porcelain
 bash tools/phase10_prune_verify.sh
 ```
 THEME_MAP controls the theme map input for a run; the one-click flow auto-points it to the pruned map.
+phase10_prune_verify.sh requires a clean tree; if the tree is dirty, commit your changes or run `git stash -u` before re-running.
+Timeseries outputs in `artifacts_metrics/*_latest_timeseries*.json` are runtime artifacts and are ignored by git.
 
 ## Common Parameters
 ```bash
@@ -32,6 +34,7 @@ INPUT_POOL=./inputs/pool.csv TOP_N=10 bash tools/phase10_prune_verify.sh
 ./.venv/bin/python tools/run_snapshot_sweep.py --discover-latest 2 --top-n 10 --gate
 ```
 If a fixed pool has zero overlap in a snapshot, sweep will mark it as skipped; use universe mode when snapshots don’t overlap, and fixed pools only for a shared identifier space.
+Sweep output enhanced_unique_value_ratio/all_unique_value_ratio is computed per snapshot from candidates (candidate_theme_total_summary in screener_candidates_latest.jsonl).
 ```bash
 ./.venv/bin/python tools/run_snapshot_sweep.py --snapshots 2026-01-20,2026-01-16 --top-n 10 --gate \
   | rg "\\[snapshot_sweep\\]"

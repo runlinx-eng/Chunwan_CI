@@ -157,6 +157,77 @@ def _load_theme_precision_thresholds(repo_root: Path) -> Dict[str, float]:
     return thresholds
 
 
+def _coerce_float(value: Any) -> Optional[float]:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _candidate_theme_total(row: Dict[str, Any]) -> Optional[float]:
+    breakdown = row.get("score_breakdown")
+    if isinstance(breakdown, dict):
+        raw = breakdown.get("score_theme_total")
+        if raw is not None:
+            parsed = _coerce_float(raw)
+            if parsed is not None:
+                return parsed
+    for key in ("score_theme_total", "theme_total"):
+        if key in row:
+            parsed = _coerce_float(row.get(key))
+            if parsed is not None:
+                return parsed
+    return None
+
+
+def _summarize_unique_ratio(values: List[float]) -> Dict[str, Any]:
+    n_value = len(values)
+    if n_value == 0:
+        return {"N": 0, "unique_value_ratio": None}
+    unique_count = len(set(values))
+    return {"N": n_value, "unique_value_ratio": float(unique_count) / float(n_value)}
+
+
+def _default_candidate_theme_total_summary() -> Dict[str, Dict[str, Any]]:
+    return {
+        "all": {"N": 0, "unique_value_ratio": None},
+        "enhanced": {"N": 0, "unique_value_ratio": None},
+    }
+
+
+def _candidate_theme_total_summary(path: Path) -> Dict[str, Dict[str, Any]]:
+    summary = _default_candidate_theme_total_summary()
+    if not path.exists():
+        return summary
+    enhanced_values: List[float] = []
+    all_values: List[float] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(row, dict):
+                continue
+            mode = row.get("mode")
+            if mode not in ("enhanced", "tech_only"):
+                continue
+            if mode == "tech_only":
+                theme_total = 0.0
+            else:
+                theme_total = _candidate_theme_total(row)
+                if theme_total is None:
+                    continue
+            if mode == "enhanced":
+                enhanced_values.append(theme_total)
+            all_values.append(theme_total)
+    summary["enhanced"] = _summarize_unique_ratio(enhanced_values)
+    summary["all"] = _summarize_unique_ratio(all_values)
+    return summary
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run snapshot sweep regression matrix")
     parser.add_argument("--snapshots", default="", help="comma-separated snapshot ids")
@@ -219,7 +290,12 @@ def main() -> int:
     last_active_sha: Optional[str] = None
 
     for snapshot_id in snapshots:
-        entry: Dict[str, Any] = {"snapshot_id": snapshot_id, "warnings": [], "errors": []}
+        entry: Dict[str, Any] = {
+            "snapshot_id": snapshot_id,
+            "warnings": [],
+            "errors": [],
+            "candidate_theme_total_summary": _default_candidate_theme_total_summary(),
+        }
         try:
             theme_map_path, fallback = _resolve_theme_map(REPO_ROOT, snapshot_id)
             if not theme_map_path.exists():
@@ -252,6 +328,18 @@ def main() -> int:
                 "mode_distribution": pool_output.get("mode_distribution", {}),
             }
             entry["pool_coverage_summary"] = pool_summary
+            candidates_path = pool_output.get("path")
+            candidates_summary_path: Optional[Path] = None
+            if candidates_path:
+                candidate_path = Path(candidates_path)
+                if candidate_path.exists():
+                    candidates_summary_path = candidate_path
+            if candidates_summary_path:
+                entry["candidate_theme_total_summary"] = _candidate_theme_total_summary(
+                    candidates_summary_path
+                )
+            else:
+                entry["warnings"].append("missing_candidates_path_for_summary")
             if pool_output.get("rows") == 0 or candidates_meta.get("reason") == "empty_pool":
                 entry["warnings"].append("empty_pool_for_snapshot")
                 snapshots_skipped += 1
@@ -308,7 +396,7 @@ def main() -> int:
                     entry["errors"].append("pool_mode_distribution_mismatch")
                     break
 
-            summary = entry.get("theme_precision_summary") or {}
+            summary = entry.get("candidate_theme_total_summary") or {}
             enhanced_ratio = summary.get("enhanced", {}).get("unique_value_ratio")
             all_ratio = summary.get("all", {}).get("unique_value_ratio")
             if enhanced_ratio is not None and enhanced_ratio < min_ratio_enhanced:
@@ -381,7 +469,7 @@ def main() -> int:
         elif "empty_pool_for_snapshot" in warnings:
             status = "skipped"
         pool_summary = entry.get("pool_coverage_summary", {}) if isinstance(entry.get("pool_coverage_summary"), dict) else {}
-        theme_summary = entry.get("theme_precision_summary", {}) if isinstance(entry.get("theme_precision_summary"), dict) else {}
+        theme_summary = entry.get("candidate_theme_total_summary", {}) if isinstance(entry.get("candidate_theme_total_summary"), dict) else {}
         enhanced_ratio = None
         all_ratio = None
         if isinstance(theme_summary.get("enhanced"), dict):

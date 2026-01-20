@@ -138,6 +138,23 @@ def _parse_weight(row: Dict[str, Any]) -> Optional[float]:
     return None
 
 
+def _percentile(values: List[int], q: float) -> Optional[float]:
+    if not values:
+        return None
+    if q <= 0:
+        return float(values[0])
+    if q >= 1:
+        return float(values[-1])
+    ordered = sorted(values)
+    idx = (len(ordered) - 1) * q
+    lo = int(idx)
+    hi = min(lo + 1, len(ordered) - 1)
+    if lo == hi:
+        return float(ordered[lo])
+    frac = idx - lo
+    return float(ordered[lo]) * (1 - frac) + float(ordered[hi]) * frac
+
+
 def _build_candidates(
     path: Path,
 ) -> Tuple[List[str], str, List[str], List[Dict[str, Any]], bool, int, int, int]:
@@ -183,6 +200,7 @@ def _select_terms(
     min_concepts: int,
     min_score: float,
     lambda_penalty: float,
+    max_themes_per_concept: int,
 ) -> Tuple[Dict[str, List[Dict[str, Any]]], str]:
     theme_candidates: Dict[str, Dict[str, Dict[str, Any]]] = {}
     theme_order: List[str] = []
@@ -247,6 +265,8 @@ def _select_terms(
                     continue
                 base_freq = term_theme_counts.get(term, 1)
                 selected_count = selected_terms_global.get(term, 0)
+                if selected_count >= max_themes_per_concept:
+                    continue
                 penalty = lambda_penalty * (base_freq / max(1, num_themes))
                 score = entry["local_support"] - penalty
                 bias = (term_hash.get(term, 0) + theme_index.get(theme, 0)) % 1000000
@@ -264,7 +284,8 @@ def _select_terms(
                     best_entry = entry
                     best_score = score
             if best_entry is None:
-                break
+                blocked_themes.add(theme)
+                continue
             if len(selected[theme]) >= min_concepts and best_score is not None and best_score < min_score:
                 blocked_themes.add(theme)
                 continue
@@ -309,6 +330,7 @@ def _build_summary(
     candidates: List[Dict[str, Any]],
     selected: Dict[str, List[Dict[str, Any]]],
     strategy: str,
+    max_themes_per_concept: int,
 ) -> Dict[str, Any]:
     all_terms = {}
     for item in candidates:
@@ -346,6 +368,26 @@ def _build_summary(
         [{"concept": term, "themes": count} for term, count in term_counts.items()],
         key=lambda x: (-x["themes"], x["concept"]),
     )[:20]
+    concept_themes: Dict[str, List[str]] = {}
+    for theme, entries in selected.items():
+        for entry in entries:
+            term = entry["term"]
+            concept_themes.setdefault(term, []).append(theme)
+    themes_per_concept = [len(set(themes)) for themes in concept_themes.values()]
+    themes_per_concept_max = max(themes_per_concept) if themes_per_concept else None
+    themes_per_concept_p95 = _percentile(themes_per_concept, 0.95)
+    concepts_over_cap = []
+    for concept, themes in concept_themes.items():
+        unique_themes = sorted(set(themes))
+        count = len(unique_themes)
+        if count > max_themes_per_concept:
+            concepts_over_cap.append(
+                {"concept": concept, "count": count, "themes": unique_themes}
+            )
+    concepts_over_cap = sorted(
+        concepts_over_cap,
+        key=lambda item: (-item["count"], item["concept"]),
+    )[:20]
     unique_triplets = {
         tuple(sorted(item["term"] for item in selected.get(theme, [])))
         for theme in selected
@@ -356,7 +398,10 @@ def _build_summary(
         "duplicate_terms": duplicate_terms,
         "duplicate_ratio": (duplicate_terms / total_terms) if total_terms else 0.0,
         "top_repeated_terms": top_repeated,
+        "themes_per_concept_max": themes_per_concept_max,
+        "themes_per_concept_p95": themes_per_concept_p95,
     }
+    summary["concepts_over_cap"] = concepts_over_cap
     summary["concepts_per_theme_histogram"] = dict(summary["distribution"])
     summary["top_repeated_concepts"] = top_repeated
     summary["unique_triplets_count"] = len(unique_triplets)
@@ -391,6 +436,12 @@ def main() -> None:
         type=float,
         default=0.5,
         help="Penalty multiplier for global theme frequency",
+    )
+    parser.add_argument(
+        "--max-themes-per-concept",
+        type=int,
+        default=2,
+        help="Maximum number of themes a concept can appear in",
     )
     parser.add_argument(
         "--out",
@@ -436,6 +487,7 @@ def main() -> None:
         max(args.min_concepts, 1),
         args.min_score,
         args.lambda_penalty,
+        max(args.max_themes_per_concept, 1),
     )
 
     out_path = Path(args.out)
@@ -444,7 +496,14 @@ def main() -> None:
     schema = "cn" if "主题名称" in header else "en"
     _write_pruned(header, schema, theme_col, term_cols, selected, out_path)
 
-    summary = _build_summary(theme_map_path, out_path, candidates, selected, strategy)
+    summary = _build_summary(
+        theme_map_path,
+        out_path,
+        candidates,
+        selected,
+        strategy,
+        max(args.max_themes_per_concept, 1),
+    )
     metrics_dir = repo_root / "artifacts_metrics"
     metrics_dir.mkdir(parents=True, exist_ok=True)
     summary_path = metrics_dir / "theme_map_prune_latest.json"

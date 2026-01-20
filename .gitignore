@@ -1,5 +1,6 @@
 .venv/
 __pycache__/
+tools/__pycache__/
 .cache/
 outputs/
 artifacts_logs/
@@ -22,6 +23,8 @@ notes/
 artifacts_metrics/theme_precision_latest.json
 artifacts_metrics/theme_map_prune_latest.json
 artifacts_metrics/regression_matrix_latest.json
+artifacts_metrics/regression_matrix_timeseries_latest.json
+artifacts_metrics/*_latest_timeseries*.json
 artifacts_metrics/theme_map_sparsity_latest.json
 artifacts_metrics/screener_topn_latest.jsonl
 artifacts_metrics/screener_topn_latest_all.jsonl
