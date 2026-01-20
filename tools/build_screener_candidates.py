@@ -53,6 +53,36 @@ def _normalize_theme_map_paths(repo_root: Path, theme_map_path: Path) -> Tuple[s
     return rel_path, abs_path, False
 
 
+def _normalize_repo_path(repo_root: Path, path: Path) -> Tuple[str, str, bool]:
+    if not path.is_absolute():
+        path = repo_root / path
+    abs_path = str(path.resolve())
+    try:
+        rel_path = str(path.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        return abs_path, abs_path, True
+    return rel_path, abs_path, False
+
+
+def _membership_fingerprint(repo_root: Path, snapshot_id: str) -> Tuple[Optional[str], Optional[int], Optional[str], List[str]]:
+    if not snapshot_id:
+        return None, None, None, []
+    path = repo_root / "data" / "snapshots" / snapshot_id / "concept_membership.csv"
+    rel_path, _abs_path, _external = _normalize_repo_path(repo_root, path)
+    if not path.exists():
+        return rel_path, None, None, []
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    rows = 0
+    columns: List[str] = []
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.reader(handle)
+        header = next(reader, [])
+        columns = header[:30] if isinstance(header, list) else []
+        for _ in reader:
+            rows += 1
+    return rel_path, rows, sha, columns
+
+
 def _latest_log(repo_root: Path) -> Optional[str]:
     logs_dir = repo_root / "artifacts_logs"
     if not logs_dir.exists():
@@ -220,6 +250,9 @@ def main() -> None:
 
     input_pool_meta: Optional[Dict[str, Any]] = None
     reason: Optional[str] = None
+    membership_path, membership_rows, membership_sha256, membership_columns_sample = (
+        _membership_fingerprint(REPO_ROOT, snapshot_id)
+    )
     if args.input_pool:
         pool_path = Path(args.input_pool)
         if not pool_path.is_absolute():
@@ -264,6 +297,10 @@ def main() -> None:
             "theme_map_abs_path": meta_theme_map_abs_path,
             "theme_map_is_external": meta_theme_map_external,
             "theme_map_sha256": theme_map_sha256,
+            "membership_path": membership_path,
+            "membership_rows": membership_rows,
+            "membership_sha256": membership_sha256,
+            "membership_columns_sample": membership_columns_sample,
             "latest_log_path": latest_log_path,
             "source": {
                 "provider": "snapshot",
@@ -307,6 +344,10 @@ def main() -> None:
         "theme_map_abs_path": meta_theme_map_abs_path,
         "theme_map_is_external": meta_theme_map_external,
         "theme_map_sha256": theme_map_sha256,
+        "membership_path": membership_path,
+        "membership_rows": membership_rows,
+        "membership_sha256": membership_sha256,
+        "membership_columns_sample": membership_columns_sample,
         "latest_log_path": latest_log_path,
         "source": {
             "provider": "snapshot",

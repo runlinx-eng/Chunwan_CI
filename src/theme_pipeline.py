@@ -1,4 +1,8 @@
 from dataclasses import dataclass
+import getpass
+import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 import re
@@ -11,6 +15,27 @@ from .signals import Signal
 
 ThemeMap = Dict[str, List[Dict[str, List[str]]]]
 TERM_SPLIT_RE = re.compile(r"[,\uFF0C;\uFF1B、|\s]+")
+
+
+def _io_debug_exit(path: Path, exc: Exception) -> None:
+    print(
+        "[io] error={error} path={path}".format(error=type(exc).__name__, path=path),
+        file=sys.stderr,
+    )
+    print(
+        "[io] pwd={pwd} user={user}".format(pwd=os.getcwd(), user=getpass.getuser()),
+        file=sys.stderr,
+    )
+    try:
+        subprocess.run(
+            ["ls", "-leO@", str(path)],
+            check=False,
+            stdout=sys.stderr,
+            stderr=sys.stderr,
+        )
+    except Exception as ls_exc:  # noqa: BLE001
+        print(f"[io] ls_failed={ls_exc}", file=sys.stderr)
+    sys.exit(1)
 
 
 def _split_terms(value: str) -> List[str]:
@@ -297,18 +322,43 @@ def build_snapshot_candidates(
     membership_path = snapshot_dir / "concept_membership.csv"
     prices_path = snapshot_dir / "prices.csv"
     if not membership_path.exists():
-        raise FileNotFoundError(f"Missing concept_membership.csv: {membership_path}")
+        _io_debug_exit(
+            membership_path,
+            FileNotFoundError(f"Missing concept_membership.csv: {membership_path}"),
+        )
     if not prices_path.exists():
-        raise FileNotFoundError(f"Missing prices.csv: {prices_path}")
+        _io_debug_exit(prices_path, FileNotFoundError(f"Missing prices.csv: {prices_path}"))
 
-    membership = pd.read_csv(membership_path, dtype={"ticker": str, "concept": str, "industry": str})
+    try:
+        membership = pd.read_csv(
+            membership_path, dtype={"ticker": str, "concept": str, "industry": str}
+        )
+    except (FileNotFoundError, PermissionError) as exc:
+        _io_debug_exit(membership_path, exc)
+    if len(membership) == 0:
+        raise ValueError(f"membership has 0 rows: {membership_path}")
+    if "ticker" not in membership.columns:
+        raise ValueError(
+            "membership missing join key column(s) ['ticker']; "
+            f"columns={list(membership.columns)}"
+        )
     membership["ticker"] = membership["ticker"].map(normalize_ticker)
     membership["concept"] = membership.get("concept", "").astype(str).str.strip()
     membership["industry"] = membership.get("industry", membership["concept"]).astype(str).str.strip()
     membership["name"] = membership.get("name", "").astype(str).str.strip()
     membership["description"] = membership.get("description", "").astype(str).str.strip()
 
-    prices = pd.read_csv(prices_path, dtype={"ticker": str})
+    try:
+        prices = pd.read_csv(prices_path, dtype={"ticker": str})
+    except (FileNotFoundError, PermissionError) as exc:
+        _io_debug_exit(prices_path, exc)
+    if len(prices) == 0:
+        raise ValueError(f"prices has 0 rows: {prices_path}")
+    if "ticker" not in prices.columns:
+        raise ValueError(
+            "prices missing join key column(s) ['ticker']; "
+            f"columns={list(prices.columns)}"
+        )
     prices["ticker"] = prices["ticker"].map(normalize_ticker)
 
     n_prices_tickers = int(prices["ticker"].nunique())

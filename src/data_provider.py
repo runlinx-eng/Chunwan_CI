@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import getpass
+import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional
 
@@ -14,6 +18,27 @@ from .utils import stable_hash, trading_calendar
 def normalize_ticker(x) -> str:
     s = str(x).strip()
     return s.zfill(6) if s.isdigit() else s
+
+
+def _io_debug_exit(path: Path, exc: Exception) -> None:
+    print(
+        "[io] error={error} path={path}".format(error=type(exc).__name__, path=path),
+        file=sys.stderr,
+    )
+    print(
+        "[io] pwd={pwd} user={user}".format(pwd=os.getcwd(), user=getpass.getuser()),
+        file=sys.stderr,
+    )
+    try:
+        subprocess.run(
+            ["ls", "-leO@", str(path)],
+            check=False,
+            stdout=sys.stderr,
+            stderr=sys.stderr,
+        )
+    except Exception as ls_exc:  # noqa: BLE001
+        print(f"[io] ls_failed={ls_exc}", file=sys.stderr)
+    sys.exit(1)
 
 
 @dataclass(frozen=True)
@@ -312,14 +337,24 @@ class SnapshotProvider(DataProvider):
         snapshot_dir = self._snapshot_dir(as_of)
         membership_path = snapshot_dir / "concept_membership.csv"
         if not membership_path.exists():
-            available = ", ".join(self._available_snapshots())
-            raise FileNotFoundError(
-                f"Missing concept_membership.csv under {snapshot_dir}. Available snapshots: {available}"
+            _io_debug_exit(
+                membership_path,
+                FileNotFoundError(f"Missing concept_membership.csv: {membership_path}"),
             )
-        df = pd.read_csv(
-            membership_path,
-            dtype={"ticker": str, "concept": str, "industry": str},
-        )
+        try:
+            df = pd.read_csv(
+                membership_path,
+                dtype={"ticker": str, "concept": str, "industry": str},
+            )
+        except (FileNotFoundError, PermissionError) as exc:
+            _io_debug_exit(membership_path, exc)
+        if len(df) == 0:
+            raise ValueError(f"membership has 0 rows: {membership_path}")
+        if "ticker" not in df.columns:
+            raise ValueError(
+                "membership missing join key column(s) ['ticker']; "
+                f"columns={list(df.columns)}"
+            )
         df["ticker"] = df["ticker"].map(normalize_ticker)
         df["concept"] = df.get("concept", "").astype(str).str.strip()
         df["industry"] = df.get("industry", df["concept"]).astype(str).str.strip()
@@ -328,21 +363,36 @@ class SnapshotProvider(DataProvider):
 
     def _load_prices(self, as_of: pd.Timestamp) -> pd.DataFrame:
         snapshot_dir = self._snapshot_dir(as_of)
-        for suffix in ("csv", "parquet"):
-            path = snapshot_dir / f"prices.{suffix}"
-            if path.exists():
-                if suffix == "csv":
-                    df = pd.read_csv(path, dtype={"ticker": str})
-                else:
-                    df = pd.read_parquet(path)
-                if "ticker" in df.columns:
-                    df["ticker"] = df["ticker"].map(normalize_ticker)
-                df["date"] = pd.to_datetime(df["date"])
-                return df
-        available = ", ".join(self._available_snapshots())
-        raise FileNotFoundError(
-            f"Missing prices.csv or prices.parquet under {snapshot_dir}. Available snapshots: {available}"
-        )
+        path: Optional[Path] = None
+        suffix = None
+        for candidate in ("csv", "parquet"):
+            candidate_path = snapshot_dir / f"prices.{candidate}"
+            if candidate_path.exists():
+                path = candidate_path
+                suffix = candidate
+                break
+        if path is None or suffix is None:
+            _io_debug_exit(
+                snapshot_dir / "prices.csv",
+                FileNotFoundError(f"Missing prices.csv or prices.parquet: {snapshot_dir}"),
+            )
+        try:
+            if suffix == "csv":
+                df = pd.read_csv(path, dtype={"ticker": str})
+            else:
+                df = pd.read_parquet(path)
+        except (FileNotFoundError, PermissionError) as exc:
+            _io_debug_exit(path, exc)
+        if len(df) == 0:
+            raise ValueError(f"prices has 0 rows: {path}")
+        if "ticker" not in df.columns:
+            raise ValueError(
+                "prices missing join key column(s) ['ticker']; "
+                f"columns={list(df.columns)}"
+            )
+        df["ticker"] = df["ticker"].map(normalize_ticker)
+        df["date"] = pd.to_datetime(df["date"])
+        return df
 
     def get_stock_universe(self, industries: List[str]) -> List[StockInfo]:
         snapshot_date = self.snapshot_as_of or self.as_of

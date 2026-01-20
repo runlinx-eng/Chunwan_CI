@@ -34,6 +34,8 @@ if [ -z "${CANDIDATES_PATH:-}" ]; then
   fi
   "${build_cmd[@]}"
 fi
+CANDIDATES_HEALTH_PATH="${CANDIDATES_PATH:-artifacts_metrics/screener_candidates_latest.jsonl}"
+python tools/validate_candidates_health.py --path "${CANDIDATES_HEALTH_PATH}"
 EXPORT_TOP_N="${TOP_N:-50}"
 EXPORT_SORT_KEY="${SORT_KEY:-final_score}"
 EXPORT_SOURCE_PATH="${CANDIDATES_PATH:-}"

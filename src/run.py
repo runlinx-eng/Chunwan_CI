@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -41,6 +42,105 @@ def write_outputs(report: dict, output_prefix: Path) -> None:
 
 def _mode_label(theme_weight: float) -> str:
     return "tech_only" if abs(theme_weight) < 1e-12 else "enhanced"
+
+
+def _log_candidate_field_coverage(scored_df: pd.DataFrame, snapshot_id: str) -> None:
+    if os.environ.get("CANDIDATES_DEBUG") != "1":
+        return
+    row_count = int(scored_df.shape[0]) if scored_df is not None else 0
+
+    def _ratio_for(field: str) -> Optional[float]:
+        if field not in scored_df.columns:
+            return None
+        series = scored_df[field]
+        nonempty = series.fillna("").astype(str).str.strip() != ""
+        if row_count == 0:
+            return 0.0
+        return float(nonempty.mean())
+
+    ratios = {
+        "industry": _ratio_for("industry"),
+        "concept": _ratio_for("concept"),
+        "concepts": _ratio_for("concepts"),
+        "industries": _ratio_for("industries"),
+        "reason_struct": _ratio_for("reason_struct"),
+    }
+    print(
+        "[candidates] snapshot_id={snapshot_id} scored_rows={rows} "
+        "industry_nonempty_ratio={industry} concept_nonempty_ratio={concept} "
+        "concepts_nonempty_ratio={concepts} industries_nonempty_ratio={industries} "
+        "reason_struct_nonempty_ratio={reason_struct}".format(
+            snapshot_id=snapshot_id,
+            rows=row_count,
+            industry=ratios["industry"] if ratios["industry"] is not None else "null",
+            concept=ratios["concept"] if ratios["concept"] is not None else "null",
+            concepts=ratios["concepts"] if ratios["concepts"] is not None else "null",
+            industries=ratios["industries"] if ratios["industries"] is not None else "null",
+            reason_struct=ratios["reason_struct"] if ratios["reason_struct"] is not None else "null",
+        )
+    )
+    for _, row in scored_df.head(3).iterrows():
+        keys = sorted(list(row.index))
+        print(
+            "[candidates] sample keys={keys} industry={industry!r} concept={concept!r}".format(
+                keys=keys,
+                industry=row.get("industry"),
+                concept=row.get("concept"),
+            )
+        )
+
+
+def _log_enhanced_candidate_concepts(report: dict, mode_label: str) -> None:
+    if mode_label != "enhanced":
+        return
+    results = report.get("results", [])
+    if not isinstance(results, list):
+        return
+    enhanced_n = len(results)
+    concept_nonempty = 0
+    for row in results:
+        reason_struct = row.get("reason_struct", {})
+        concept_hits = reason_struct.get("concept_hits") if isinstance(reason_struct, dict) else None
+        if isinstance(concept_hits, list) and concept_hits:
+            concept_nonempty += 1
+    print(
+        f"[candidates] enhanced_n={enhanced_n} "
+        f"enhanced_concept_nonempty_n={concept_nonempty}"
+    )
+    if enhanced_n > 0 and concept_nonempty == 0:
+        for row in results[:3]:
+            item_id = row.get("item_id") or row.get("ticker") or ""
+            reason_struct = row.get("reason_struct", {})
+            theme_hits = row.get("theme_hits")
+            theme_hits_len = len(theme_hits) if isinstance(theme_hits, list) else "null"
+            concept_hits = (
+                reason_struct.get("concept_hits") if isinstance(reason_struct, dict) else None
+            )
+            concept_hits_len = len(concept_hits) if isinstance(concept_hits, list) else "null"
+            score_breakdown = row.get("score_breakdown", {})
+            concept_keys = []
+            if isinstance(score_breakdown, dict):
+                for key in score_breakdown:
+                    if "concept" in key or "industry" in key:
+                        concept_keys.append(key)
+            concept_keys = sorted(concept_keys)
+            reason_struct_keys = (
+                sorted(reason_struct.keys()) if isinstance(reason_struct, dict) else []
+            )
+            print(
+                "[candidates] sample item_id={item_id} keys={keys} industry={industry!r} "
+                "theme_hits_len={theme_hits_len} concept_hits_len={concept_hits_len} "
+                "reason_struct_keys={reason_struct_keys} "
+                "score_breakdown_concept_keys={concept_keys}".format(
+                    item_id=item_id,
+                    keys=sorted(row.keys()),
+                    industry=row.get("industry"),
+                    theme_hits_len=theme_hits_len,
+                    concept_hits_len=concept_hits_len,
+                    reason_struct_keys=reason_struct_keys,
+                    concept_keys=concept_keys,
+                )
+            )
 
 
 def read_manifest(snapshot_as_of: Optional[pd.Timestamp]) -> dict:
@@ -354,6 +454,8 @@ def main() -> None:
                 scored_df = scored_df.copy()
                 scored_df["theme_score"] = 0.0
                 scored_df["final_score"] = scored_df["technical_score"]
+            snapshot_id = args.snapshot_as_of or as_of.strftime("%Y-%m-%d")
+            _log_candidate_field_coverage(scored_df, snapshot_id)
             primary = scored_df.sort_values("final_score", ascending=False)
             selected = primary.head(args.top)
             if len(selected) < args.top and len(scored_df) >= args.top:
@@ -477,6 +579,7 @@ def main() -> None:
         if candidates_report:
             snapshot_id = args.snapshot_as_of or as_of.strftime("%Y-%m-%d")
             candidates_path = Path("artifacts_metrics") / "screener_candidates_latest.jsonl"
+            _log_enhanced_candidate_concepts(candidates_report, _mode_label(args.theme_weight))
             write_candidates(
                 candidates_report, _mode_label(args.theme_weight), candidates_path, snapshot_id
             )

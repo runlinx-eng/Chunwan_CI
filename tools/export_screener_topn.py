@@ -50,6 +50,38 @@ def _load_csv(path: Path) -> List[Dict[str, Any]]:
     return entries
 
 
+def _normalize_repo_path(repo_root: Path, path: Path) -> Tuple[str, str, bool]:
+    if not path.is_absolute():
+        path = repo_root / path
+    abs_path = str(path.resolve())
+    try:
+        rel_path = str(path.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        return abs_path, abs_path, True
+    return rel_path, abs_path, False
+
+
+def _membership_fingerprint(
+    repo_root: Path, snapshot_id: str
+) -> Tuple[Optional[str], Optional[int], Optional[str], List[str]]:
+    if not snapshot_id:
+        return None, None, None, []
+    path = repo_root / "data" / "snapshots" / snapshot_id / "concept_membership.csv"
+    rel_path, _abs_path, _external = _normalize_repo_path(repo_root, path)
+    if not path.exists():
+        return rel_path, None, None, []
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    rows = 0
+    columns: List[str] = []
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.reader(handle)
+        header = next(reader, [])
+        columns = header[:30] if isinstance(header, list) else []
+        for _ in reader:
+            rows += 1
+    return rel_path, rows, sha, columns
+
+
 def _theme_weight(report: Dict[str, Any]) -> Optional[float]:
     raw = report.get("provenance", {}).get("args", {}).get("theme_weight")
     try:
@@ -440,6 +472,9 @@ def main() -> None:
             content += "\n"
         out_path.write_text(content, encoding="utf-8")
 
+    membership_path, membership_rows, membership_sha256, membership_columns_sample = (
+        _membership_fingerprint(repo_root, snapshot_id)
+    )
     meta_payload = {
         "git_rev": git_rev,
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
@@ -448,6 +483,10 @@ def main() -> None:
         "theme_map_abs_path": meta_theme_map_abs_path,
         "theme_map_is_external": meta_theme_map_external,
         "theme_map_sha256": theme_map_sha,
+        "membership_path": membership_path,
+        "membership_rows": membership_rows,
+        "membership_sha256": membership_sha256,
+        "membership_columns_sample": membership_columns_sample,
         "latest_log_path": latest_log,
         "schema_version": 1,
         "input_format": input_format,

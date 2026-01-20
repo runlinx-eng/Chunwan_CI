@@ -76,7 +76,7 @@ def _resolve_active_theme_map(
     candidates_meta: Optional[Dict[str, Any]],
     fallback_path: Optional[Path],
     env_theme_map: Optional[Path],
-) -> Optional[Path]:
+) -> Tuple[Optional[Path], str]:
     if isinstance(candidates_meta, dict):
         path_value = candidates_meta.get("theme_map_path")
         if path_value:
@@ -84,13 +84,13 @@ def _resolve_active_theme_map(
             if not candidate.is_absolute():
                 candidate = repo_root / candidate
             if candidate.exists():
-                return candidate
+                return candidate, "candidates_meta"
     if env_theme_map is not None:
         if env_theme_map.exists():
-            return env_theme_map
+            return env_theme_map, "env_theme_map"
     if fallback_path is not None:
-        return fallback_path
-    return _resolve_theme_map(repo_root, snapshot_id)[0]
+        return fallback_path, "snapshot_theme_map"
+    return _resolve_theme_map(repo_root, snapshot_id)[0], "default_theme_map"
 
 
 def _sha256_file(path: Path) -> str:
@@ -331,10 +331,14 @@ def _default_candidate_signature_summary() -> Dict[str, Dict[str, Any]]:
         "all": {
             "theme_hit_signature_unique_set_count": 0,
             "concept_hit_signature_unique_set_count": 0,
+            "concept_hit_nonempty_ratio": None,
+            "concept_hit_non_none_ratio": None,
         },
         "enhanced": {
             "theme_hit_signature_unique_set_count": 0,
             "concept_hit_signature_unique_set_count": 0,
+            "concept_hit_nonempty_ratio": None,
+            "concept_hit_non_none_ratio": None,
         },
     }
 
@@ -384,6 +388,9 @@ def _candidate_summaries(
     all_values: List[float] = []
     theme_sig_sets = {"enhanced": set(), "all": set()}
     concept_sig_sets = {"enhanced": set(), "all": set()}
+    concept_rows = {"enhanced": 0, "all": 0}
+    concept_nonempty = {"enhanced": 0, "all": 0}
+    concept_non_none = {"enhanced": 0, "all": 0}
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             if not line.strip():
@@ -397,6 +404,7 @@ def _candidate_summaries(
             mode = row.get("mode")
             if mode not in ("enhanced", "tech_only"):
                 continue
+            concept_rows["all"] += 1
             if mode == "tech_only":
                 theme_total = 0.0
                 theme_signature = tuple()
@@ -404,6 +412,7 @@ def _candidate_summaries(
                 hit_signature = _theme_hit_signature(row, concept_to_themes)
                 theme_total = float(len(hit_signature))
                 theme_signature = tuple(hit_signature)
+                concept_rows["enhanced"] += 1
             if mode == "enhanced":
                 enhanced_values.append(theme_total)
             all_values.append(theme_total)
@@ -416,15 +425,41 @@ def _candidate_summaries(
                 concept_sig_sets["all"].add(concept_signature)
                 if mode == "enhanced":
                     concept_sig_sets["enhanced"].add(concept_signature)
+                if concept_signature:
+                    concept_non_none["all"] += 1
+                    if mode == "enhanced":
+                        concept_non_none["enhanced"] += 1
+            concept_hits = row.get("concept_hits")
+            concepts = _iter_concepts(concept_hits)
+            if concepts:
+                concept_nonempty["all"] += 1
+                if mode == "enhanced":
+                    concept_nonempty["enhanced"] += 1
     theme_summary["enhanced"] = _summarize_unique_ratio(enhanced_values)
     theme_summary["all"] = _summarize_unique_ratio(all_values)
     signature_summary["enhanced"] = {
         "theme_hit_signature_unique_set_count": len(theme_sig_sets["enhanced"]),
         "concept_hit_signature_unique_set_count": len(concept_sig_sets["enhanced"]),
+        "concept_hit_nonempty_ratio": (
+            concept_nonempty["enhanced"] / concept_rows["enhanced"]
+            if concept_rows["enhanced"]
+            else 0.0
+        ),
+        "concept_hit_non_none_ratio": (
+            concept_non_none["enhanced"] / concept_rows["enhanced"]
+            if concept_rows["enhanced"]
+            else 0.0
+        ),
     }
     signature_summary["all"] = {
         "theme_hit_signature_unique_set_count": len(theme_sig_sets["all"]),
         "concept_hit_signature_unique_set_count": len(concept_sig_sets["all"]),
+        "concept_hit_nonempty_ratio": (
+            concept_nonempty["all"] / concept_rows["all"] if concept_rows["all"] else 0.0
+        ),
+        "concept_hit_non_none_ratio": (
+            concept_non_none["all"] / concept_rows["all"] if concept_rows["all"] else 0.0
+        ),
     }
     return theme_summary, signature_summary
 
@@ -455,6 +490,7 @@ def main() -> int:
         default="artifacts_metrics/regression_matrix_timeseries_latest.json",
         help="output path",
     )
+    parser.add_argument("--verbose", action="store_true", help="print debug diagnostics")
     args = parser.parse_args()
 
     snapshots = _read_snapshots(args)
@@ -468,6 +504,7 @@ def main() -> int:
         )
     if args.min_theme_unique_ratio_all is not None:
         deprecated_flags.append(("--min-theme-unique-ratio-all", args.min_theme_unique_ratio_all))
+    debug_enabled = args.verbose or os.environ.get("SWEEP_DEBUG") == "1"
 
     pool_path: Optional[Path] = None
     if args.input_pool:
@@ -499,6 +536,7 @@ def main() -> int:
     snapshots_skipped = 0
     regressions: List[Dict[str, Any]] = []
     last_active_sha: Optional[str] = None
+    debug_info_by_snapshot: Dict[str, Dict[str, Any]] = {}
 
     for snapshot_id in snapshots:
         entry: Dict[str, Any] = {
@@ -521,11 +559,8 @@ def main() -> int:
             entry["default_theme_map_sha256"] = theme_map_sha
             entry["theme_map_fallback"] = fallback
 
-            env_theme_map_path, env_theme_map_external = _resolve_env_theme_map(REPO_ROOT)
+            env_theme_map_path, _env_theme_map_external = _resolve_env_theme_map(REPO_ROOT)
             build_theme_map_path = env_theme_map_path or theme_map_path
-            if env_theme_map_path is not None and env_theme_map_external:
-                entry["warnings"].append("external_theme_map_path")
-                entry["active_theme_map_path_external"] = True
 
             env = os.environ.copy()
             env["THEME_MAP"] = str(build_theme_map_path)
@@ -550,9 +585,27 @@ def main() -> int:
                 "mode_distribution": pool_output.get("mode_distribution", {}),
             }
             entry["pool_coverage_summary"] = pool_summary
-            summary_theme_map_path = _resolve_active_theme_map(
+            summary_theme_map_path, summary_theme_map_source = _resolve_active_theme_map(
                 REPO_ROOT, snapshot_id, candidates_meta, theme_map_path, env_theme_map_path
             )
+            resolved_active_theme_map_abs: Optional[str] = None
+            resolved_active_theme_map_external = False
+            if summary_theme_map_path is not None:
+                _rel_path, resolved_active_theme_map_abs, resolved_active_theme_map_external = (
+                    _normalize_repo_path(summary_theme_map_path, REPO_ROOT)
+                )
+            is_under_repo = None
+            if resolved_active_theme_map_abs is not None:
+                is_under_repo = not resolved_active_theme_map_external
+            debug_info_by_snapshot[snapshot_id] = {
+                "resolved_active_theme_map_abs": resolved_active_theme_map_abs,
+                "is_under_repo": is_under_repo,
+                "warning_trigger_source": summary_theme_map_source,
+            }
+            if resolved_active_theme_map_external:
+                entry["active_theme_map_path_external"] = True
+                if "external_theme_map_path" not in entry["warnings"]:
+                    entry["warnings"].append("external_theme_map_path")
             candidates_path = pool_output.get("path")
             candidates_summary_path: Optional[Path] = None
             if candidates_path:
@@ -589,11 +642,23 @@ def main() -> int:
                     if isinstance(signature_summary, dict)
                     else None
                 )
+                enhanced_concept_nonempty_ratio = (
+                    signature_summary.get("enhanced", {}).get("concept_hit_nonempty_ratio")
+                    if isinstance(signature_summary, dict)
+                    else None
+                )
+                enhanced_concept_non_none_ratio = (
+                    signature_summary.get("enhanced", {}).get("concept_hit_non_none_ratio")
+                    if isinstance(signature_summary, dict)
+                    else None
+                )
                 entry["enhanced_unique_value_count"] = enhanced_unique_count
                 entry["all_unique_value_count"] = all_unique_count
                 entry["enhanced_theme_hit_sig_sets"] = enhanced_theme_sig_unique
                 if "enhanced_concept_hit_sig_sets" not in entry:
                     entry["enhanced_concept_hit_sig_sets"] = enhanced_concept_sig_unique
+                entry["enhanced_concept_nonempty_ratio"] = enhanced_concept_nonempty_ratio
+                entry["enhanced_concept_non_none_ratio"] = enhanced_concept_non_none_ratio
             else:
                 entry["warnings"].append("missing_candidates_path_for_summary")
             if pool_output.get("rows") == 0 or candidates_meta.get("reason") == "empty_pool":
@@ -660,6 +725,8 @@ def main() -> int:
             if "missing_candidates_path_for_summary" not in entry["warnings"]:
                 pool_strategy = entry.get("pool_strategy") or "snapshot_universe"
                 enhanced_concept_sig_unique = entry.get("enhanced_concept_hit_sig_sets")
+                enhanced_concept_nonempty_ratio = entry.get("enhanced_concept_nonempty_ratio")
+                enhanced_concept_non_none_ratio = entry.get("enhanced_concept_non_none_ratio")
                 if pool_strategy == "snapshot_universe":
                     if (
                         enhanced_concept_sig_unique is not None
@@ -667,6 +734,34 @@ def main() -> int:
                     ):
                         entry["errors"].append(
                             "enhanced_concept_hit_signature_unique_set_count_below_min"
+                        )
+                    if (
+                        (enhanced_concept_nonempty_ratio is not None and enhanced_concept_nonempty_ratio <= 0)
+                        or (
+                            enhanced_concept_non_none_ratio is not None
+                            and enhanced_concept_non_none_ratio <= 0
+                        )
+                    ):
+                        entry["errors"].append("enhanced_concept_hit_nonempty_ratio_zero")
+                    enhanced_unique_count = entry.get("enhanced_unique_value_count")
+                    all_unique_count = entry.get("all_unique_value_count")
+                    enhanced_theme_sig_unique = entry.get("enhanced_theme_hit_sig_sets")
+                    if (
+                        enhanced_unique_count is not None
+                        and enhanced_unique_count < THEME_TOTAL_UNIQUE_COUNT_MIN_ENHANCED
+                    ):
+                        entry["warnings"].append("enhanced_theme_total_unique_value_count_below_min")
+                    if (
+                        all_unique_count is not None
+                        and all_unique_count < THEME_TOTAL_UNIQUE_COUNT_MIN_ALL
+                    ):
+                        entry["warnings"].append("all_theme_total_unique_value_count_below_min")
+                    if (
+                        enhanced_theme_sig_unique is not None
+                        and enhanced_theme_sig_unique < THEME_HIT_SIGNATURE_UNIQUE_COUNT_MIN
+                    ):
+                        entry["warnings"].append(
+                            "enhanced_theme_hit_signature_unique_set_count_below_min"
                         )
                 else:
                     enhanced_unique_count = entry.get("enhanced_unique_value_count")
@@ -769,10 +864,29 @@ def main() -> int:
         elif "empty_pool_for_snapshot" in warnings:
             status = "skipped"
         if entry.get("active_theme_map_path_external"):
+            debug_info = debug_info_by_snapshot.get(snapshot_id, {})
+            warning_path = (
+                debug_info.get("resolved_active_theme_map_abs") or entry.get("active_theme_map_path")
+            )
             print(
                 "warning=external_theme_map_path snapshot_id={snapshot_id} path={path}".format(
                     snapshot_id=snapshot_id,
-                    path=entry.get("active_theme_map_path"),
+                    path=warning_path,
+                )
+            )
+        if debug_enabled:
+            debug_info = debug_info_by_snapshot.get(snapshot_id, {})
+            print(
+                "debug snapshot_id={snapshot_id} "
+                "resolved_active_theme_map_abs={resolved_abs} "
+                "is_under_repo={is_under_repo} "
+                "warning_trigger_source={warning_trigger_source}".format(
+                    snapshot_id=snapshot_id,
+                    resolved_abs=debug_info.get("resolved_active_theme_map_abs") or "null",
+                    is_under_repo=debug_info.get("is_under_repo")
+                    if debug_info.get("is_under_repo") is not None
+                    else "null",
+                    warning_trigger_source=debug_info.get("warning_trigger_source") or "null",
                 )
             )
         pool_summary = entry.get("pool_coverage_summary", {}) if isinstance(entry.get("pool_coverage_summary"), dict) else {}
