@@ -1,9 +1,9 @@
 {
-  "outputs_dir": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs",
+  "outputs_dir": "outputs",
   "report_count": 44,
   "reports": [
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-11_top5.json",
+      "path": "outputs/report_2025-11-11_top5.json",
       "as_of": "2025-11-11",
       "theme_weight": null,
       "category": "unknown",
@@ -33,7 +33,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-12_top5.json",
+      "path": "outputs/report_2025-11-12_top5.json",
       "as_of": "2025-11-12",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -107,7 +107,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-13_top5.json",
+      "path": "outputs/report_2025-11-13_top5.json",
       "as_of": "2025-11-13",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -181,7 +181,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-14_top5.json",
+      "path": "outputs/report_2025-11-14_top5.json",
       "as_of": "2025-11-14",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -255,7 +255,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-17_top5.json",
+      "path": "outputs/report_2025-11-17_top5.json",
       "as_of": "2025-11-17",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -329,7 +329,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-18_top5.json",
+      "path": "outputs/report_2025-11-18_top5.json",
       "as_of": "2025-11-18",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -403,7 +403,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-19_top5.json",
+      "path": "outputs/report_2025-11-19_top5.json",
       "as_of": "2025-11-19",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -477,7 +477,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-20_top5.json",
+      "path": "outputs/report_2025-11-20_top5.json",
       "as_of": "2025-11-20",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -551,7 +551,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-21_top5.json",
+      "path": "outputs/report_2025-11-21_top5.json",
       "as_of": "2025-11-21",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -625,7 +625,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-24_top5.json",
+      "path": "outputs/report_2025-11-24_top5.json",
       "as_of": "2025-11-24",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -699,7 +699,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-25_top5.json",
+      "path": "outputs/report_2025-11-25_top5.json",
       "as_of": "2025-11-25",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -773,7 +773,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-26_top5.json",
+      "path": "outputs/report_2025-11-26_top5.json",
       "as_of": "2025-11-26",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -847,7 +847,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-27_top5.json",
+      "path": "outputs/report_2025-11-27_top5.json",
       "as_of": "2025-11-27",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -921,7 +921,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-28_top5.json",
+      "path": "outputs/report_2025-11-28_top5.json",
       "as_of": "2025-11-28",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -995,7 +995,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-01_top5.json",
+      "path": "outputs/report_2025-12-01_top5.json",
       "as_of": "2025-12-01",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1069,7 +1069,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-02_top5.json",
+      "path": "outputs/report_2025-12-02_top5.json",
       "as_of": "2025-12-02",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1143,7 +1143,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-03_top5.json",
+      "path": "outputs/report_2025-12-03_top5.json",
       "as_of": "2025-12-03",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1217,7 +1217,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-04_top5.json",
+      "path": "outputs/report_2025-12-04_top5.json",
       "as_of": "2025-12-04",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1291,7 +1291,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-05_top5.json",
+      "path": "outputs/report_2025-12-05_top5.json",
       "as_of": "2025-12-05",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1365,7 +1365,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-08_top5.json",
+      "path": "outputs/report_2025-12-08_top5.json",
       "as_of": "2025-12-08",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1439,7 +1439,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-09_top5.json",
+      "path": "outputs/report_2025-12-09_top5.json",
       "as_of": "2025-12-09",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1513,7 +1513,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-10_top5.json",
+      "path": "outputs/report_2025-12-10_top5.json",
       "as_of": "2025-12-10",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1587,7 +1587,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-11_top5.json",
+      "path": "outputs/report_2025-12-11_top5.json",
       "as_of": "2025-12-11",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1661,7 +1661,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-12_top5.json",
+      "path": "outputs/report_2025-12-12_top5.json",
       "as_of": "2025-12-12",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1735,7 +1735,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-15_top5.json",
+      "path": "outputs/report_2025-12-15_top5.json",
       "as_of": "2025-12-15",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1809,7 +1809,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-16_top5.json",
+      "path": "outputs/report_2025-12-16_top5.json",
       "as_of": "2025-12-16",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1883,7 +1883,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-17_top5.json",
+      "path": "outputs/report_2025-12-17_top5.json",
       "as_of": "2025-12-17",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1957,7 +1957,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-18_top5.json",
+      "path": "outputs/report_2025-12-18_top5.json",
       "as_of": "2025-12-18",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2031,7 +2031,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-19_top5.json",
+      "path": "outputs/report_2025-12-19_top5.json",
       "as_of": "2025-12-19",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2105,7 +2105,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-22_top5.json",
+      "path": "outputs/report_2025-12-22_top5.json",
       "as_of": "2025-12-22",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2179,7 +2179,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-23_top5.json",
+      "path": "outputs/report_2025-12-23_top5.json",
       "as_of": "2025-12-23",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2253,7 +2253,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-06_top5.json",
+      "path": "outputs/report_2026-01-06_top5.json",
       "as_of": "2026-01-06",
       "theme_weight": null,
       "category": "unknown",
@@ -2283,7 +2283,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-07_top5.json",
+      "path": "outputs/report_2026-01-07_top5.json",
       "as_of": "2026-01-07",
       "theme_weight": null,
       "category": "unknown",
@@ -2313,7 +2313,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-08_top5.json",
+      "path": "outputs/report_2026-01-08_top5.json",
       "as_of": "2026-01-08",
       "theme_weight": null,
       "category": "unknown",
@@ -2343,7 +2343,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-09_top5.json",
+      "path": "outputs/report_2026-01-09_top5.json",
       "as_of": "2026-01-09",
       "theme_weight": null,
       "category": "unknown",
@@ -2373,7 +2373,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-12_top5.json",
+      "path": "outputs/report_2026-01-12_top5.json",
       "as_of": "2026-01-12",
       "theme_weight": null,
       "category": "unknown",
@@ -2403,7 +2403,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-13_top5.json",
+      "path": "outputs/report_2026-01-13_top5.json",
       "as_of": "2026-01-13",
       "theme_weight": null,
       "category": "unknown",
@@ -2433,7 +2433,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-16_top5.json",
+      "path": "outputs/report_2026-01-16_top5.json",
       "as_of": "2026-01-16",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2510,7 +2510,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-16_top5_techonly.json",
+      "path": "outputs/report_2026-01-16_top5_techonly.json",
       "as_of": "2026-01-16",
       "theme_weight": null,
       "category": "unknown",
@@ -2581,7 +2581,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top10.json",
+      "path": "outputs/report_2026-01-20_top10.json",
       "as_of": "2026-01-20",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2689,7 +2689,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top20.json",
+      "path": "outputs/report_2026-01-20_top20.json",
       "as_of": "2026-01-20",
       "theme_weight": null,
       "category": "unknown",
@@ -2719,7 +2719,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5.json",
+      "path": "outputs/report_2026-01-20_top5.json",
       "as_of": "2026-01-20",
       "theme_weight": 0.0,
       "category": "tech_only",
@@ -2793,7 +2793,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5_enhanced.json",
+      "path": "outputs/report_2026-01-20_top5_enhanced.json",
       "as_of": "2026-01-20",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2866,7 +2866,7 @@
       }
     },
     {
-      "path": "/Users/zj1-6/Desktop/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5_techonly.json",
+      "path": "outputs/report_2026-01-20_top5_techonly.json",
       "as_of": "2026-01-20",
       "theme_weight": 0.0,
       "category": "tech_only",
