@@ -160,6 +160,19 @@ def _theme_map_fallback(repo_root: Path, report: Optional[Dict[str, Any]]) -> Tu
     return theme_map_path, sha
 
 
+def _normalize_theme_map_paths(repo_root: Path, theme_map_path: str) -> Tuple[str, str, bool]:
+    path = Path(theme_map_path)
+    if not path.is_absolute():
+        path = repo_root / path
+    abs_path = str(path.resolve())
+    try:
+        rel_path = str(path.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        rel_path = abs_path
+        return rel_path, abs_path, True
+    return rel_path, abs_path, False
+
+
 def _latest_log(repo_root: Path) -> Optional[str]:
     logs_dir = repo_root / "artifacts_logs"
     if not logs_dir.exists():
@@ -343,6 +356,15 @@ def main() -> None:
         theme_map_path, theme_map_sha = map_info
     else:
         theme_map_path, theme_map_sha = _theme_map_fallback(repo_root, meta)
+    meta_theme_map_path, meta_theme_map_abs_path, meta_theme_map_external = _normalize_theme_map_paths(
+        repo_root, theme_map_path
+    )
+    if meta_theme_map_external:
+        print(
+            "warning=external_theme_map_path path={path}".format(
+                path=meta_theme_map_abs_path
+            )
+        )
 
     git_rev = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=repo_root, text=True
@@ -422,7 +444,9 @@ def main() -> None:
         "git_rev": git_rev,
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "snapshot_id": snapshot_id,
-        "theme_map_path": theme_map_path,
+        "theme_map_path": meta_theme_map_path,
+        "theme_map_abs_path": meta_theme_map_abs_path,
+        "theme_map_is_external": meta_theme_map_external,
         "theme_map_sha256": theme_map_sha,
         "latest_log_path": latest_log,
         "schema_version": 1,

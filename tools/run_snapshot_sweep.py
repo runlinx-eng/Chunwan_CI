@@ -8,10 +8,15 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+THEME_TOTAL_UNIQUE_COUNT_MIN_ENHANCED = 3
+THEME_TOTAL_UNIQUE_COUNT_MIN_ALL = 4
+THEME_HIT_SIGNATURE_UNIQUE_COUNT_MIN = 3
+CONCEPT_HIT_SIGNATURE_UNIQUE_COUNT_MIN = 3
+DEFAULT_ENHANCED_CONCEPT_SIG_UNIQUE_MIN = 6
 
 
 def _read_default_theme_map(repo_root: Path) -> Path:
@@ -34,6 +39,58 @@ def _resolve_theme_map(repo_root: Path, snapshot_id: str) -> Tuple[Path, bool]:
     if legacy_map.exists():
         return legacy_map, False
     return _read_default_theme_map(repo_root), True
+
+
+def _is_external_path(path: Path, repo_root: Path) -> bool:
+    try:
+        path.resolve().relative_to(repo_root.resolve())
+    except ValueError:
+        return True
+    return False
+
+
+def _normalize_repo_path(path: Path, repo_root: Path) -> Tuple[str, str, bool]:
+    if not path.is_absolute():
+        path = repo_root / path
+    abs_path = str(path.resolve())
+    try:
+        rel_path = str(path.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        return abs_path, abs_path, True
+    return rel_path, abs_path, False
+
+
+def _resolve_env_theme_map(repo_root: Path) -> Tuple[Optional[Path], bool]:
+    env_value = os.environ.get("THEME_MAP")
+    if not env_value:
+        return None, False
+    candidate = Path(env_value)
+    if not candidate.is_absolute():
+        candidate = repo_root / candidate
+    return candidate, _is_external_path(candidate, repo_root)
+
+
+def _resolve_active_theme_map(
+    repo_root: Path,
+    snapshot_id: str,
+    candidates_meta: Optional[Dict[str, Any]],
+    fallback_path: Optional[Path],
+    env_theme_map: Optional[Path],
+) -> Optional[Path]:
+    if isinstance(candidates_meta, dict):
+        path_value = candidates_meta.get("theme_map_path")
+        if path_value:
+            candidate = Path(path_value)
+            if not candidate.is_absolute():
+                candidate = repo_root / candidate
+            if candidate.exists():
+                return candidate
+    if env_theme_map is not None:
+        if env_theme_map.exists():
+            return env_theme_map
+    if fallback_path is not None:
+        return fallback_path
+    return _resolve_theme_map(repo_root, snapshot_id)[0]
 
 
 def _sha256_file(path: Path) -> str:
@@ -148,6 +205,7 @@ def _load_theme_precision_thresholds(repo_root: Path) -> Dict[str, float]:
     for key in (
         "min_theme_total_unique_value_ratio_enhanced",
         "min_theme_total_unique_value_ratio_all",
+        "min_enhanced_concept_hit_signature_unique_set_count",
     ):
         if key in payload:
             try:
@@ -157,50 +215,175 @@ def _load_theme_precision_thresholds(repo_root: Path) -> Dict[str, float]:
     return thresholds
 
 
-def _coerce_float(value: Any) -> Optional[float]:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
+def _iter_values(raw: Any) -> List[str]:
+    if raw is None:
+        return []
+    values: List[str] = []
+    if isinstance(raw, list):
+        for item in raw:
+            if item is None:
+                continue
+            value = str(item).strip()
+            if value:
+                values.append(value)
+    else:
+        value = str(raw).strip()
+        if value:
+            values.append(value)
+    return values
 
 
-def _candidate_theme_total(row: Dict[str, Any]) -> Optional[float]:
-    breakdown = row.get("score_breakdown")
-    if isinstance(breakdown, dict):
-        raw = breakdown.get("score_theme_total")
-        if raw is not None:
-            parsed = _coerce_float(raw)
-            if parsed is not None:
-                return parsed
-    for key in ("score_theme_total", "theme_total"):
-        if key in row:
-            parsed = _coerce_float(row.get(key))
-            if parsed is not None:
-                return parsed
-    return None
+def _matches_token(name: str, token: str) -> bool:
+    if token.isascii():
+        return token.lower() in name.lower()
+    return token in name
+
+
+def _detect_column(
+    fieldnames: List[str],
+    tokens: List[str],
+    preferred_tokens: Optional[List[str]] = None,
+    exclude_tokens: Optional[List[str]] = None,
+) -> Optional[str]:
+    best_name = None
+    best_score = None
+    for name in fieldnames:
+        if not any(_matches_token(name, token) for token in tokens):
+            continue
+        score = 0
+        for token in tokens:
+            if _matches_token(name, token):
+                score += 1
+        for token in preferred_tokens or []:
+            if _matches_token(name, token):
+                score += 2
+        for token in exclude_tokens or []:
+            if _matches_token(name, token):
+                score -= 2
+        if best_score is None or score > best_score:
+            best_score = score
+            best_name = name
+    return best_name
+
+
+def _load_theme_map_concept_index(path: Optional[Path]) -> Dict[str, Set[str]]:
+    if path is None or not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = reader.fieldnames or []
+        theme_col = _detect_column(
+            fieldnames,
+            tokens=["theme", "主题"],
+            preferred_tokens=["name", "名称"],
+            exclude_tokens=["id", "编号", "代码"],
+        )
+        concept_col = _detect_column(
+            fieldnames,
+            tokens=["concept", "industry", "概念", "行业"],
+        )
+        if not theme_col or not concept_col:
+            return {}
+        concept_map: Dict[str, Set[str]] = {}
+        for row in reader:
+            if not isinstance(row, dict):
+                continue
+            themes = _iter_values(row.get(theme_col))
+            concepts = _iter_values(row.get(concept_col))
+            if not themes or not concepts:
+                continue
+            for concept in concepts:
+                for theme in themes:
+                    concept_map.setdefault(concept, set()).add(theme)
+        return concept_map
 
 
 def _summarize_unique_ratio(values: List[float]) -> Dict[str, Any]:
     n_value = len(values)
     if n_value == 0:
-        return {"N": 0, "unique_value_ratio": None}
-    unique_count = len(set(values))
-    return {"N": n_value, "unique_value_ratio": float(unique_count) / float(n_value)}
+        return {
+            "N": 0,
+            "unique_value_count": 0,
+            "unique_value_ratio": None,
+            "min": None,
+            "max": None,
+        }
+    unique_values = set(values)
+    unique_count = len(unique_values)
+    return {
+        "N": n_value,
+        "unique_value_count": unique_count,
+        "unique_value_ratio": float(unique_count) / float(n_value),
+        "min": min(values),
+        "max": max(values),
+    }
 
 
 def _default_candidate_theme_total_summary() -> Dict[str, Dict[str, Any]]:
     return {
-        "all": {"N": 0, "unique_value_ratio": None},
-        "enhanced": {"N": 0, "unique_value_ratio": None},
+        "all": {"N": 0, "unique_value_count": 0, "unique_value_ratio": None, "min": None, "max": None},
+        "enhanced": {"N": 0, "unique_value_count": 0, "unique_value_ratio": None, "min": None, "max": None},
     }
 
 
-def _candidate_theme_total_summary(path: Path) -> Dict[str, Dict[str, Any]]:
-    summary = _default_candidate_theme_total_summary()
+def _default_candidate_signature_summary() -> Dict[str, Dict[str, Any]]:
+    return {
+        "all": {
+            "theme_hit_signature_unique_set_count": 0,
+            "concept_hit_signature_unique_set_count": 0,
+        },
+        "enhanced": {
+            "theme_hit_signature_unique_set_count": 0,
+            "concept_hit_signature_unique_set_count": 0,
+        },
+    }
+
+
+def _iter_concepts(raw_hits: Any) -> List[str]:
+    if not isinstance(raw_hits, list):
+        return []
+    concepts: List[str] = []
+    for hit in raw_hits:
+        raw = None
+        if isinstance(hit, dict):
+            raw = hit.get("concept")
+            if raw is None or str(raw).strip() == "":
+                raw = hit.get("industry")
+        else:
+            raw = hit
+        concepts.extend(_iter_values(raw))
+    return concepts
+
+
+def _theme_hit_signature(row: Dict[str, Any], concept_to_themes: Dict[str, Set[str]]) -> List[str]:
+    concepts = _iter_concepts(row.get("concept_hits"))
+    hit_themes: Set[str] = set()
+    for concept in concepts:
+        hit_themes.update(concept_to_themes.get(concept, set()))
+    return sorted(hit_themes)
+
+
+def _concept_hit_signature(row: Dict[str, Any]) -> Optional[Tuple[str, ...]]:
+    concept_hits = row.get("concept_hits")
+    if not isinstance(concept_hits, list):
+        return None
+    concepts = _iter_concepts(concept_hits)
+    return tuple(sorted(set(concepts)))
+
+
+def _candidate_summaries(
+    path: Path,
+    theme_map_path: Optional[Path],
+) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, Dict[str, Any]]]:
+    theme_summary = _default_candidate_theme_total_summary()
+    signature_summary = _default_candidate_signature_summary()
     if not path.exists():
-        return summary
+        return theme_summary, signature_summary
+    concept_to_themes = _load_theme_map_concept_index(theme_map_path)
     enhanced_values: List[float] = []
     all_values: List[float] = []
+    theme_sig_sets = {"enhanced": set(), "all": set()}
+    concept_sig_sets = {"enhanced": set(), "all": set()}
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             if not line.strip():
@@ -216,16 +399,34 @@ def _candidate_theme_total_summary(path: Path) -> Dict[str, Dict[str, Any]]:
                 continue
             if mode == "tech_only":
                 theme_total = 0.0
+                theme_signature = tuple()
             else:
-                theme_total = _candidate_theme_total(row)
-                if theme_total is None:
-                    continue
+                hit_signature = _theme_hit_signature(row, concept_to_themes)
+                theme_total = float(len(hit_signature))
+                theme_signature = tuple(hit_signature)
             if mode == "enhanced":
                 enhanced_values.append(theme_total)
             all_values.append(theme_total)
-    summary["enhanced"] = _summarize_unique_ratio(enhanced_values)
-    summary["all"] = _summarize_unique_ratio(all_values)
-    return summary
+
+            theme_sig_sets["all"].add(theme_signature)
+            if mode == "enhanced":
+                theme_sig_sets["enhanced"].add(theme_signature)
+            concept_signature = _concept_hit_signature(row)
+            if concept_signature is not None:
+                concept_sig_sets["all"].add(concept_signature)
+                if mode == "enhanced":
+                    concept_sig_sets["enhanced"].add(concept_signature)
+    theme_summary["enhanced"] = _summarize_unique_ratio(enhanced_values)
+    theme_summary["all"] = _summarize_unique_ratio(all_values)
+    signature_summary["enhanced"] = {
+        "theme_hit_signature_unique_set_count": len(theme_sig_sets["enhanced"]),
+        "concept_hit_signature_unique_set_count": len(concept_sig_sets["enhanced"]),
+    }
+    signature_summary["all"] = {
+        "theme_hit_signature_unique_set_count": len(theme_sig_sets["all"]),
+        "concept_hit_signature_unique_set_count": len(concept_sig_sets["all"]),
+    }
+    return theme_summary, signature_summary
 
 
 def main() -> int:
@@ -241,13 +442,13 @@ def main() -> int:
         "--min-theme-unique-ratio-enhanced",
         type=float,
         default=None,
-        help="minimum enhanced theme unique ratio",
+        help="DEPRECATED: no longer affects gating (count-based gates).",
     )
     parser.add_argument(
         "--min-theme-unique-ratio-all",
         type=float,
         default=None,
-        help="minimum all theme unique ratio",
+        help="DEPRECATED: no longer affects gating (count-based gates).",
     )
     parser.add_argument(
         "--out-path",
@@ -260,22 +461,32 @@ def main() -> int:
     if not snapshots:
         raise ValueError("no snapshots provided")
 
+    deprecated_flags: List[Tuple[str, float]] = []
+    if args.min_theme_unique_ratio_enhanced is not None:
+        deprecated_flags.append(
+            ("--min-theme-unique-ratio-enhanced", args.min_theme_unique_ratio_enhanced)
+        )
+    if args.min_theme_unique_ratio_all is not None:
+        deprecated_flags.append(("--min-theme-unique-ratio-all", args.min_theme_unique_ratio_all))
+
     pool_path: Optional[Path] = None
     if args.input_pool:
         pool_path = Path(args.input_pool)
         if not pool_path.is_absolute():
             pool_path = REPO_ROOT / pool_path
         pool_meta = _load_input_pool(pool_path)
+        pool_meta.setdefault("strategy", "fixed_pool")
     else:
         pool_meta = {"strategy": "snapshot_universe"}
 
     thresholds = _load_theme_precision_thresholds(REPO_ROOT)
-    min_ratio_enhanced = args.min_theme_unique_ratio_enhanced
-    if min_ratio_enhanced is None:
-        min_ratio_enhanced = thresholds.get("min_theme_total_unique_value_ratio_enhanced", 0.02)
-    min_ratio_all = args.min_theme_unique_ratio_all
-    if min_ratio_all is None:
-        min_ratio_all = thresholds.get("min_theme_total_unique_value_ratio_all", 0.02)
+    concept_sig_min_universe = DEFAULT_ENHANCED_CONCEPT_SIG_UNIQUE_MIN
+    raw_concept_min = thresholds.get("min_enhanced_concept_hit_signature_unique_set_count")
+    if raw_concept_min is not None:
+        try:
+            concept_sig_min_universe = int(raw_concept_min)
+        except (TypeError, ValueError):
+            concept_sig_min_universe = DEFAULT_ENHANCED_CONCEPT_SIG_UNIQUE_MIN
 
     out_path = Path(args.out_path)
     if not out_path.is_absolute():
@@ -295,18 +506,29 @@ def main() -> int:
             "warnings": [],
             "errors": [],
             "candidate_theme_total_summary": _default_candidate_theme_total_summary(),
+            "candidate_signature_summary": _default_candidate_signature_summary(),
         }
+        entry["pool_strategy"] = pool_meta.get("strategy")
         try:
             theme_map_path, fallback = _resolve_theme_map(REPO_ROOT, snapshot_id)
             if not theme_map_path.exists():
                 raise FileNotFoundError(f"theme map not found: {theme_map_path}")
             theme_map_sha = _sha256_file(theme_map_path)
-            entry["default_theme_map_path"] = str(theme_map_path)
+            default_theme_map_path, _default_abs_path, _default_external = _normalize_repo_path(
+                theme_map_path, REPO_ROOT
+            )
+            entry["default_theme_map_path"] = default_theme_map_path
             entry["default_theme_map_sha256"] = theme_map_sha
             entry["theme_map_fallback"] = fallback
 
+            env_theme_map_path, env_theme_map_external = _resolve_env_theme_map(REPO_ROOT)
+            build_theme_map_path = env_theme_map_path or theme_map_path
+            if env_theme_map_path is not None and env_theme_map_external:
+                entry["warnings"].append("external_theme_map_path")
+                entry["active_theme_map_path_external"] = True
+
             env = os.environ.copy()
-            env["THEME_MAP"] = str(theme_map_path)
+            env["THEME_MAP"] = str(build_theme_map_path)
 
             build_cmd = [
                 sys.executable,
@@ -328,6 +550,9 @@ def main() -> int:
                 "mode_distribution": pool_output.get("mode_distribution", {}),
             }
             entry["pool_coverage_summary"] = pool_summary
+            summary_theme_map_path = _resolve_active_theme_map(
+                REPO_ROOT, snapshot_id, candidates_meta, theme_map_path, env_theme_map_path
+            )
             candidates_path = pool_output.get("path")
             candidates_summary_path: Optional[Path] = None
             if candidates_path:
@@ -335,9 +560,40 @@ def main() -> int:
                 if candidate_path.exists():
                     candidates_summary_path = candidate_path
             if candidates_summary_path:
-                entry["candidate_theme_total_summary"] = _candidate_theme_total_summary(
-                    candidates_summary_path
+                theme_summary, signature_summary = _candidate_summaries(
+                    candidates_summary_path, summary_theme_map_path
                 )
+                entry["candidate_theme_total_summary"] = theme_summary
+                entry["candidate_signature_summary"] = signature_summary
+                enhanced_unique_count = (
+                    theme_summary.get("enhanced", {}).get("unique_value_count")
+                    if isinstance(theme_summary, dict)
+                    else None
+                )
+                all_unique_count = (
+                    theme_summary.get("all", {}).get("unique_value_count")
+                    if isinstance(theme_summary, dict)
+                    else None
+                )
+                enhanced_theme_sig_unique = (
+                    signature_summary.get("enhanced", {}).get(
+                        "theme_hit_signature_unique_set_count"
+                    )
+                    if isinstance(signature_summary, dict)
+                    else None
+                )
+                enhanced_concept_sig_unique = (
+                    signature_summary.get("enhanced", {}).get(
+                        "concept_hit_signature_unique_set_count"
+                    )
+                    if isinstance(signature_summary, dict)
+                    else None
+                )
+                entry["enhanced_unique_value_count"] = enhanced_unique_count
+                entry["all_unique_value_count"] = all_unique_count
+                entry["enhanced_theme_hit_sig_sets"] = enhanced_theme_sig_unique
+                if "enhanced_concept_hit_sig_sets" not in entry:
+                    entry["enhanced_concept_hit_sig_sets"] = enhanced_concept_sig_unique
             else:
                 entry["warnings"].append("missing_candidates_path_for_summary")
             if pool_output.get("rows") == 0 or candidates_meta.get("reason") == "empty_pool":
@@ -380,7 +636,12 @@ def main() -> int:
             topn_meta_path = REPO_ROOT / "artifacts_metrics" / "screener_topn_latest_meta.json"
             topn_meta = _load_json(topn_meta_path)
 
-            entry["active_theme_map_path"] = topn_meta.get("theme_map_path")
+            active_theme_map_raw = topn_meta.get("theme_map_path") or str(build_theme_map_path)
+            active_path, active_abs_path, _active_external = _normalize_repo_path(
+                Path(active_theme_map_raw), REPO_ROOT
+            )
+            entry["active_theme_map_path"] = active_path
+            entry["active_theme_map_abs_path"] = active_abs_path
             entry["active_theme_map_sha256"] = topn_meta.get("theme_map_sha256")
             entry["active_latest_log_path"] = topn_meta.get("latest_log_path")
             entry["active_git_rev"] = topn_meta.get("git_rev")
@@ -396,13 +657,45 @@ def main() -> int:
                     entry["errors"].append("pool_mode_distribution_mismatch")
                     break
 
-            summary = entry.get("candidate_theme_total_summary") or {}
-            enhanced_ratio = summary.get("enhanced", {}).get("unique_value_ratio")
-            all_ratio = summary.get("all", {}).get("unique_value_ratio")
-            if enhanced_ratio is not None and enhanced_ratio < min_ratio_enhanced:
-                entry["errors"].append("theme_precision_enhanced_unique_ratio_below_min")
-            if all_ratio is not None and all_ratio < min_ratio_all:
-                entry["errors"].append("theme_precision_all_unique_ratio_below_min")
+            if "missing_candidates_path_for_summary" not in entry["warnings"]:
+                pool_strategy = entry.get("pool_strategy") or "snapshot_universe"
+                enhanced_concept_sig_unique = entry.get("enhanced_concept_hit_sig_sets")
+                if pool_strategy == "snapshot_universe":
+                    if (
+                        enhanced_concept_sig_unique is not None
+                        and enhanced_concept_sig_unique < concept_sig_min_universe
+                    ):
+                        entry["errors"].append(
+                            "enhanced_concept_hit_signature_unique_set_count_below_min"
+                        )
+                else:
+                    enhanced_unique_count = entry.get("enhanced_unique_value_count")
+                    all_unique_count = entry.get("all_unique_value_count")
+                    if (
+                        enhanced_unique_count is not None
+                        and enhanced_unique_count < THEME_TOTAL_UNIQUE_COUNT_MIN_ENHANCED
+                    ):
+                        entry["errors"].append("enhanced_theme_total_unique_value_count_below_min")
+                    if (
+                        all_unique_count is not None
+                        and all_unique_count < THEME_TOTAL_UNIQUE_COUNT_MIN_ALL
+                    ):
+                        entry["errors"].append("all_theme_total_unique_value_count_below_min")
+                    enhanced_theme_sig_unique = entry.get("enhanced_theme_hit_sig_sets")
+                    if (
+                        enhanced_theme_sig_unique is not None
+                        and enhanced_theme_sig_unique < THEME_HIT_SIGNATURE_UNIQUE_COUNT_MIN
+                    ):
+                        entry["errors"].append(
+                            "enhanced_theme_hit_signature_unique_set_count_below_min"
+                        )
+                    if (
+                        enhanced_concept_sig_unique is not None
+                        and enhanced_concept_sig_unique < CONCEPT_HIT_SIGNATURE_UNIQUE_COUNT_MIN
+                    ):
+                        entry["errors"].append(
+                            "enhanced_concept_hit_signature_unique_set_count_below_min"
+                        )
 
             if args.input_pool:
                 modes = candidates_meta.get("modes") if isinstance(candidates_meta, dict) else None
@@ -452,12 +745,19 @@ def main() -> int:
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print("[snapshot_sweep] BEGIN")
+    print("parser_version=2")
     print(f"created_at={payload.get('created_at')}")
     print("snapshots_requested=" + ",".join(snapshots_requested))
     print(f"snapshots_succeeded={success_count}")
     print(f"snapshots_failed={failed_count}")
     print(f"snapshots_skipped={snapshots_skipped}")
     print(f"regressions_count={len(regressions)}")
+    for name, value in deprecated_flags:
+        print(
+            "warning=deprecated_flag_no_effect name={name} value={value}".format(
+                name=name, value=value
+            )
+        )
     summary_map = {entry.get("snapshot_id"): entry for entry in results}
     for snapshot_id in snapshots_requested:
         entry = summary_map.get(snapshot_id, {})
@@ -468,22 +768,29 @@ def main() -> int:
             status = "failed"
         elif "empty_pool_for_snapshot" in warnings:
             status = "skipped"
+        if entry.get("active_theme_map_path_external"):
+            print(
+                "warning=external_theme_map_path snapshot_id={snapshot_id} path={path}".format(
+                    snapshot_id=snapshot_id,
+                    path=entry.get("active_theme_map_path"),
+                )
+            )
         pool_summary = entry.get("pool_coverage_summary", {}) if isinstance(entry.get("pool_coverage_summary"), dict) else {}
-        theme_summary = entry.get("candidate_theme_total_summary", {}) if isinstance(entry.get("candidate_theme_total_summary"), dict) else {}
-        enhanced_ratio = None
-        all_ratio = None
-        if isinstance(theme_summary.get("enhanced"), dict):
-            enhanced_ratio = theme_summary["enhanced"].get("unique_value_ratio")
-        if isinstance(theme_summary.get("all"), dict):
-            all_ratio = theme_summary["all"].get("unique_value_ratio")
+        enhanced_unique_count = entry.get("enhanced_unique_value_count")
+        all_unique_count = entry.get("all_unique_value_count")
+        enhanced_theme_sig_unique = entry.get("enhanced_theme_hit_sig_sets")
+        enhanced_concept_sig_unique = entry.get("enhanced_concept_hit_sig_sets")
         pool_rows = pool_summary.get("rows")
         line = (
             f"snapshot_id={snapshot_id} "
             f"status={status} "
             f"active_git_rev={entry.get('active_git_rev') or 'null'} "
             f"active_theme_map_sha256={entry.get('active_theme_map_sha256') or 'null'} "
-            f"enhanced_unique_value_ratio={enhanced_ratio if enhanced_ratio is not None else 'null'} "
-            f"all_unique_value_ratio={all_ratio if all_ratio is not None else 'null'} "
+            f"pool_strategy={entry.get('pool_strategy') or 'null'} "
+            f"enhanced_unique_value_count={enhanced_unique_count if enhanced_unique_count is not None else 'null'} "
+            f"all_unique_value_count={all_unique_count if all_unique_count is not None else 'null'} "
+            f"enhanced_theme_hit_sig_sets={enhanced_theme_sig_unique if enhanced_theme_sig_unique is not None else 'null'} "
+            f"enhanced_concept_hit_sig_sets={enhanced_concept_sig_unique if enhanced_concept_sig_unique is not None else 'null'} "
             f"pool_rows={pool_rows if pool_rows is not None else 'null'} "
             f"warnings_count={len(warnings)} "
             f"errors_count={len(errors)}"

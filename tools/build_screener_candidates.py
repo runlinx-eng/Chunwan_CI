@@ -41,6 +41,18 @@ def _theme_map_info(repo_root: Path, override: Optional[str]) -> Tuple[Path, str
     return theme_map_path, sha
 
 
+def _normalize_theme_map_paths(repo_root: Path, theme_map_path: Path) -> Tuple[str, str, bool]:
+    if not theme_map_path.is_absolute():
+        theme_map_path = repo_root / theme_map_path
+    abs_path = str(theme_map_path.resolve())
+    try:
+        rel_path = str(theme_map_path.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        rel_path = abs_path
+        return rel_path, abs_path, True
+    return rel_path, abs_path, False
+
+
 def _latest_log(repo_root: Path) -> Optional[str]:
     logs_dir = repo_root / "artifacts_logs"
     if not logs_dir.exists():
@@ -235,11 +247,22 @@ def main() -> None:
         git_rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
         latest_log_path = _latest_log(REPO_ROOT)
         empty_distribution = _mode_distribution([])
+        meta_theme_map_path, meta_theme_map_abs_path, meta_theme_map_external = _normalize_theme_map_paths(
+            REPO_ROOT, theme_map_path
+        )
+        if meta_theme_map_external:
+            print(
+                "warning=external_theme_map_path path={path}".format(
+                    path=meta_theme_map_abs_path
+                )
+            )
         output_meta = {
             "git_rev": git_rev,
             "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
             "snapshot_id": snapshot_id,
-            "theme_map_path": str(theme_map_path),
+            "theme_map_path": meta_theme_map_path,
+            "theme_map_abs_path": meta_theme_map_abs_path,
+            "theme_map_is_external": meta_theme_map_external,
             "theme_map_sha256": theme_map_sha256,
             "latest_log_path": latest_log_path,
             "source": {
@@ -267,11 +290,22 @@ def main() -> None:
     git_rev = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
     latest_log_path = _latest_log(REPO_ROOT)
 
+    meta_theme_map_path, meta_theme_map_abs_path, meta_theme_map_external = _normalize_theme_map_paths(
+        REPO_ROOT, theme_map_path
+    )
+    if meta_theme_map_external:
+        print(
+            "warning=external_theme_map_path path={path}".format(
+                path=meta_theme_map_abs_path
+            )
+        )
     output_meta = {
         "git_rev": git_rev,
         "created_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "snapshot_id": snapshot_id,
-        "theme_map_path": str(theme_map_path),
+        "theme_map_path": meta_theme_map_path,
+        "theme_map_abs_path": meta_theme_map_abs_path,
+        "theme_map_is_external": meta_theme_map_external,
         "theme_map_sha256": theme_map_sha256,
         "latest_log_path": latest_log_path,
         "source": {

@@ -34,7 +34,8 @@ INPUT_POOL=./inputs/pool.csv TOP_N=10 bash tools/phase10_prune_verify.sh
 ./.venv/bin/python tools/run_snapshot_sweep.py --discover-latest 2 --top-n 10 --gate
 ```
 If a fixed pool has zero overlap in a snapshot, sweep will mark it as skipped; use universe mode when snapshots don’t overlap, and fixed pools only for a shared identifier space.
-Sweep output enhanced_unique_value_ratio/all_unique_value_ratio is computed per snapshot from candidates (candidate_theme_total_summary in screener_candidates_latest.jsonl).
+Sweep output enhanced_unique_value_count/all_unique_value_count is computed per snapshot from candidates (candidate_theme_total_summary in screener_candidates_latest.jsonl).
+Universe mode gates on concept diversity (enhanced_concept_hit_sig_sets); theme diversity gates only apply to fixed pools.
 ```bash
 ./.venv/bin/python tools/run_snapshot_sweep.py --snapshots 2026-01-20,2026-01-16 --top-n 10 --gate \
   | rg "\\[snapshot_sweep\\]"
@@ -57,6 +58,7 @@ wc -l artifacts_metrics/screener_topn_latest_all.jsonl \
 
 # Meta fields
 cat artifacts_metrics/screener_topn_latest_meta.json
+Note: meta theme_map_path is repo-relative when the theme map lives under REPO_ROOT; theme_map_abs_path is the absolute path.
 
 # Coverage + modes
 rg -n "screener_coverage_summary|modes_present" artifacts_metrics/regression_matrix_latest.json
