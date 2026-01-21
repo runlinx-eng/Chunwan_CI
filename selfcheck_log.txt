@@ -1,0 +1,1 @@
+[selfcheck] FAIL step=clean_tree hint=commit or git stash -u before running selfcheck
