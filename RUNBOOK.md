@@ -1,6 +1,12 @@
 # RUNBOOK
 
-## 一键流程
+## Quickstart（新目录/新 venv）
+```bash
+python3 -m venv .venv
+./.venv/bin/pip install -r requirements.txt
+```
+
+## 可执行工作流
 ```bash
 STRICT_IO=1 bash tools/phase10_prune_verify.sh
 ```
@@ -13,11 +19,15 @@ STRICT_IO=1 bash tools/phase10_prune_verify.sh
 ./.venv/bin/python tools/inspect_candidates_diversity.py --path artifacts_metrics/screener_candidates_latest.jsonl
 ```
 
-## 环境约束
-- 统一使用 `./.venv/bin/python` 与 `./.venv/bin/pip`。
-- `phase10_prune_verify.sh` 需要 clean tree。
+## 自检命令
+```bash
+bash tools/compileall_check.sh
+bash tools/selfcheck.sh
+```
 
-## 说明：theme_total 常数（expected）
-在 snapshot_universe 模式下，theme_total 可能因为概念命中稀疏或主题映射收敛而成为常数；sweep gate 只看概念多样性（`enhanced_concept_hit_sig_sets` 与概念非空率）。
+## 常见陷阱
+- python 解析：优先 `./.venv/bin/python`，脚本支持 `VENV_PYTHON=...`。
+- clean tree：`phase10_prune_verify.sh` 要求工作区干净。
+- pyc 权限：如果 `compileall` 报 PermissionError，先检查缓存目录权限或禁写 bytecode。
 
-排障与常见坑：`TROUBLESHOOTING.md`
+排障与命令：`TROUBLESHOOTING.md`

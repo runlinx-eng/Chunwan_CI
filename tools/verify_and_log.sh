@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+source "$ROOT_DIR/tools/resolve_python.sh"
 
 if [ "${1:-}" = "--theme-map" ]; then
   if [ -z "${2:-}" ]; then
@@ -18,10 +19,10 @@ if [ "$#" -gt 0 ]; then
 fi
 
 rm -rf .cache
-python3 -m pytest -q
+"$PYTHON_BIN" -m pytest -q
 ./specpack/verify_all.sh
 ./tools/capture_verify_log.sh
-python tools/theme_precision_metrics.py --out artifacts_metrics/theme_precision_latest.json
+"$PYTHON_BIN" tools/theme_precision_metrics.py --out artifacts_metrics/theme_precision_latest.json
 
 echo "git_rev: $(git rev-parse HEAD)"
 if [ -d artifacts_logs ]; then

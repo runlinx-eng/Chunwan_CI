@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+source "$ROOT_DIR/tools/resolve_python.sh"
 
 meta_path="artifacts_metrics/screener_topn_latest_meta.json"
 if [ ! -f "$meta_path" ]; then
@@ -10,7 +11,9 @@ if [ ! -f "$meta_path" ]; then
   exit 1
 fi
 
-latest_log_path=$(python - <<'PY'
+echo "[backup_audit] python=${PYTHON_BIN}"
+
+latest_log_path=$("$PYTHON_BIN" - <<'PY'
 import json
 from pathlib import Path
 meta_path = Path("artifacts_metrics/screener_topn_latest_meta.json")
@@ -19,7 +22,7 @@ print(meta.get("latest_log_path", ""))
 PY
 )
 
-git_rev=$(python - <<'PY'
+git_rev=$("$PYTHON_BIN" - <<'PY'
 import json
 from pathlib import Path
 meta_path = Path("artifacts_metrics/screener_topn_latest_meta.json")
@@ -28,7 +31,7 @@ print(meta.get("git_rev", ""))
 PY
 )
 
-snapshot_id=$(python - <<'PY'
+snapshot_id=$("$PYTHON_BIN" - <<'PY'
 import json
 from pathlib import Path
 meta_path = Path("artifacts_metrics/screener_topn_latest_meta.json")
@@ -37,7 +40,7 @@ print(meta.get("snapshot_id", ""))
 PY
 )
 
-theme_map_sha256=$(python - <<'PY'
+theme_map_sha256=$("$PYTHON_BIN" - <<'PY'
 import json
 from pathlib import Path
 meta_path = Path("artifacts_metrics/screener_topn_latest_meta.json")

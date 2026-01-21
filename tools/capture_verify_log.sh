@@ -3,13 +3,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+source "$ROOT_DIR/tools/resolve_python.sh"
 
 mkdir -p artifacts_logs
 TS="$(date +%Y%m%d_%H%M%S)"
 LOG="artifacts_logs/verify_${TS}.txt"
 
 echo "pwd: $(pwd)" | tee -a "$LOG"
-python3 -V 2>&1 | tee -a "$LOG"
+"$PYTHON_BIN" -V 2>&1 | tee -a "$LOG"
 uname -a 2>&1 | tee -a "$LOG"
 
 echo "" | tee -a "$LOG"

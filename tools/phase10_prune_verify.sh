@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+source "$ROOT_DIR/tools/resolve_python.sh"
 
 if [ -n "$(git status --porcelain)" ]; then
   echo "error: working tree is dirty; commit or stash before running"
@@ -17,7 +18,7 @@ fi
 
 mkdir -p artifacts_metrics
 
-python tools/prune_theme_map.py \
+"$PYTHON_BIN" tools/prune_theme_map.py \
   --in theme_to_industry_em_2026-01-20.csv \
   --out artifacts_metrics/theme_to_industry_pruned.csv \
   --lambda 0.5 \
@@ -26,27 +27,27 @@ python tools/prune_theme_map.py \
 
 export THEME_MAP="artifacts_metrics/theme_to_industry_pruned.csv"
 bash tools/verify_and_log.sh --theme-map "${THEME_MAP}"
-python tools/build_regression_matrix.py
+"$PYTHON_BIN" tools/build_regression_matrix.py
 if [ -z "${CANDIDATES_PATH:-}" ]; then
-  build_cmd=(python tools/build_screener_candidates.py)
+  build_cmd=("$PYTHON_BIN" tools/build_screener_candidates.py)
   if [ -n "${INPUT_POOL:-}" ]; then
     build_cmd+=(--input-pool "${INPUT_POOL}")
   fi
   "${build_cmd[@]}"
 fi
 CANDIDATES_HEALTH_PATH="${CANDIDATES_PATH:-artifacts_metrics/screener_candidates_latest.jsonl}"
-python tools/validate_candidates_health.py --path "${CANDIDATES_HEALTH_PATH}"
+"$PYTHON_BIN" tools/validate_candidates_health.py --path "${CANDIDATES_HEALTH_PATH}"
 EXPORT_TOP_N="${TOP_N:-50}"
 EXPORT_SORT_KEY="${SORT_KEY:-final_score}"
 EXPORT_SOURCE_PATH="${CANDIDATES_PATH:-}"
-export_cmd=(python tools/export_screener_topn.py --top-n "${EXPORT_TOP_N}" --sort-key "${EXPORT_SORT_KEY}" --modes all,enhanced,tech_only)
+export_cmd=("$PYTHON_BIN" tools/export_screener_topn.py --top-n "${EXPORT_TOP_N}" --sort-key "${EXPORT_SORT_KEY}" --modes all,enhanced,tech_only)
 if [ -n "${EXPORT_SOURCE_PATH}" ]; then
   export_cmd+=(--source-path "${EXPORT_SOURCE_PATH}")
 fi
 "${export_cmd[@]}"
-python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_all.jsonl
-python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_enhanced.jsonl
-python tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_tech_only.jsonl
+"$PYTHON_BIN" tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_all.jsonl
+"$PYTHON_BIN" tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_enhanced.jsonl
+"$PYTHON_BIN" tools/validate_screener_topn.py --path artifacts_metrics/screener_topn_latest_tech_only.jsonl
 
 latest_log="$(ls -t artifacts_logs/verify_*.txt | head -n 1)"
 echo "latest_log: ${latest_log}"

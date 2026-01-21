@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+source "$ROOT_DIR/tools/resolve_python.sh"
 
 if [ $# -ne 1 ]; then
   echo "usage: $0 <AS_OF>"
@@ -11,7 +12,7 @@ fi
 
 AS_OF="$1"
 
-python3 tools/build_real_snapshot_em.py \
+"$PYTHON_BIN" tools/build_real_snapshot_em.py \
   --as-of "$AS_OF" \
   --n-concepts 10 \
   --min-members 50 \
@@ -19,7 +20,7 @@ python3 tools/build_real_snapshot_em.py \
   --max-tickers 600 \
   --adjust hfq
 
-python3 -m src.run \
+"$PYTHON_BIN" -m src.run \
   --date "$AS_OF" \
   --top 5 \
   --provider snapshot \
@@ -27,7 +28,7 @@ python3 -m src.run \
   --snapshot-as-of "$AS_OF" \
   --theme-map theme_to_industry_em_2026-01-16.csv
 
-python3 - "$AS_OF" <<'PY'
+"$PYTHON_BIN" - "$AS_OF" <<'PY'
 import json
 import sys
 from pathlib import Path
