@@ -10,8 +10,18 @@ portable_stat() {
   if stat --version >/dev/null 2>&1; then
     stat -c "%y %n" "$target" || true
   else
-    local stat_bsd_args=(-f "%Sm %N")
-    stat "${stat_bsd_args[@]}" "$target" || true
+    "$PYTHON_BIN" - "$target" <<'PY' || true
+import os
+import sys
+import time
+
+path = sys.argv[1]
+try:
+    st = os.stat(path)
+except FileNotFoundError:
+    sys.exit(0)
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(st.st_mtime)), path)
+PY
   fi
 }
 
@@ -64,5 +74,5 @@ echo "latest_log: ${latest_log}"
 grep -n "^git_rev:" "$latest_log"
 grep -n "\\[specpack\\] all packs passed" "$latest_log"
 grep -n "\\[verify\\] all gates passed" "$latest_log"
-portable_stat "$latest_log"
-portable_stat "artifacts_metrics/theme_precision_latest.json"
+portable_stat "$latest_log" || true
+portable_stat "artifacts_metrics/theme_precision_latest.json" || true
