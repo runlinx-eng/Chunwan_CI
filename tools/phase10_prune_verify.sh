@@ -5,6 +5,16 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 source "$ROOT_DIR/tools/resolve_python.sh"
 
+portable_stat() {
+  local target="$1"
+  if stat --version >/dev/null 2>&1; then
+    stat -c "%y %n" "$target" || true
+  else
+    local stat_bsd_args=(-f "%Sm %N")
+    stat "${stat_bsd_args[@]}" "$target" || true
+  fi
+}
+
 if [ -n "$(git status --porcelain)" ]; then
   echo "error: working tree is dirty; commit or stash before running"
   git status --porcelain
@@ -54,5 +64,5 @@ echo "latest_log: ${latest_log}"
 grep -n "^git_rev:" "$latest_log"
 grep -n "\\[specpack\\] all packs passed" "$latest_log"
 grep -n "\\[verify\\] all gates passed" "$latest_log"
-stat -f "%Sm %N" "$latest_log"
-stat -f "%Sm %N" artifacts_metrics/theme_precision_latest.json
+portable_stat "$latest_log"
+portable_stat "artifacts_metrics/theme_precision_latest.json"
