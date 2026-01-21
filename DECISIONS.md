@@ -21,6 +21,10 @@
 ## 一键脚本约束
 - phase10 一键脚本要求 clean tree，避免产物与源码混杂。
 
+## 备份锚点
+- 决策：本项目备份锚点采用 bundle + INDEX，不依赖 git tag。
+- 原因：部分 macOS/安全策略禁止在 `.git` 创建 `.lock`，导致 tag/refs 更新失败。
+
 ## 记录：theme_total 集中度允许（snapshot_universe）
 - 现象：theme_total 多样性已恢复到 4，但 top1 集中 250。
 - 决策：snapshot_universe 只用概念多样性 gate（概念非空率 + enhanced_concept_hit_signature_unique_set_count），theme_total 低多样性仅警告不阻断。

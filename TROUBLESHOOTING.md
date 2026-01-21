@@ -56,6 +56,22 @@ Fix：
 bash tools/compileall_check.sh
 ```
 
+### macOS 禁止在 .git 创建 .lock（tag/refs 更新失败）
+Root cause：文件系统/安全策略禁止写入 `.git`，导致 `git tag` 或 refs 更新失败。
+Fix：
+复现/验证：
+```bash
+touch .git/refs/tags/_perm_test && echo "OK touch normal" || echo "FAIL touch normal"
+rm -f .git/refs/tags/_perm_test
+touch .git/refs/tags/_perm_test.lock && echo "OK touch .lock" || echo "FAIL touch .lock"
+rm -f .git/refs/tags/_perm_test.lock
+touch .git/packed-refs.lock && echo "OK packed-refs.lock" || echo "FAIL packed-refs.lock"
+rm -f .git/packed-refs.lock
+```
+规避方案：
+- 备份以 bundle + INDEX 为锚点（`bash tools/backup_audit.sh` 会写 `INDEX.txt`）。
+- tag 失败仅记录 warning，不阻断流程。
+
 ### dirty tree
 Root cause：一键流程要求 clean tree。
 Fix：

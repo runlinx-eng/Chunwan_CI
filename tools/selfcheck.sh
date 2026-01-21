@@ -42,7 +42,7 @@ pass "snapshot_sweep"
 
 audit_tag="run_$(date +%Y%m%d_%H%M)"
 if ! AUDIT_TAG="${audit_tag}" VENV_PYTHON="${PYTHON_BIN}" bash tools/backup_audit.sh; then
-  fail "backup_audit" "check screener_topn_latest_meta.json and verify log paths"
+  fail "backup_audit" "check screener_topn_latest_meta.json and verify log paths (tag failures are non-fatal)"
 fi
 pass "backup_audit"
 

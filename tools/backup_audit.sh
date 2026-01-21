@@ -66,6 +66,21 @@ else
 fi
 mkdir -p "$backup_dir"
 
+tag_failed=0
+tag_error=""
+if [ -n "${AUDIT_TAG:-}" ]; then
+  tag_name="${AUDIT_TAG}"
+  if ! tag_error=$(git tag "$tag_name" 2>&1); then
+    tag_failed=1
+    tag_error="${tag_error//$'\n'/ }"
+    tag_reason="tag_failed"
+    if echo "$tag_error" | grep -qi "operation not permitted"; then
+      tag_reason="operation_not_permitted"
+    fi
+    echo "[backup_audit] WARN tag_failed=${tag_name} reason=${tag_reason}"
+  fi
+fi
+
 cp "$meta_path" "$backup_dir/"
 cp "artifacts_metrics/regression_matrix_latest.json" "$backup_dir/"
 cp "$latest_log_path" "$backup_dir/"
@@ -76,6 +91,8 @@ run_git_rev=${git_rev}
 verify_log_basename=${verify_log_basename}
 snapshot_id=${snapshot_id}
 theme_map_sha256=${theme_map_sha256}
+tag_failed=${tag_failed}
+tag_error=${tag_error}
 EOF
 
 echo "[backup_audit] written=${backup_dir} verify_log=${verify_log_basename}"
