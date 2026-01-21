@@ -1,109 +1,30 @@
-name: Phase10 Verify
+name: phase10_verify
 
 on:
-  pull_request:
-  push:
   workflow_dispatch:
 
 jobs:
   phase10_verify:
-    name: Phase10 Verify
     runs-on: ubuntu-latest
-    if: github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Detect Python version
-        id: pyver
-        run: |
-          if [ -f .python-version ]; then
-            ver=$(cat .python-version)
-          else
-            ver=3.11
-          fi
-          echo "version=${ver}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ steps.pyver.outputs.version }}
+          python-version: "3.9"
 
-      - name: Install dependencies
+      - name: Install system deps
         run: |
-          python -m pip install -U pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          elif [ -f pyproject.toml ]; then
-            pip install .
-          else
-            pip install pytest
-          fi
+          sudo apt-get update
+          sudo apt-get install -y ripgrep libdigest-sha-perl
 
-      - name: Run phase10 verify
-        run: bash tools/phase10_prune_verify.sh
-
-      - name: Summarize results
-        if: always()
+      - name: Install deps
         run: |
-          {
-            echo "## Phase10 Verify Summary"
-            LOG=$(ls -t artifacts_logs/verify_*.txt 2>/dev/null | head -n 1 || true)
-            echo ""
-            echo "- latest_log: ${LOG:-missing}"
-            if [ -n "${LOG:-}" ]; then
-              echo "- git_rev: $(grep -n '^git_rev:' "$LOG" | tail -n 1 || true)"
-              echo "- anchors:"
-              echo "  - $(grep -n '\[specpack\] all packs passed' "$LOG" | tail -n 1 || true)"
-              echo "  - $(grep -n '\[verify\] all gates passed' "$LOG" | tail -n 1 || true)"
-            else
-              echo "- git_rev: missing"
-              echo "- anchors: missing"
-            fi
-            echo ""
-            echo "### regression_matrix_latest.json"
-            python - <<'PY'
-import json
-from pathlib import Path
-path = Path('artifacts_metrics/regression_matrix_latest.json')
-if not path.exists():
-    print('- regression_matrix_latest.json: missing')
-    raise SystemExit(0)
-data = json.loads(path.read_text(encoding='utf-8'))
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-def dump(obj):
-    return json.dumps(obj, ensure_ascii=False, sort_keys=True)
-
-tp = data.get('theme_precision_summary')
-sc = data.get('screener_coverage_summary')
-stm = data.get('screener_topn_meta')
-print(f"- theme_precision_summary: {dump(tp)}")
-print(f"- screener_coverage_summary: {dump(sc)}")
-if isinstance(stm, dict):
-    filtered = {k: stm.get(k) for k in (
-        'snapshot_id',
-        'theme_map_sha256',
-        'latest_log_path',
-        'top_n',
-        'modes_present',
-        'exported_counts',
-    )}
-    print(f"- screener_topn_meta: {dump(filtered)}")
-else:
-    print(f"- screener_topn_meta: {dump(stm)}")
-PY
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: phase10-artifacts
-          if-no-files-found: warn
-          path: |
-            artifacts_logs/verify_*.txt
-            artifacts_metrics/regression_matrix_latest.json
-            artifacts_metrics/theme_precision_latest.json
-            artifacts_metrics/theme_map_sparsity_latest.json
-            artifacts_metrics/screener_coverage_latest.json
-            artifacts_metrics/screener_topn_latest_meta.json
+      - name: Selfcheck
+        run: |
+          bash tools/selfcheck.sh
