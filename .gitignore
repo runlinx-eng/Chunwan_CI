@@ -40,3 +40,5 @@ theme_map_prune_latest.json
 artifacts_logs/verify_*.txt
 theme_to_industry_pruned*.csv
 artifacts_metrics/theme_to_industry_pruned*.csv
+downloads_release_bundle/
+downloads_*/
