@@ -58,7 +58,9 @@ jobs:
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
+        env:
+          RUN_DIR: ${{ steps.selfcheck.outputs.audit_dir }}
         with:
           name: ${{ inputs.audit_tag }}
-          path: ${{ steps.selfcheck.outputs.audit_dir }}.tar.gz
+          path: ${{ env.RUN_DIR }}.tar.gz
           if-no-files-found: error
