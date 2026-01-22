@@ -26,13 +26,32 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run selfcheck and backup
+        id: selfcheck
         run: |
-          AUDIT_TAG=${{ inputs.audit_tag }} bash tools/selfcheck.sh
+          set -euo pipefail
+          AUDIT_TAG=${{ inputs.audit_tag }} bash tools/selfcheck.sh | tee /tmp/selfcheck.log
+          audit_dir="$(rg -o 'audit_dir=backups/run_[0-9]{8}_[0-9]{4}' /tmp/selfcheck.log | tail -n 1 | cut -d= -f2)"
+          if [ -z "$audit_dir" ]; then
+            audit_dir="$(ls -1dt backups/run_* 2>/dev/null | head -n 1)"
+          fi
+          if [ -z "$audit_dir" ]; then
+            echo "error: audit_dir not found; backups dir:" >&2
+            ls -la backups >&2 || true
+            exit 1
+          fi
+          echo "audit_dir=${audit_dir}" >> "$GITHUB_OUTPUT"
 
       - name: Create tar.gz
         run: |
           set -euo pipefail
-          RUN_DIR="backups/${{ inputs.audit_tag }}"
+          RUN_DIR="${{ steps.selfcheck.outputs.audit_dir }}"
+          echo "RUN_DIR=${RUN_DIR}"
+          ls -la "$RUN_DIR"
+          du -sh "$RUN_DIR" || true
+          if [ -z "$RUN_DIR" ]; then
+            echo "error: audit_dir output missing" >&2
+            exit 1
+          fi
           test -d "$RUN_DIR"
           tar -czf "${RUN_DIR}.tar.gz" "$RUN_DIR"
           ls -lh "${RUN_DIR}.tar.gz"
@@ -41,5 +60,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.audit_tag }}
-          path: backups/${{ inputs.audit_tag }}.tar.gz
+          path: ${{ steps.selfcheck.outputs.audit_dir }}.tar.gz
           if-no-files-found: error
