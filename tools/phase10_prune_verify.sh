@@ -7,22 +7,35 @@ source "$ROOT_DIR/tools/resolve_python.sh"
 
 portable_stat() {
   local target="$1"
-  if stat --version >/dev/null 2>&1; then
-    stat -c "%y %n" "$target" || true
+  local python_bin=""
+  if [ -n "${PYTHON_BIN:-}" ] && command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
+    python_bin="${PYTHON_BIN}"
+  elif command -v python3 >/dev/null 2>&1; then
+    python_bin="python3"
+  elif command -v python >/dev/null 2>&1; then
+    python_bin="python"
   else
-    "$PYTHON_BIN" - "$target" <<'PY' || true
+    return 0
+  fi
+
+  "${python_bin}" - "$target" <<'PY' || true
+from datetime import datetime
 import os
 import sys
-import time
 
 path = sys.argv[1]
 try:
     st = os.stat(path)
 except FileNotFoundError:
     sys.exit(0)
-print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(st.st_mtime)), path)
+
+dt = datetime.fromtimestamp(st.st_mtime)
+try:
+    ts = dt.isoformat(timespec="seconds")
+except TypeError:
+    ts = dt.isoformat()
+print(ts, path)
 PY
-  fi
 }
 
 if [ -n "$(git status --porcelain)" ]; then
