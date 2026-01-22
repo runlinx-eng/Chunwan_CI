@@ -25,16 +25,12 @@ import sys
 
 path = sys.argv[1]
 try:
-    st = os.stat(path)
-except FileNotFoundError:
+    ts = os.path.getmtime(path)
+except OSError:
     sys.exit(0)
 
-dt = datetime.fromtimestamp(st.st_mtime)
-try:
-    ts = dt.isoformat(timespec="seconds")
-except TypeError:
-    ts = dt.isoformat()
-print(ts, path)
+dt = datetime.fromtimestamp(ts)
+print(dt.strftime("%Y-%m-%d %H:%M:%S"), path)
 PY
 }
 
@@ -87,5 +83,6 @@ echo "latest_log: ${latest_log}"
 grep -n "^git_rev:" "$latest_log"
 grep -n "\\[specpack\\] all packs passed" "$latest_log"
 grep -n "\\[verify\\] all gates passed" "$latest_log"
+TARGET_FILE="artifacts_metrics/theme_precision_latest.json"
 portable_stat "$latest_log" || true
-portable_stat "artifacts_metrics/theme_precision_latest.json" || true
+portable_stat "$TARGET_FILE" || true
