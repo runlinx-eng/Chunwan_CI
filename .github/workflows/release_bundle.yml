@@ -58,6 +58,19 @@ jobs:
             exit 1
           fi
           test -d "$RUN_DIR"
+          INDEX_PATH="${RUN_DIR}/INDEX.txt"
+          if [ ! -f "$INDEX_PATH" ]; then
+            echo "error: INDEX.txt missing at ${INDEX_PATH}" >&2
+            ls -la "$RUN_DIR" >&2 || true
+            exit 1
+          fi
+          for key in as_of_date created_at; do
+            if ! grep -q "^${key}=" "$INDEX_PATH"; then
+              echo "error: INDEX.txt missing ${key}" >&2
+              cat "$INDEX_PATH" >&2 || true
+              exit 1
+            fi
+          done
           tar -czf "${RUN_DIR}.tar.gz" "$RUN_DIR"
           ls -lh "${RUN_DIR}.tar.gz"
 
