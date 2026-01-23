@@ -42,3 +42,4 @@ theme_to_industry_pruned*.csv
 artifacts_metrics/theme_to_industry_pruned*.csv
 downloads_release_bundle/
 downloads_*/
+.vscode/
