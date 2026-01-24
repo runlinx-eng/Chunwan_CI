@@ -51,6 +51,15 @@ print("is_under_repo=", str(abs_p).startswith(str(repo)))
 PY
 ```
 
+### gh cannot reach api.github.com
+Root cause：网络/代理设置导致 GitHub API 不可达。
+Fix：
+```bash
+gh auth status
+curl -I https://api.github.com | head
+scutil --proxy | head
+```
+
 ### PermissionError: *.pyc
 Root cause：Python bytecode cache 目录不可写。
 Fix：
@@ -74,14 +83,6 @@ rm -f .git/packed-refs.lock
 - 备份以 bundle + INDEX 为锚点（`bash tools/backup_audit.sh` 会写 `INDEX.txt`）。
 - tag 失败仅记录 warning，不阻断流程。
 
-### dirty tree
-Root cause：一键流程要求 clean tree。
-Fix：
-```bash
-git status --porcelain
-git stash -u
-```
-
 ### zsh: no matches found
 Root cause：zsh glob 无匹配时报错。
 Fix：
@@ -91,6 +92,20 @@ ls artifacts_logs/verify_*.txt 2>/dev/null || true
 或临时禁用：
 ```bash
 setopt NO_NOMATCH
+```
+
+### zsh shows "command not found: #"
+Root cause：交互式 zsh 不识别注释行。
+Fix：
+```bash
+setopt interactivecomments
+```
+
+### selfcheck fails at clean_tree
+Root cause：一键流程要求 clean tree。
+Fix：
+```bash
+git stash push -u -m wip_before_selfcheck_YYYYMMDD_HHMM
 ```
 
 ### 目录迁移导致旧绝对路径
@@ -131,5 +146,5 @@ cp artifacts_metrics/screener_candidates_latest_meta.json /private/tmp/candidate
 Root cause：phase10 需要 clean tree。
 Fix：
 ```bash
-git status --porcelain
+git stash push -u -m wip_before_selfcheck_YYYYMMDD_HHMM
 ```

@@ -30,6 +30,39 @@ bash tools/compileall_check.sh
 bash tools/selfcheck.sh
 ```
 
+## Usage
+
+### Local quick run
+1) Activate venv (example)
+- source .venv/bin/activate
+
+2) Run selfcheck
+- bash tools/selfcheck.sh
+
+3) Locate the latest run dir
+- ls -1dt backups/run_* | head -n 1
+
+The run dir contains INDEX.txt, verify log, and generated metrics.
+
+### CI bundle (release_bundle)
+1) Pick an audit tag (use the latest local run dir name)
+Example: run_YYYYMMDD_HHMM
+
+2) Trigger and watch CI
+- bash tools/cw_release_bundle_watch.sh run_YYYYMMDD_HHMM
+
+The script prints RUN_ID and waits until success or failure.
+
+### Download and verify bundle artifact
+Given RUN_ID:
+- bash tools/cw_bundle_download_extract_verify.sh RUN_ID
+
+This downloads artifacts into:
+downloads_release_bundle/RUN_ID/
+and verifies INDEX.txt contains:
+- as_of_date
+- created_at
+
 ## 常见陷阱
 - python 解析：优先 `./.venv/bin/python`，脚本支持 `VENV_PYTHON=...`。
 - clean tree：`phase10_prune_verify.sh` 要求工作区干净。
