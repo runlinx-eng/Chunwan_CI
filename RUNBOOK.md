@@ -63,6 +63,12 @@ and verifies INDEX.txt contains:
 - as_of_date
 - created_at
 
+## 可交付物指针
+- AUDIT_TAG=run_20260124_1924
+- RUN_ID=21315297685
+- ART_NAME=run_20260124_1924
+- run_git_rev=9937c1e5...
+
 ## 常见陷阱
 - python 解析：优先 `./.venv/bin/python`，脚本支持 `VENV_PYTHON=...`。
 - clean tree：`phase10_prune_verify.sh` 要求工作区干净。
