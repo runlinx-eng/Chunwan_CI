@@ -63,6 +63,32 @@ and verifies INDEX.txt contains:
 - as_of_date
 - created_at
 
+## 如何接入新日期 snapshot
+1) Create pack（生成快照包）
+```bash
+bash tools/cw_snapshot_pack_create.sh --snapshot-id YYYY-MM-DD --mode minimal
+```
+
+2) 传递 pack 文件（避免直接提交大文件）
+- snapshot_packs/snapshot_pack_YYYY-MM-DD.tar.gz
+- snapshot_packs/snapshot_pack_YYYY-MM-DD.sha256
+- snapshot_packs/snapshot_pack_YYYY-MM-DD.manifest.txt
+
+3) Install pack（安装到本地）
+```bash
+bash tools/cw_snapshot_pack_install.sh --tar snapshot_packs/snapshot_pack_YYYY-MM-DD.tar.gz
+```
+
+4) 验证
+```bash
+./.venv/bin/python -m src.run --date YYYY-MM-DD --top 1 --provider snapshot --no-fallback --snapshot-as-of YYYY-MM-DD
+bash tools/selfcheck.sh
+```
+
+### FAQ
+Q: 缺 snapshot（FileNotFoundError: Missing concept_membership.csv）怎么办？
+A: 用上面的 pack install 安装该日期，或先 create pack 再安装。
+
 ## 可交付物指针
 - AUDIT_TAG=run_20260124_1924
 - RUN_ID=21315297685
