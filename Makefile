@@ -16,3 +16,6 @@ run:
 
 verify:
 	bash specpack/verify_all.sh
+
+release:
+	bash tools/run_release_pipeline.sh $(if $(SNAPSHOTS),--snapshots "$(SNAPSHOTS)",) $(if $(TOP_N),--top-n "$(TOP_N)",)

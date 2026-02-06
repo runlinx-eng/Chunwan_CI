@@ -1,5 +1,89 @@
 # RUNBOOK
 
+## 目标口径（V2）
+
+项目目标由“输出 Top N 名单”升级为“输出可验证 Top N 名单”：
+
+1. 结果完整性：`results_len == topN` 且 `issues == 0`。
+2. 可解释性：每条结果必须含 `theme_hits`、`matched_terms`、`score_breakdown`、`data_date`。
+3. 信号有效性：`enhanced` 相对 `tech_only` 必须有可观测增益。
+4. 数据可靠性：优先 `snapshot`，备选 `akshare`，失败必须显式报因。
+5. 可复现性：同输入哈希输出一致，`provenance` 完整。
+
+## 验收入口（唯一主流程）
+
+```bash
+STRICT_IO=1 bash tools/phase10_prune_verify.sh
+./.venv/bin/python tools/run_snapshot_sweep.py --snapshots 2026-01-20,2026-01-16 --top-n 10 --gate
+```
+
+通过标准：
+- `phase10_prune_verify.sh` 无报错退出。
+- `run_snapshot_sweep.py --gate` 无 gate 失败。
+- 产物存在：`artifacts_metrics/screener_topn_latest_all.jsonl`。
+
+## P0 Preflight（先于验收执行）
+
+```bash
+bash tools/preflight_gate.sh
+bash tools/preflight_gate.sh --require-clean --require-pytest
+bash tools/preflight_gate.sh --ensure-theme-map-sparsity --theme-map theme_to_industry_em_2026-01-20.csv
+```
+
+说明：
+- `--require-clean` 用于 release 验收；日常开发可不加。
+- `--ensure-theme-map-sparsity` 会自动补齐 `artifacts_metrics/theme_map_sparsity_latest.json`，避免 `snapshot_sweep` 在回归矩阵阶段因缺文件失败。
+
+### clean-tree 验收策略
+
+若当前有未提交改动，先暂存再验收：
+
+```bash
+git stash push -u -m wip_before_gate_YYYYMMDD_HHMM
+STRICT_IO=1 bash tools/phase10_prune_verify.sh
+./.venv/bin/python tools/run_snapshot_sweep.py --snapshots 2026-01-20,2026-01-16 --top-n 10 --gate
+```
+
+验收后再恢复：
+
+```bash
+git stash pop
+```
+
+### P1/P2 快速验收（主题区分度）
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m src.run --date 2026-01-20 --top 5 --provider snapshot --no-fallback --snapshot-as-of 2026-01-20 --no-cache
+cp outputs/report_2026-01-20_top5.json /tmp/report_enh.json
+PYTHONDONTWRITEBYTECODE=1 python3 -m src.run --date 2026-01-20 --top 5 --provider snapshot --no-fallback --snapshot-as-of 2026-01-20 --theme-weight 0 --no-cache
+```
+
+通过标准：
+- `enhanced` 与 `tech_only` TopN 序列不完全一致。
+- `tools/run_snapshot_sweep.py --gate` 输出 `snapshots_failed=0`。
+
+## 一键发布流水线（P5）
+
+标准模式（要求 clean tree + pytest 可用）：
+
+```bash
+bash tools/run_release_pipeline.sh
+```
+
+开发诊断模式（跳过 phase10）：
+
+```bash
+bash tools/run_release_pipeline.sh --skip-phase10 --snapshots 2026-01-20,2026-01-16 --top-n 10
+```
+
+## 执行指挥文档（V2）
+
+- 总指挥：`EXECUTION_BOARD.md`
+- 策略内核待办：`BACKLOG_B.md`
+- 项目地图：`PROJECT_MAP.md`
+- 数据契约：`DATA_CONTRACTS.md`
+- 失败矩阵：`FAILURE_MATRIX.md`
+
 ## Quickstart（新目录/新 venv）
 ```bash
 python3 -m venv .venv

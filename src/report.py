@@ -109,10 +109,31 @@ def build_report(
             }
             for hit in hits
         ]
+        theme_strength_components = row.get(
+            "theme_strength_components",
+            {
+                "hit_signal_count": 0.0,
+                "matched_terms_count": 0.0,
+                "match_path_count": 0.0,
+                "map_source_signal_ratio": 0.0,
+            },
+        )
+        if not isinstance(theme_strength_components, dict):
+            theme_strength_components = {
+                "hit_signal_count": 0.0,
+                "matched_terms_count": 0.0,
+                "match_path_count": 0.0,
+                "map_source_signal_ratio": 0.0,
+            }
 
-        score_theme_total = float(row["theme_score"])
-        score_tech_total = float(row["technical_score"])
-        score_total = score_theme_total + score_tech_total
+        score_w_theme = float(row.get("score_w_theme", 1.0))
+        score_w_tech = float(row.get("score_w_tech", 1.0))
+        score_w_risk = float(row.get("score_w_risk", 0.0))
+        risk_penalty = float(row.get("risk_penalty", 0.0))
+        score_theme_total = float(score_w_theme * row["theme_score"])
+        score_tech_total = float(score_w_tech * row["technical_score"])
+        score_risk_total = float(score_w_risk * risk_penalty)
+        score_total = score_theme_total + score_tech_total - score_risk_total
 
         base_themes = themes_used or [hit["theme"] for hit in hits if hit.get("theme")]
         themes_used_list = normalize_themes_used(base_themes, "theme_to_industry.csv")
@@ -129,10 +150,20 @@ def build_report(
 
         contributions = [
             ("theme", score_theme_total, f"theme:+{score_theme_total:.3f}"),
-            ("momentum_20", tech_components["momentum_20"], f"tech_momentum_20:+{tech_components['momentum_20']:.3f}"),
-            ("momentum_60", tech_components["momentum_60"], f"tech_momentum_60:+{tech_components['momentum_60']:.3f}"),
+            (
+                "momentum_20",
+                tech_components["momentum_20"],
+                f"tech_momentum_20:+{tech_components['momentum_20']:.3f}",
+            ),
+            (
+                "momentum_60",
+                tech_components["momentum_60"],
+                f"tech_momentum_60:+{tech_components['momentum_60']:.3f}",
+            ),
             ("volume", tech_components["volume"], f"tech_volume:+{tech_components['volume']:.3f}"),
         ]
+        if score_risk_total > 0:
+            contributions.append(("risk", -score_risk_total, f"risk:-{score_risk_total:.3f}"))
         contributions.sort(key=lambda x: (-x[1], x[0]))
         why_in_top5 = [item[2] for item in contributions[:3]]
 
@@ -149,11 +180,10 @@ def build_report(
             reason_parts.append("指标缺失按0处理")
         reason_parts.append(
             "评分构成: "
-            f"主题{row['theme_score']:.3f}"
-            f"+0.5*20日动量分位{row['momentum_20_rank']:.3f}"
-            f"+0.3*60日动量分位{row['momentum_60_rank']:.3f}"
-            f"+0.2*均量分位{row['volume_rank']:.3f}"
-            f"={row['final_score']:.3f}"
+            f"{score_w_theme:.2f}*主题{row['theme_score']:.3f}"
+            f"+{score_w_tech:.2f}*技术{row['technical_score']:.3f}"
+            f"-{score_w_risk:.2f}*风险{risk_penalty:.3f}"
+            f"={score_total:.3f}"
         )
         reason_parts.append(f"20日动量: {row['momentum_20']:.4f}")
         reason_parts.append(f"60日动量: {row['momentum_60']:.4f}")
@@ -174,9 +204,18 @@ def build_report(
                     "score_total": float(score_total),
                     "score_tech_total": float(score_tech_total),
                     "score_theme_total": float(score_theme_total),
+                    "score_risk_total": float(score_risk_total),
                     "tech_components": tech_components,
                     "theme_components": theme_components,
+                    "theme_strength_components": theme_strength_components,
                     "theme_score": float(row["theme_score"]),
+                    "technical_score": float(row["technical_score"]),
+                    "risk_penalty": float(risk_penalty),
+                    "score_weights": {
+                        "theme": float(score_w_theme),
+                        "tech": float(score_w_tech),
+                        "risk": float(score_w_risk),
+                    },
                     "momentum_20_rank": float(row["momentum_20_rank"]),
                     "momentum_60_rank": float(row["momentum_60_rank"]),
                     "volume_rank": float(row["volume_rank"]),

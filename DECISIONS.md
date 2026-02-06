@@ -2,6 +2,41 @@
 
 定位：记录“为什么这么做”的决策与取舍；每次改 gating、改路径语义、改 CI 范围都补一条。
 
+## 目标重定义（V2）
+- 决策：目标从“能输出 Top N”改为“可验证 Top N（稳定、可解释、可回放）”。
+- 约束：验收统一看 `results_len/topN`、`issues`、`enhanced vs tech_only`、`provenance`，不再以“仅有结果文件”作为通过标准。
+- 原因：避免工程流程通过但策略信息无效。
+
+## 验收入口统一
+- 决策：以 `tools/phase10_prune_verify.sh` + `tools/run_snapshot_sweep.py --gate` 作为主验收入口。
+- 约束：所有后续改动必须先过这两道门禁再进入交付。
+- 原因：统一口径可减少“单点通过、全局失效”的回归风险。
+
+## 执行顺序重排（V2分包）
+- 决策：先做 `P0 验收解阻`，再做 `P1/P2` 策略内核，最后做 `P3/P4/P5` 可靠性与交付。
+- 约束：禁止跳过 `P0` 直接做策略重构。
+- 原因：F0 实跑已确认门禁前置依赖存在阻塞（clean-tree、theme_map_sparsity），不先解阻会导致后续包无法稳定验收。
+
+## 缓存键补全
+- 决策：缓存键加入 `snapshot_as_of`、`theme_weight`、`no_fallback` 维度。
+- 原因：避免 enhanced/tech_only 或不同回放日期之间的缓存串读污染。
+
+## 映射稀疏化与概念权重
+- 决策：`DefaultConceptMapper` 对每个 signal 限制 concept 数量（默认 3），并产出 concept 权重用于主题强度打分。
+- 原因：原始映射接近全连接，导致主题分常数化且无法形成排序差异。
+
+## provider fallback 显式化
+- 决策：provider 初始化/运行期 fallback 必须写入 `meta.provider_fallback_reason` 与 `debug.warnings`。
+- 原因：避免“结果可用但来源不明”的静默降级，便于定位真实数据链路问题。
+
+## sweep 同质化 gate
+- 决策：`run_snapshot_sweep.py` 增加常数主题分拦截（`enhanced_theme_total_constant` / `all_theme_total_constant`）。
+- 原因：防止主题分退化为常数时仍通过回归流程。
+
+## 一键发布入口
+- 决策：新增 `tools/run_release_pipeline.sh`，统一串联 preflight、phase10、snapshot_sweep gate。
+- 原因：降低手动拼命令导致的漏跑与口径不一致风险。
+
 ## Snapshot sweep 的两种池策略
 - fixed pool：用于共享 identifier space 的可比对集合；保留 theme 相关 gate
 - snapshot_universe：每个 snapshot 用自身 universe；gate 主要看 concept 多样性（因为跨 snapshot 不保证重叠）
