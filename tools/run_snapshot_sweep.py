@@ -372,7 +372,25 @@ def _iter_concepts(raw_hits: Any) -> List[str]:
     return concepts
 
 
+def _iter_theme_labels(raw_hits: Any) -> List[str]:
+    if not isinstance(raw_hits, list):
+        return []
+    labels: Set[str] = set()
+    for hit in raw_hits:
+        if not isinstance(hit, dict):
+            continue
+        for key in ("signal_themes", "signal_theme", "theme"):
+            raw = hit.get(key)
+            for label in _iter_values(raw):
+                if label:
+                    labels.add(label)
+    return sorted(labels)
+
+
 def _theme_hit_signature(row: Dict[str, Any], concept_to_themes: Dict[str, Set[str]]) -> List[str]:
+    direct_hits = _iter_theme_labels(row.get("theme_hits"))
+    if direct_hits:
+        return direct_hits
     concepts = _iter_concepts(row.get("concept_hits"))
     hit_themes: Set[str] = set()
     for concept in concepts:

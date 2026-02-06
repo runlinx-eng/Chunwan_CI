@@ -99,6 +99,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m src.run --date 2026-01-20 --top 5 --provide
 通过标准：
 - `enhanced` 与 `tech_only` TopN 序列不完全一致。
 - `tools/run_snapshot_sweep.py --gate` 输出 `snapshots_failed=0`。
+- `enhanced_theme_hit_sig_sets` 以运行时 `theme_hits/signal_themes` 口径统计，不再使用静态映射反推。
 
 ## 一键发布流水线（P5）
 

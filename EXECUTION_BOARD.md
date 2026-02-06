@@ -25,6 +25,7 @@
 | P3 | 可靠性补漏包 | 解决真实数据与失败语义不稳 | provider错误分层、fallback显式策略、同质化告警 | 故障可定位，不再静默降级 |
 | P4 | 门禁升级包 | 把有效性约束落到自动检查 | 新增/升级 gate 与回归矩阵容错 | 关键失败可被门禁直接拦截 |
 | P5 | 交付封装包 | 形成日常可运行交付物 | 一键命令、标准产物、发布清单 | 新日期接入后单命令完成“构建-验收-导出” |
+| P7 | 签名多样性包 | 消除主题签名“假单一”告警 | 用运行时命中签名替代静态反推签名 | `snapshot_sweep` 主题签名反映真实命中差异 |
 
 ## Milestones
 
@@ -120,6 +121,7 @@
 | P6-1 | 重置 `theme_precision` 基线到稀疏化口径 | Done | `artifacts_metrics/theme_precision_baseline.json` 已更新 |
 | P6-2 | 下调 concept-hit 非退化阈值（10 -> 6） | Done | 对齐当前 `snapshot` 实测分布 |
 | P6-3 | 严格门禁复验（`phase10`） | Done | `verify` 全门禁通过 |
+| P7-1 | `snapshot_sweep` 主题签名改为读取 `theme_hits/signal_themes` | Done | 2026-01-20 警告清零，主题签名集合数恢复 |
 
 ## Change Log
 
@@ -130,3 +132,4 @@
 - 2026-02-06: 完成 P4（同质化 gate + 回归矩阵前置依赖检查）。
 - 2026-02-06: 完成 P5（一键发布流水线脚本与 Makefile 入口）。
 - 2026-02-06: 完成 P6（theme_precision 基线与阈值重标定，strict phase10 复验通过）。
+- 2026-02-06: 完成 P7-1（`snapshot_sweep` 主题签名改为运行时命中口径，修复假单一告警）。

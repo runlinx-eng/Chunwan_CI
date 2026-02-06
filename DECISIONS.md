@@ -74,3 +74,7 @@
 ## theme_precision 基线与阈值重标定（P6）
 - 决策：将 `theme_precision_baseline.json` 刷新到当前稀疏化评分口径，并将 `min_concept_hits_unique_set_enhanced/all` 从 10 下调到 6。
 - 原因：P1/P2 后主题映射从“广覆盖常量”转为“稀疏加权命中”，旧基线与旧阈值会把正确改进误判为退化，阻断 strict phase10。
+
+## snapshot_sweep 主题签名口径修正（P7-1）
+- 决策：`run_snapshot_sweep.py` 的 `theme_hit_signature` 优先读取候选结果里的 `theme_hits/signal_themes`，仅在缺失时回退到 `concept_hits + theme_map` 反推。
+- 原因：静态映射反推会把稠密主题图误判为“签名单一”，无法反映运行时稀疏化后的真实命中差异。
