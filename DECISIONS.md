@@ -37,6 +37,10 @@
 - 决策：新增 `tools/run_release_pipeline.sh`，统一串联 preflight、phase10、snapshot_sweep gate。
 - 原因：降低手动拼命令导致的漏跑与口径不一致风险。
 
+## Git 流程防遗漏
+- 决策：新增 `tools/git_guard.sh`，在发布流水线前强制校验分支状态（非 detached、前缀、upstream、clean tree）。
+- 原因：新手在 worktree 环境下容易忘记建分支/推远端，导致提交难追溯或验收被 clean-tree gate 阻断。
+
 ## Snapshot sweep 的两种池策略
 - fixed pool：用于共享 identifier space 的可比对集合；保留 theme 相关 gate
 - snapshot_universe：每个 snapshot 用自身 universe；gate 主要看 concept 多样性（因为跨 snapshot 不保证重叠）

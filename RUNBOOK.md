@@ -22,6 +22,26 @@ STRICT_IO=1 bash tools/phase10_prune_verify.sh
 - `run_snapshot_sweep.py --gate` 无 gate 失败。
 - 产物存在：`artifacts_metrics/screener_topn_latest_all.jsonl`。
 
+## Git 防遗漏流程（新手强制建议）
+
+开工前先跑：
+
+```bash
+bash tools/git_guard.sh --require-prefix --require-upstream
+```
+
+验收前再跑：
+
+```bash
+bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean
+```
+
+通过标准：
+- 非 detached HEAD。
+- 分支名以 `codex/` 开头。
+- 已设置 upstream（避免本地提交未推远端）。
+- 严格验收时必须 clean tree。
+
 ## P0 Preflight（先于验收执行）
 
 ```bash

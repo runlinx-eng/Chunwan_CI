@@ -55,8 +55,10 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$SKIP_PHASE10" -eq 1 ]; then
+  bash tools/git_guard.sh --require-prefix --require-upstream
   bash tools/preflight_gate.sh
 else
+  bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean
   bash tools/preflight_gate.sh --require-clean --require-pytest
   STRICT_IO=1 bash tools/phase10_prune_verify.sh
 fi
