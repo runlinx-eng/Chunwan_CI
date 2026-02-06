@@ -256,6 +256,8 @@ def main() -> None:
     n_theme_hit_tickers = None
     debug_data = {}
     provider_fallback = False
+    provider_fallback_reason = None
+    provider_warning_messages: List[str] = []
 
     input_date = parse_date(args.date)
     as_of = previous_trading_date(input_date)
@@ -284,6 +286,9 @@ def main() -> None:
             args.date,
             str(args.top),
             args.provider,
+            args.snapshot_as_of or "",
+            f"{float(args.theme_weight):.6f}",
+            str(bool(args.no_fallback)),
             signals_hash,
             map_hash,
         ]
@@ -317,11 +322,13 @@ def main() -> None:
     else:
         try:
             provider = build_provider(args.provider, as_of=as_of, snapshot_as_of=snapshot_as_of)
-        except Exception:
+        except Exception as exc:
             if args.no_fallback:
                 raise
             provider = build_provider("mock", as_of=as_of)
             provider_fallback = True
+            provider_fallback_reason = f"provider_init_error:{type(exc).__name__}"
+            provider_warning_messages.append(provider_fallback_reason)
 
         debug = {
             "n_prices_tickers": 0,
@@ -397,7 +404,19 @@ def main() -> None:
         else:
             stocks = provider.get_stock_universe(industries)
         seed = provider_seed(args.date, signals_hash)
-        price_df = provider.get_price_history(stocks, as_of, lookback_days=130, seed=seed)
+        try:
+            price_df = provider.get_price_history(stocks, as_of, lookback_days=130, seed=seed)
+        except Exception as exc:
+            runtime_error = f"provider_runtime_error:{provider.name}:{type(exc).__name__}"
+            if args.no_fallback or provider.name == "snapshot":
+                raise
+            provider_warning_messages.append(runtime_error)
+            provider_fallback = True
+            provider_fallback_reason = runtime_error
+            provider = build_provider("mock", as_of=as_of)
+            stocks = provider.get_stock_universe(industries)
+            seed = provider_seed(args.date, signals_hash)
+            price_df = provider.get_price_history(stocks, as_of, lookback_days=130, seed=seed)
         if price_df.empty:
             n_prices_unique_tickers = 0
             data_date_max = None
@@ -437,7 +456,7 @@ def main() -> None:
             indicator_df["industry"] = ""
             indicator_df["description"] = ""
         issue_list = []
-        warnings = []
+        warnings = list(provider_warning_messages)
         fallback_used = False
         if indicator_df.empty:
             report = {
@@ -472,7 +491,7 @@ def main() -> None:
                 as_of,
                 args.top,
                 themes_used=core_themes,
-                provider=args.provider,
+                provider=provider.name,
                 snapshot_as_of=args.snapshot_as_of,
             )
             candidates_report = build_report(
@@ -482,7 +501,7 @@ def main() -> None:
                 as_of,
                 int(len(scored_df)),
                 themes_used=core_themes,
-                provider=args.provider,
+                provider=provider.name,
                 snapshot_as_of=args.snapshot_as_of,
             )
             report["data_date"] = as_of.strftime("%Y-%m-%d")
@@ -503,6 +522,8 @@ def main() -> None:
         if fallback_all_universe:
             warnings.append("fallback_all_universe_no_theme_hits")
         report["meta"]["provider_fallback"] = provider_fallback
+        if provider_fallback_reason:
+            report["meta"]["provider_fallback_reason"] = provider_fallback_reason
         issue_list, warnings = compute_issue_lists(
             report,
             args.top,
@@ -555,6 +576,8 @@ def main() -> None:
                 if key in mapper_debug:
                     debug_data[key] = mapper_debug[key]
         debug_data["warnings"] = warnings
+        if provider_fallback_reason:
+            debug_data["provider_fallback_reason"] = provider_fallback_reason
         if isinstance(debug, dict):
             for key in (
                 "themes_in_map_count",

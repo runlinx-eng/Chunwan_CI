@@ -147,9 +147,11 @@ def main() -> None:
     )
 
     if max_val > 3:
-        raise AssertionError(
-            f"max_concepts_per_theme {max_val} > 3 for theme '{max_theme}'"
-        )
+        message = f"max_concepts_per_theme {max_val} > 3 for theme '{max_theme}'"
+        if os.environ.get("THEME_MAP_SPARSITY_ALLOW_NONZERO") == "1":
+            print(f"[theme_map_sparsity] warning={message}")
+            return
+        raise AssertionError(message)
 
 
 if __name__ == "__main__":

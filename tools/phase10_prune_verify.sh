@@ -34,11 +34,7 @@ print(dt.strftime("%Y-%m-%d %H:%M:%S"), path)
 PY
 }
 
-if [ -n "$(git status --porcelain)" ]; then
-  echo "error: working tree is dirty; commit or stash before running"
-  git status --porcelain
-  exit 1
-fi
+bash tools/preflight_gate.sh --require-clean --require-pytest
 
 if [ -d .venv ]; then
   # shellcheck disable=SC1091
@@ -55,6 +51,7 @@ mkdir -p artifacts_metrics
   --min-concepts 1
 
 export THEME_MAP="artifacts_metrics/theme_to_industry_pruned.csv"
+bash tools/preflight_gate.sh --ensure-theme-map-sparsity --theme-map "${THEME_MAP}"
 bash tools/verify_and_log.sh --theme-map "${THEME_MAP}"
 "$PYTHON_BIN" tools/build_regression_matrix.py
 if [ -z "${CANDIDATES_PATH:-}" ]; then

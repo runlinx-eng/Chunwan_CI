@@ -1,6 +1,7 @@
 name: release_bundle
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       audit_tag:
@@ -30,11 +31,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ripgrep
 
+      - name: Resolve audit tag
+        id: audit_tag
+        env:
+          INPUT_AUDIT_TAG: ${{ github.event.inputs.audit_tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_AUDIT_TAG:-}" ]; then
+            audit_tag="${INPUT_AUDIT_TAG}"
+          else
+            audit_tag="run_${GITHUB_RUN_ID}"
+          fi
+          echo "value=${audit_tag}" >> "$GITHUB_OUTPUT"
+          echo "audit_tag=${audit_tag}"
+
       - name: Run selfcheck and backup
         id: selfcheck
         run: |
           set -euo pipefail
-          AUDIT_TAG=${{ inputs.audit_tag }} bash tools/selfcheck.sh | tee /tmp/selfcheck.log
+          AUDIT_TAG=${{ steps.audit_tag.outputs.value }} bash tools/selfcheck.sh | tee /tmp/selfcheck.log
           audit_dir="$(rg -o 'audit_dir=backups/run_[0-9]{8}_[0-9]{4}' /tmp/selfcheck.log | tail -n 1 | cut -d= -f2)"
           if [ -z "$audit_dir" ]; then
             audit_dir="$(ls -1dt backups/run_* 2>/dev/null | head -n 1)"
@@ -79,6 +94,6 @@ jobs:
         env:
           RUN_DIR: ${{ steps.selfcheck.outputs.audit_dir }}
         with:
-          name: ${{ inputs.audit_tag }}
+          name: ${{ steps.audit_tag.outputs.value }}
           path: ${{ env.RUN_DIR }}.tar.gz
           if-no-files-found: error

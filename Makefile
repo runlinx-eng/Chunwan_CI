@@ -16,3 +16,20 @@ run:
 
 verify:
 	bash specpack/verify_all.sh
+
+strategy-effectiveness:
+	bash specpack/strategy_effectiveness/verify.sh
+
+git-guard:
+	bash tools/git_guard.sh --require-prefix --require-upstream
+
+real-data-probe:
+	@test -n "$(DATE)" || (echo "DATE is required" && exit 1)
+	./.venv/bin/python tools/probe_real_data_chain.py --date "$(DATE)" --top $(if $(TOP),$(TOP),3)
+
+real-data-replay:
+	@test -n "$(DATES)" || (echo "DATES is required" && exit 1)
+	./.venv/bin/python tools/run_real_data_replay.py --dates "$(DATES)" --top $(if $(TOP),$(TOP),3)
+
+release:
+	bash tools/run_release_pipeline.sh $(if $(SNAPSHOTS),--snapshots "$(SNAPSHOTS)",) $(if $(TOP_N),--top-n "$(TOP_N)",)

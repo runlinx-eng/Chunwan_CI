@@ -1,0 +1,14 @@
+{
+  "min_dates": 30,
+  "min_horizons": 3,
+  "min_enhanced_mean_return": 0.0,
+  "max_enhanced_max_drawdown": 0.25,
+  "min_excess_mean_return_hard": -0.003,
+  "min_excess_win_rate_hard": 0.0,
+  "min_cumulative_spread_hard": -0.25,
+  "min_horizons_with_non_negative_mean_excess_hard": 0,
+  "min_excess_mean_return_target": 0.0,
+  "min_excess_win_rate_target": 0.45,
+  "min_cumulative_spread_target": 0.0,
+  "min_horizons_with_non_negative_mean_excess_target": 1
+}

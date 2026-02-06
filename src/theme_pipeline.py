@@ -12,6 +12,7 @@ import pandas as pd
 from .data_provider import normalize_ticker
 from .scoring import score_stocks
 from .signals import Signal
+from .utils import stable_hash
 
 ThemeMap = Dict[str, List[Dict[str, List[str]]]]
 TERM_SPLIT_RE = re.compile(r"[,\uFF0C;\uFF1B、|\s]+")
@@ -205,6 +206,81 @@ class ConceptMapper:
 
 @dataclass
 class DefaultConceptMapper(ConceptMapper):
+    def _signal_text(self, signal: Signal) -> str:
+        parts = [signal.theme, signal.core_theme]
+        parts.extend(signal.keywords or [])
+        return " ".join([str(p) for p in parts if p]).strip().lower()
+
+    def _concept_score(self, signal: Signal, concept: str) -> float:
+        signal_text = self._signal_text(signal)
+        concept_text = str(concept).strip().lower()
+        if not concept_text:
+            return 0.0
+        score = 0.0
+        if concept_text in signal_text:
+            score += 3.0
+        for keyword in signal.keywords or []:
+            kw = str(keyword).strip().lower()
+            if not kw:
+                continue
+            if concept_text in kw:
+                score += 1.5
+            common = set(concept_text) & set(kw)
+            if len(common) >= 2:
+                score += min(1.0, float(len(common)) * 0.2)
+        return score
+
+    def _sparsify_signal_entries(
+        self, signal: Signal, entries: List[Dict[str, List[str]]], max_terms: int
+    ) -> List[Dict[str, List[str]]]:
+        if max_terms <= 0:
+            return entries
+        concept_terms = []
+        passthrough_entries = []
+        for entry in entries:
+            map_type = str(entry.get("type", "")).lower()
+            values = [str(v).strip() for v in entry.get("values", []) if str(v).strip()]
+            if map_type in ("concept", "industry"):
+                concept_terms.extend(values)
+            else:
+                passthrough_entries.append({"type": map_type, "values": values})
+
+        concept_terms = sorted(set(concept_terms))
+        if len(concept_terms) <= max_terms:
+            weights = {concept: 1.0 for concept in concept_terms}
+            concept_entries = (
+                [{"type": "concept", "values": concept_terms, "weights": weights}]
+                if concept_terms
+                else []
+            )
+            return concept_entries + passthrough_entries
+
+        scored = []
+        for concept in concept_terms:
+            score = self._concept_score(signal, concept)
+            if score <= 0:
+                # deterministic fallback ordering to avoid full-coverage constant maps
+                tie = stable_hash([signal.id, concept])
+                scored.append((0.0, tie, concept))
+            else:
+                scored.append((score, "", concept))
+        scored.sort(key=lambda x: (-x[0], x[1], x[2]))
+        selected_scored = scored[:max_terms]
+        selected = [item[2] for item in selected_scored]
+        weights: Dict[str, float] = {}
+        for rank, item in enumerate(selected_scored):
+            signal_score = float(item[0])
+            concept = item[2]
+            if signal_score > 0:
+                weight = min(1.5, 0.8 + signal_score / 3.0)
+            else:
+                weight = max(0.4, 1.0 - rank * 0.2)
+            weights[concept] = round(float(weight), 3)
+        concept_entries = (
+            [{"type": "concept", "values": selected, "weights": weights}] if selected else []
+        )
+        return concept_entries + passthrough_entries
+
     def _signal_candidate_keys(self, signal: Signal) -> List[str]:
         candidates: List[str] = []
 
@@ -269,6 +345,22 @@ class DefaultConceptMapper(ConceptMapper):
                 if matched_keys:
                     signal_theme_key_map[signal.id] = matched_keys[0]
 
+        max_terms = 3
+        raw_max_terms = os.environ.get("THEME_MAP_MAX_TERMS_PER_SIGNAL")
+        if raw_max_terms:
+            try:
+                max_terms = int(raw_max_terms)
+            except ValueError:
+                max_terms = 3
+        sparsified_theme_map: ThemeMap = {}
+        for signal in signals:
+            if signal.id not in mapped_theme_map:
+                continue
+            sparsified_theme_map[signal.id] = self._sparsify_signal_entries(
+                signal, mapped_theme_map.get(signal.id, []), max_terms=max_terms
+            )
+        mapped_theme_map = sparsified_theme_map
+
         theme_keys = list(theme_terms.keys())
         theme_key_hit_count = sum(1 for key in candidate_keys if key in theme_terms)
         theme_key_miss_count = len(candidate_keys) - theme_key_hit_count
@@ -278,6 +370,7 @@ class DefaultConceptMapper(ConceptMapper):
             "theme_map_theme_sample": theme_keys[:10],
             "theme_key_miss_count": theme_key_miss_count,
             "theme_key_hit_count": theme_key_hit_count,
+            "sparsify_max_terms_per_signal": max_terms,
         }
         return mapped_theme_map, debug_stats, signal_theme_key_map
 

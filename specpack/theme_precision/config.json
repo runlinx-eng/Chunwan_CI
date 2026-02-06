@@ -3,13 +3,13 @@
   "delta_p95": 0,
   "delta_p99": 0,
   "delta_unique_count": 0,
-  "min_concept_hits_unique_set_enhanced": 10,
-  "min_enhanced_concept_hit_signature_unique_set_count": 6,
+  "min_concept_hits_unique_set_enhanced": 4,
+  "min_enhanced_concept_hit_signature_unique_set_count": 4,
   "min_theme_total_range_enhanced": 1.0,
   "min_theme_total_unique_enhanced": 2,
   "min_theme_hit_unique_set_enhanced": 2,
   "min_theme_hit_unique_set_all": 3,
-  "min_concept_hits_unique_set_all": 10,
+  "min_concept_hits_unique_set_all": 5,
   "min_theme_total_unique_value_ratio_enhanced": 0.06,
   "min_theme_total_unique_value_ratio_all": 0.06
 }

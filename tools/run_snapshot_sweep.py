@@ -187,6 +187,19 @@ def _run(cmd: List[str], env: Dict[str, str]) -> None:
     subprocess.check_call(cmd, cwd=REPO_ROOT, env=env)
 
 
+def _run_preflight(
+    env: Dict[str, str],
+    ensure_theme_map_sparsity: bool = False,
+    theme_map_path: Optional[Path] = None,
+) -> None:
+    cmd: List[str] = ["bash", "tools/preflight_gate.sh"]
+    if ensure_theme_map_sparsity:
+        cmd.append("--ensure-theme-map-sparsity")
+    if theme_map_path is not None:
+        cmd += ["--theme-map", str(theme_map_path)]
+    _run(cmd, env)
+
+
 def _load_json(path: Path) -> Dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"missing json: {path}")
@@ -359,7 +372,25 @@ def _iter_concepts(raw_hits: Any) -> List[str]:
     return concepts
 
 
+def _iter_theme_labels(raw_hits: Any) -> List[str]:
+    if not isinstance(raw_hits, list):
+        return []
+    labels: Set[str] = set()
+    for hit in raw_hits:
+        if not isinstance(hit, dict):
+            continue
+        for key in ("signal_themes", "signal_theme", "theme"):
+            raw = hit.get(key)
+            for label in _iter_values(raw):
+                if label:
+                    labels.add(label)
+    return sorted(labels)
+
+
 def _theme_hit_signature(row: Dict[str, Any], concept_to_themes: Dict[str, Set[str]]) -> List[str]:
+    direct_hits = _iter_theme_labels(row.get("theme_hits"))
+    if direct_hits:
+        return direct_hits
     concepts = _iter_concepts(row.get("concept_hits"))
     hit_themes: Set[str] = set()
     for concept in concepts:
@@ -409,8 +440,20 @@ def _candidate_summaries(
                 theme_total = 0.0
                 theme_signature = tuple()
             else:
+                score_breakdown = row.get("score_breakdown")
+                theme_total = None
+                if isinstance(score_breakdown, dict):
+                    raw_total = score_breakdown.get("score_theme_total")
+                    if raw_total is None:
+                        raw_total = score_breakdown.get("theme_total")
+                    if raw_total is not None:
+                        try:
+                            theme_total = float(raw_total)
+                        except (TypeError, ValueError):
+                            theme_total = None
                 hit_signature = _theme_hit_signature(row, concept_to_themes)
-                theme_total = float(len(hit_signature))
+                if theme_total is None:
+                    theme_total = float(len(hit_signature))
                 theme_signature = tuple(hit_signature)
                 concept_rows["enhanced"] += 1
             if mode == "enhanced":
@@ -530,6 +573,8 @@ def main() -> int:
         out_path = REPO_ROOT / out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    _run_preflight(os.environ.copy())
+
     results: List[Dict[str, Any]] = []
     snapshots_requested = list(snapshots)
     failures = 0
@@ -564,6 +609,12 @@ def main() -> int:
 
             env = os.environ.copy()
             env["THEME_MAP"] = str(build_theme_map_path)
+
+            _run_preflight(
+                env,
+                ensure_theme_map_sparsity=True,
+                theme_map_path=build_theme_map_path,
+            )
 
             build_cmd = [
                 sys.executable,
@@ -728,6 +779,12 @@ def main() -> int:
                 enhanced_concept_nonempty_ratio = entry.get("enhanced_concept_nonempty_ratio")
                 enhanced_concept_non_none_ratio = entry.get("enhanced_concept_non_none_ratio")
                 if pool_strategy == "snapshot_universe":
+                    enhanced_unique_count = entry.get("enhanced_unique_value_count")
+                    all_unique_count = entry.get("all_unique_value_count")
+                    if enhanced_unique_count is not None and enhanced_unique_count <= 1:
+                        entry["errors"].append("enhanced_theme_total_constant")
+                    if all_unique_count is not None and all_unique_count <= 1:
+                        entry["errors"].append("all_theme_total_constant")
                     if (
                         enhanced_concept_sig_unique is not None
                         and enhanced_concept_sig_unique < concept_sig_min_universe
@@ -743,8 +800,6 @@ def main() -> int:
                         )
                     ):
                         entry["errors"].append("enhanced_concept_hit_nonempty_ratio_zero")
-                    enhanced_unique_count = entry.get("enhanced_unique_value_count")
-                    all_unique_count = entry.get("all_unique_value_count")
                     enhanced_theme_sig_unique = entry.get("enhanced_theme_hit_sig_sets")
                     if (
                         enhanced_unique_count is not None
@@ -766,6 +821,10 @@ def main() -> int:
                 else:
                     enhanced_unique_count = entry.get("enhanced_unique_value_count")
                     all_unique_count = entry.get("all_unique_value_count")
+                    if enhanced_unique_count is not None and enhanced_unique_count <= 1:
+                        entry["errors"].append("enhanced_theme_total_constant")
+                    if all_unique_count is not None and all_unique_count <= 1:
+                        entry["errors"].append("all_theme_total_constant")
                     if (
                         enhanced_unique_count is not None
                         and enhanced_unique_count < THEME_TOTAL_UNIQUE_COUNT_MIN_ENHANCED
