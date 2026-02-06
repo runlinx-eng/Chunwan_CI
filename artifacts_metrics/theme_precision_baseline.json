@@ -1,39 +1,9 @@
 {
-  "outputs_dir": "outputs",
-  "report_count": 44,
+  "outputs_dir": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs",
+  "report_count": 37,
   "reports": [
     {
-      "path": "outputs/report_2025-11-11_top5.json",
-      "as_of": "2025-11-11",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 0,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2025-11-12_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-12_top5.json",
       "as_of": "2025-11-12",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -41,17 +11,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -85,10 +55,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -98,16 +67,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-13_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-13_top5.json",
       "as_of": "2025-11-13",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -115,17 +84,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -159,10 +128,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -172,16 +140,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-14_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-14_top5.json",
       "as_of": "2025-11-14",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -189,17 +157,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -233,10 +201,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -246,16 +213,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-17_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-17_top5.json",
       "as_of": "2025-11-17",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -263,17 +230,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -307,10 +274,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -320,16 +286,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-18_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-18_top5.json",
       "as_of": "2025-11-18",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -337,17 +303,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -381,10 +347,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -394,16 +359,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-19_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-19_top5.json",
       "as_of": "2025-11-19",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -411,17 +376,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -455,10 +420,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -468,16 +432,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-20_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-20_top5.json",
       "as_of": "2025-11-20",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -485,17 +449,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -529,10 +493,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -542,16 +505,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-21_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-21_top5.json",
       "as_of": "2025-11-21",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -559,17 +522,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -603,10 +566,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -616,16 +578,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-24_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-24_top5.json",
       "as_of": "2025-11-24",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -633,17 +595,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -677,10 +639,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -690,16 +651,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-25_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-25_top5.json",
       "as_of": "2025-11-25",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -707,17 +668,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -751,10 +712,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -764,16 +724,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-26_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-26_top5.json",
       "as_of": "2025-11-26",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -781,17 +741,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -825,10 +785,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -838,16 +797,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-27_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-27_top5.json",
       "as_of": "2025-11-27",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -855,17 +814,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -899,10 +858,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -912,16 +870,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-11-28_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-11-28_top5.json",
       "as_of": "2025-11-28",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -929,17 +887,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -973,10 +931,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -986,16 +943,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-01_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-01_top5.json",
       "as_of": "2025-12-01",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1003,17 +960,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1047,10 +1004,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1060,16 +1016,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-02_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-02_top5.json",
       "as_of": "2025-12-02",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1077,17 +1033,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1121,10 +1077,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1134,16 +1089,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-03_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-03_top5.json",
       "as_of": "2025-12-03",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1151,17 +1106,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1195,10 +1150,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1208,16 +1162,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-04_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-04_top5.json",
       "as_of": "2025-12-04",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1225,17 +1179,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1269,10 +1223,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1282,16 +1235,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-05_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-05_top5.json",
       "as_of": "2025-12-05",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1299,17 +1252,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1343,10 +1296,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1356,16 +1308,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-08_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-08_top5.json",
       "as_of": "2025-12-08",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1373,17 +1325,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1417,10 +1369,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1430,16 +1381,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-09_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-09_top5.json",
       "as_of": "2025-12-09",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1447,17 +1398,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1491,10 +1442,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1504,16 +1454,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-10_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-10_top5.json",
       "as_of": "2025-12-10",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1521,17 +1471,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1565,10 +1515,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1578,16 +1527,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-11_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-11_top5.json",
       "as_of": "2025-12-11",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1595,17 +1544,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1639,10 +1588,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1652,16 +1600,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-12_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-12_top5.json",
       "as_of": "2025-12-12",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1669,17 +1617,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1713,10 +1661,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1726,16 +1673,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-15_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-15_top5.json",
       "as_of": "2025-12-15",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1743,17 +1690,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1787,10 +1734,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1800,16 +1746,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-16_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-16_top5.json",
       "as_of": "2025-12-16",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1817,17 +1763,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1861,10 +1807,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1874,16 +1819,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-17_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-17_top5.json",
       "as_of": "2025-12-17",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1891,17 +1836,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -1935,10 +1880,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -1948,16 +1892,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-18_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-18_top5.json",
       "as_of": "2025-12-18",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -1965,17 +1909,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -2009,10 +1953,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -2022,16 +1965,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-19_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-19_top5.json",
       "as_of": "2025-12-19",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2039,17 +1982,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -2083,10 +2026,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -2096,16 +2038,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-22_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-22_top5.json",
       "as_of": "2025-12-22",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2113,17 +2055,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -2157,10 +2099,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -2170,16 +2111,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2025-12-23_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2025-12-23_top5.json",
       "as_of": "2025-12-23",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2187,17 +2128,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 35.49999999999999,
-        "avg": 7.099999999999999,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 26.334,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
         "positive": 5,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -2231,10 +2172,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 2,
+        "unique_count": 1,
         "unique": [
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务"
         ],
         "per_result_counts": [
           1,
@@ -2244,196 +2184,16 @@
           1
         ],
         "per_result_signatures": [
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "语音交互技术",
-          "实时互动传媒"
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2026-01-06_top5.json",
-      "as_of": "2026-01-06",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 0,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2026-01-07_top5.json",
-      "as_of": "2026-01-07",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 5,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2026-01-08_top5.json",
-      "as_of": "2026-01-08",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 5,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2026-01-09_top5.json",
-      "as_of": "2026-01-09",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 5,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2026-01-12_top5.json",
-      "as_of": "2026-01-12",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 5,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2026-01-13_top5.json",
-      "as_of": "2026-01-13",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 5,
-      "results_included": 0,
-      "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
-      },
-      "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      },
-      "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
-      }
-    },
-    {
-      "path": "outputs/report_2026-01-16_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-16_top5.json",
       "as_of": "2026-01-16",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2441,17 +2201,17 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 18.0,
-        "avg": 3.6,
-        "min": 3.6,
-        "max": 3.6,
+        "sum": 16.68,
+        "avg": 3.336,
+        "min": 3.0000000000000004,
+        "max": 3.48,
         "positive": 5,
         "per_result_values": [
-          3.6,
-          3.6,
-          3.6,
-          3.6,
-          3.6
+          3.48,
+          3.4,
+          3.4,
+          3.4,
+          3.0000000000000004
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产",
@@ -2485,13 +2245,10 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 5,
+        "unique_count": 2,
         "unique": [
           "百元股",
-          "特高压",
-          "第三代半导体",
-          "存储芯片",
-          "人形机器人"
+          "第三代半导体"
         ],
         "per_result_counts": [
           1,
@@ -2502,40 +2259,32 @@
         ],
         "per_result_signatures": [
           "百元股",
-          "特高压",
           "第三代半导体",
-          "存储芯片",
-          "人形机器人"
+          "第三代半导体",
+          "第三代半导体",
+          "第三代半导体"
         ]
       }
     },
     {
-      "path": "outputs/report_2026-01-16_top5_techonly.json",
-      "as_of": "2026-01-16",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 5,
-      "results_included": 5,
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top1.json",
+      "as_of": "2026-01-20",
+      "theme_weight": 1.0,
+      "category": "enhanced",
+      "results_count": 1,
+      "results_included": 1,
       "theme_total": {
-        "count": 5,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": 0.0,
-        "max": 0.0,
-        "positive": 0,
+        "count": 1,
+        "sum": 5.2668,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
+        "positive": 1,
         "per_result_values": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
+          5.2668
         ],
         "per_result_signatures": [
-          "",
-          "",
-          "",
-          "",
-          ""
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与"
         ]
       },
       "themes_used": {
@@ -2547,41 +2296,27 @@
           "安全合规与理性参与"
         ],
         "per_result_counts": [
-          4,
-          4,
-          4,
-          4,
           4
         ],
         "per_result_signatures": [
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与"
         ]
       },
       "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
+        "unique_count": 1,
+        "unique": [
+          "AI技术服务"
+        ],
         "per_result_counts": [
-          0,
-          0,
-          0,
-          0,
-          0
+          1
         ],
         "per_result_signatures": [
-          "",
-          "",
-          "",
-          "",
-          ""
+          "AI技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2026-01-20_top10.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top10.json",
       "as_of": "2026-01-20",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2589,22 +2324,22 @@
       "results_included": 10,
       "theme_total": {
         "count": 10,
-        "sum": 71.0,
-        "avg": 7.1,
-        "min": 7.099999999999999,
-        "max": 7.099999999999999,
+        "sum": 50.665400000000005,
+        "avg": 5.066540000000001,
+        "min": 4.265499999999999,
+        "max": 5.2668,
         "positive": 10,
         "per_result_values": [
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999,
-          7.099999999999999
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          5.2668,
+          4.265499999999999,
+          4.265499999999999
         ],
         "per_result_signatures": [
           "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
@@ -2653,13 +2388,9 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 6,
+        "unique_count": 2,
         "unique": [
           "AI技术服务",
-          "直播技术服务",
-          "翻译服务",
-          "超高清视频产业",
-          "人工智能应用",
           "实时互动传媒"
         ],
         "per_result_counts": [
@@ -2676,50 +2407,81 @@
         ],
         "per_result_signatures": [
           "AI技术服务",
-          "直播技术服务",
-          "直播技术服务",
-          "直播技术服务",
-          "翻译服务",
-          "超高清视频产业",
-          "人工智能应用",
-          "人工智能应用",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务",
           "实时互动传媒",
           "实时互动传媒"
         ]
       }
     },
     {
-      "path": "outputs/report_2026-01-20_top20.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top3.json",
       "as_of": "2026-01-20",
-      "theme_weight": null,
-      "category": "unknown",
-      "results_count": 7,
-      "results_included": 0,
+      "theme_weight": 1.0,
+      "category": "enhanced",
+      "results_count": 3,
+      "results_included": 3,
       "theme_total": {
-        "count": 0,
-        "sum": 0.0,
-        "avg": 0.0,
-        "min": null,
-        "max": null,
-        "positive": 0,
-        "per_result_values": [],
-        "per_result_signatures": []
+        "count": 3,
+        "sum": 15.8004,
+        "avg": 5.2668,
+        "min": 5.2668,
+        "max": 5.2668,
+        "positive": 3,
+        "per_result_values": [
+          5.2668,
+          5.2668,
+          5.2668
+        ],
+        "per_result_signatures": [
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与"
+        ]
       },
       "themes_used": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
+        "unique_count": 4,
+        "unique": [
+          "AI云与互动基础设施",
+          "AI互动与陪看体验",
+          "内容共创与数字资产",
+          "安全合规与理性参与"
+        ],
+        "per_result_counts": [
+          4,
+          4,
+          4
+        ],
+        "per_result_signatures": [
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与",
+          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产,安全合规与理性参与"
+        ]
       },
       "concept_hits": {
-        "unique_count": 0,
-        "unique": [],
-        "per_result_counts": [],
-        "per_result_signatures": []
+        "unique_count": 1,
+        "unique": [
+          "AI技术服务"
+        ],
+        "per_result_counts": [
+          1,
+          1,
+          1
+        ],
+        "per_result_signatures": [
+          "AI技术服务",
+          "AI技术服务",
+          "AI技术服务"
+        ]
       }
     },
     {
-      "path": "outputs/report_2026-01-20_top5.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5.json",
       "as_of": "2026-01-20",
       "theme_weight": 0.0,
       "category": "tech_only",
@@ -2740,10 +2502,10 @@
           0.0
         ],
         "per_result_signatures": [
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
+          "AI云与互动基础设施,内容共创与数字资产",
+          "AI云与互动基础设施,内容共创与数字资产",
+          "AI云与互动基础设施,内容共创与数字资产",
+          "AI云与互动基础设施,内容共创与数字资产",
           "AI云与互动基础设施,内容共创与数字资产"
         ]
       },
@@ -2793,7 +2555,7 @@
       }
     },
     {
-      "path": "outputs/report_2026-01-20_top5_enhanced.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5_enhanced.json",
       "as_of": "2026-01-20",
       "theme_weight": 1.0,
       "category": "enhanced",
@@ -2801,24 +2563,24 @@
       "results_included": 5,
       "theme_total": {
         "count": 5,
-        "sum": 16.5,
-        "avg": 3.3,
-        "min": 3.3,
-        "max": 3.3,
+        "sum": 10.0,
+        "avg": 2.0,
+        "min": 2.0,
+        "max": 2.0,
         "positive": 5,
         "per_result_values": [
-          3.3,
-          3.3,
-          3.3,
-          3.3,
-          3.3
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
         ],
         "per_result_signatures": [
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产",
-          "AI云与互动基础设施,AI互动与陪看体验,内容共创与数字资产"
+          "AI互动与陪看体验,内容共创与数字资产",
+          "AI互动与陪看体验,内容共创与数字资产",
+          "AI互动与陪看体验,内容共创与数字资产",
+          "AI互动与陪看体验,内容共创与数字资产",
+          "AI云与互动基础设施,AI互动与陪看体验"
         ]
       },
       "themes_used": {
@@ -2845,9 +2607,10 @@
         ]
       },
       "concept_hits": {
-        "unique_count": 1,
+        "unique_count": 2,
         "unique": [
-          "人工智能应用"
+          "人工智能应用",
+          "直播技术服务"
         ],
         "per_result_counts": [
           1,
@@ -2861,12 +2624,12 @@
           "人工智能应用",
           "人工智能应用",
           "人工智能应用",
-          "人工智能应用"
+          "直播技术服务"
         ]
       }
     },
     {
-      "path": "outputs/report_2026-01-20_top5_techonly.json",
+      "path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5_techonly.json",
       "as_of": "2026-01-20",
       "theme_weight": 0.0,
       "category": "tech_only",
@@ -2887,10 +2650,10 @@
           0.0
         ],
         "per_result_signatures": [
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
-          "AI云与互动基础设施,内容共创与数字资产,安全合规与理性参与",
+          "AI云与互动基础设施,内容共创与数字资产",
+          "AI云与互动基础设施,内容共创与数字资产",
+          "AI云与互动基础设施,内容共创与数字资产",
+          "AI云与互动基础设施,内容共创与数字资产",
           "AI云与互动基础设施,内容共创与数字资产"
         ]
       },
@@ -2941,17 +2704,11 @@
     }
   ],
   "by_category": {
-    "unknown": {
-      "reports": 9,
-      "avg_theme_total_mean": 0.0,
-      "avg_theme_total_min": 0.0,
-      "avg_theme_total_max": 0.0
-    },
     "enhanced": {
-      "reports": 33,
-      "avg_theme_total_mean": 6.878787878787875,
-      "avg_theme_total_min": 3.3,
-      "avg_theme_total_max": 7.1
+      "reports": 35,
+      "avg_theme_total_mean": 5.112575428571428,
+      "avg_theme_total_min": 2.0,
+      "avg_theme_total_max": 5.2668
     },
     "tech_only": {
       "reports": 2,
@@ -2962,18 +2719,20 @@
   },
   "result_level": {
     "all": {
+      "N": 37,
       "theme_total": {
-        "N": 185,
+        "N": 37,
         "min": 0.0,
-        "p50": 7.099999999999999,
-        "p95": 7.099999999999999,
-        "p99": 7.1,
-        "max": 7.099999999999999,
-        "unique_value_count": 4,
-        "unique_set_count": 4
+        "p50": 5.2668,
+        "p95": 5.2668,
+        "p99": 5.2668,
+        "max": 5.2668,
+        "unique_value_count": 5,
+        "unique_set_count": 5,
+        "unique_value_ratio": 0.13513513513513514
       },
       "themes_used": {
-        "N": 185,
+        "N": 184,
         "min": 4.0,
         "p50": 4.0,
         "p95": 4.0,
@@ -2983,58 +2742,62 @@
         "unique_set_count": 1
       },
       "concept_hits": {
-        "N": 185,
-        "min": 0.0,
-        "p50": 1.0,
-        "p95": 1.0,
-        "p99": 1.0,
-        "max": 1.0,
-        "unique_value_count": 2,
-        "unique_set_count": 12
-      }
-    },
-    "enhanced": {
-      "theme_total": {
-        "N": 170,
-        "min": 3.3,
-        "p50": 7.099999999999999,
-        "p95": 7.099999999999999,
-        "p99": 7.099999999999999,
-        "max": 7.099999999999999,
-        "unique_value_count": 3,
-        "unique_set_count": 2
-      },
-      "themes_used": {
-        "N": 170,
-        "min": 4.0,
-        "p50": 4.0,
-        "p95": 4.0,
-        "p99": 4.0,
-        "max": 4.0,
-        "unique_value_count": 1,
-        "unique_set_count": 1
-      },
-      "concept_hits": {
-        "N": 170,
+        "N": 184,
         "min": 1.0,
         "p50": 1.0,
         "p95": 1.0,
         "p99": 1.0,
         "max": 1.0,
         "unique_value_count": 1,
-        "unique_set_count": 12
+        "unique_set_count": 7
+      }
+    },
+    "enhanced": {
+      "N": 35,
+      "theme_total": {
+        "N": 35,
+        "min": 2.0,
+        "p50": 5.2668,
+        "p95": 5.2668,
+        "p99": 5.2668,
+        "max": 5.2668,
+        "unique_value_count": 4,
+        "unique_set_count": 4,
+        "unique_value_ratio": 0.11428571428571428
+      },
+      "themes_used": {
+        "N": 174,
+        "min": 4.0,
+        "p50": 4.0,
+        "p95": 4.0,
+        "p99": 4.0,
+        "max": 4.0,
+        "unique_value_count": 1,
+        "unique_set_count": 1
+      },
+      "concept_hits": {
+        "N": 174,
+        "min": 1.0,
+        "p50": 1.0,
+        "p95": 1.0,
+        "p99": 1.0,
+        "max": 1.0,
+        "unique_value_count": 1,
+        "unique_set_count": 6
       }
     },
     "tech_only": {
+      "N": 2,
       "theme_total": {
-        "N": 10,
+        "N": 2,
         "min": 0.0,
         "p50": 0.0,
         "p95": 0.0,
         "p99": 0.0,
         "max": 0.0,
         "unique_value_count": 1,
-        "unique_set_count": 2
+        "unique_set_count": 1,
+        "unique_value_ratio": 0.5
       },
       "themes_used": {
         "N": 10,
