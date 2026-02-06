@@ -94,6 +94,12 @@ def build_report(
             entry["matched_terms"] = sorted(entry["matched_terms"])
             entry["matched_source"] = sorted(entry["matched_source"])
             hits.append(entry)
+        hit_theme_names = []
+        for item in hits:
+            theme_name = str(item.get("theme", "")).strip()
+            if theme_name and theme_name not in hit_theme_names:
+                hit_theme_names.append(theme_name)
+        has_theme_hits = len(hit_theme_names) > 0
         tech_components = {
             "momentum_20": float(0.5 * row["momentum_20_rank"]),
             "momentum_60": float(0.3 * row["momentum_60_rank"]),
@@ -171,11 +177,17 @@ def build_report(
             "themes_used": themes_used_list,
             "concept_hits": concept_hits,
             "why_in_top5": why_in_top5,
+            "theme_hit_count": len(hit_theme_names),
+            "theme_evidence_status": "hit" if has_theme_hits else "missing",
+            "ranking_mode": "theme_tech" if has_theme_hits else "tech_only_due_to_no_theme_hits",
         }
 
         reason_parts = []
-        themes_str = ", ".join(themes_used_list)
-        reason_parts.append(f"命中主题: {themes_str}")
+        if has_theme_hits:
+            themes_str = ", ".join(hit_theme_names)
+            reason_parts.append(f"命中主题: {themes_str}")
+        else:
+            reason_parts.append("命中主题: 无（当前样本未命中主题映射，按技术因子排序）")
         if row.get("indicator_missing"):
             reason_parts.append("指标缺失按0处理")
         reason_parts.append(

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 import getpass
 import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional
+from typing import Callable, Iterable, List, Optional, Set
 
 import numpy as np
 import pandas as pd
@@ -151,83 +152,273 @@ class AkshareProvider(DataProvider):
         key = stable_hash([ticker, as_of.strftime("%Y-%m-%d")])
         return self.cache_dir / f"{ticker}_{key}.csv"
 
+    @contextmanager
+    def _akshare_network_context(self):
+        """By default bypass system proxies to avoid host-level proxy injection on macOS."""
+        if os.getenv("AKSHARE_USE_SYSTEM_PROXY", "0") == "1":
+            yield
+            return
+
+        keys = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy", "NO_PROXY", "no_proxy")
+        old = {k: os.environ.get(k) for k in keys}
+        try:
+            for k in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"):
+                os.environ.pop(k, None)
+            os.environ["NO_PROXY"] = "*"
+            os.environ["no_proxy"] = "*"
+            yield
+        finally:
+            for k, v in old.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    @staticmethod
+    def _normalize_akshare_symbol(raw: object) -> str:
+        text = str(raw or "").strip()
+        digits = "".join(ch for ch in text if ch.isdigit())
+        if len(digits) >= 6:
+            return digits[-6:]
+        return normalize_ticker(text)
+
+    @staticmethod
+    def _normalize_snapshot_bridge_ticker(raw: object, valid_codes: Optional[Set[str]]) -> str:
+        text = str(raw or "").strip()
+        if not text:
+            return ""
+        if text.isdigit():
+            code = text.zfill(6)
+            if valid_codes is None or code in valid_codes:
+                return code
+            return ""
+        if len(text) >= 2 and text[0].isalpha() and text[1:].isdigit():
+            code = text[1:].zfill(6)
+            if valid_codes is None or code in valid_codes:
+                return code
+            return ""
+        return ""
+
+    @staticmethod
+    def _to_daily_symbol(symbol: str) -> str:
+        if symbol.startswith(("4", "8", "9")):
+            return f"bj{symbol}"
+        if symbol.startswith(("5", "6", "9")):
+            return f"sh{symbol}"
+        return f"sz{symbol}"
+
+    def _fetch_spot(self, ak):
+        try:
+            return self._retry(lambda: ak.stock_zh_a_spot_em())
+        except Exception:
+            return self._retry(lambda: ak.stock_zh_a_spot())
+
+    def _fetch_code_name(self, ak):
+        df = self._retry(lambda: ak.stock_info_a_code_name())
+        rename_map = {}
+        if "code" in df.columns:
+            rename_map["code"] = "代码"
+        if "name" in df.columns:
+            rename_map["name"] = "名称"
+        if rename_map:
+            df = df.rename(columns=rename_map)
+        return df
+
+    def _snapshot_membership_universe(
+        self, industries: List[str], valid_codes: Optional[Set[str]] = None
+    ) -> List[StockInfo]:
+        root_dir = Path(__file__).resolve().parent.parent
+        snapshots_root = root_dir / "data" / "snapshots"
+        if not snapshots_root.exists():
+            return []
+        membership_paths = sorted(snapshots_root.glob("*/concept_membership.csv"), reverse=True)
+        if not membership_paths:
+            return []
+        best_df = None
+        best_source = ""
+        for path in membership_paths:
+            try:
+                df = pd.read_csv(path)
+            except Exception:
+                continue
+            required = {"ticker", "name", "concept", "industry"}
+            if not required.issubset(df.columns):
+                continue
+            df = df.copy()
+            df["ticker"] = df["ticker"].map(
+                lambda x: self._normalize_snapshot_bridge_ticker(x, valid_codes)
+            )
+            df["concept"] = df["concept"].astype(str).fillna("")
+            df["industry"] = df["industry"].astype(str).fillna("")
+            df["name"] = df["name"].astype(str).fillna("")
+            df = df[df["ticker"].astype(str).str.fullmatch(r"\d{6}")]
+            if valid_codes is not None:
+                df = df[df["ticker"].isin(valid_codes)]
+            if industries:
+                allowed = set(str(x) for x in industries if x)
+                df = df[df["concept"].isin(allowed) | df["industry"].isin(allowed)]
+            if df.empty:
+                continue
+            df = df.drop_duplicates(subset=["ticker"], keep="first")
+            if best_df is None or len(df) > len(best_df):
+                best_df = df
+                best_source = path.parent.name
+
+        if best_df is None or best_df.empty:
+            return []
+        try:
+            limit = int(os.getenv("AKSHARE_UNIVERSE_LIMIT", "80"))
+        except ValueError:
+            limit = 80
+        if limit > 0 and len(best_df) > limit:
+            best_df = best_df.head(limit)
+        universe: List[StockInfo] = []
+        for _, row in best_df.iterrows():
+            ticker = str(row["ticker"])
+            universe.append(
+                StockInfo(
+                    ticker=ticker,
+                    name=str(row.get("name", ticker)),
+                    industry=str(row.get("industry", "")),
+                    concept=str(row.get("concept", "")),
+                    description=f"snapshot_membership_bridge:{best_source}",
+                )
+            )
+        return universe
+
     def get_stock_universe(self, industries: List[str]) -> List[StockInfo]:
         try:
             import akshare as ak  # noqa: F401
         except Exception as exc:  # pragma: no cover - optional dependency
             raise RuntimeError("akshare not available") from exc
 
-        if not industries:
-            spot = ak.stock_zh_a_spot_em()
+        with self._akshare_network_context():
+            valid_codes: Optional[Set[str]] = None
+            codes_df: Optional[pd.DataFrame] = None
+            try:
+                codes_df = self._fetch_code_name(ak)
+                if "代码" in codes_df.columns:
+                    valid_codes = set(codes_df["代码"].astype(str).str.zfill(6).tolist())
+            except Exception:
+                valid_codes = None
+
+            if not industries:
+                try:
+                    spot = self._fetch_spot(ak)
+                except Exception:
+                    spot = codes_df if codes_df is not None else self._fetch_code_name(ak)
+                universe = []
+                for _, row in spot.iterrows():
+                    ticker = self._normalize_akshare_symbol(
+                        row.get("代码", row.get("code", row.get("symbol", row.get("证券代码", ""))))
+                    )
+                    if not ticker:
+                        continue
+                    universe.append(
+                        StockInfo(
+                            ticker=ticker,
+                            name=str(row.get("名称", row.get("name", row.get("股票简称", ticker)))),
+                            industry="",
+                            concept="",
+                            description="",
+                        )
+                    )
+                return universe
+
+            concept_set = set()
+            industry_set = set()
+            concept_catalog_available = False
+            try:
+                concept_names = ak.stock_board_concept_name_em()
+                industry_names = ak.stock_board_industry_name_em()
+                concept_set = set(concept_names["板块名称"].astype(str).tolist())
+                industry_set = set(industry_names["板块名称"].astype(str).tolist())
+                concept_catalog_available = True
+            except Exception:
+                # In some networks, EastMoney concept endpoints are blocked while quotes/history still work.
+                concept_set = set()
+                industry_set = set()
+                concept_catalog_available = False
+
+            if not concept_catalog_available:
+                snapshot_universe = self._snapshot_membership_universe(
+                    industries, valid_codes=valid_codes
+                )
+                if snapshot_universe:
+                    return snapshot_universe
+
+            universe_map = {}
+            for name in industries:
+                if name in concept_set:
+                    df = self._retry(lambda: ak.stock_board_concept_cons_em(symbol=name))
+                    self._sleep()
+                    for _, row in df.iterrows():
+                        ticker = self._normalize_akshare_symbol(row.get("代码", row.get("code", "")))
+                        if not ticker:
+                            continue
+                        universe_map[ticker] = StockInfo(
+                            ticker=ticker,
+                            name=str(row.get("名称", row.get("name", ticker))),
+                            industry=name,
+                            concept=name,
+                            description="",
+                        )
+                elif name in industry_set:
+                    df = self._retry(lambda: ak.stock_board_industry_cons_em(symbol=name))
+                    self._sleep()
+                    for _, row in df.iterrows():
+                        ticker = self._normalize_akshare_symbol(row.get("代码", row.get("code", "")))
+                        if not ticker:
+                            continue
+                        universe_map[ticker] = StockInfo(
+                            ticker=ticker,
+                            name=str(row.get("名称", row.get("name", ticker))),
+                            industry=name,
+                            concept=name,
+                            description="",
+                        )
+
+            if universe_map:
+                return list(universe_map.values())
+
+            snapshot_universe = self._snapshot_membership_universe(
+                industries, valid_codes=valid_codes
+            )
+            if snapshot_universe:
+                return snapshot_universe
+
+            try:
+                spot = self._fetch_spot(ak)
+            except Exception:
+                spot = codes_df if codes_df is not None else self._fetch_code_name(ak)
+            keywords = [kw for kw in industries if kw]
+            if keywords:
+                mask = pd.Series(False, index=spot.index)
+                for kw in keywords:
+                    mask = mask | spot["名称"].astype(str).str.contains(kw, na=False)
+                spot = spot[mask]
+            if spot.empty:
+                try:
+                    spot = self._fetch_spot(ak).head(200)
+                except Exception:
+                    spot = self._fetch_code_name(ak).head(200)
             universe = []
             for _, row in spot.iterrows():
+                ticker = self._normalize_akshare_symbol(
+                    row.get("代码", row.get("code", row.get("symbol", row.get("证券代码", ""))))
+                )
+                if not ticker:
+                    continue
                 universe.append(
                     StockInfo(
-                        ticker=str(row.get("代码", "")),
-                        name=str(row.get("名称", "")),
+                        ticker=ticker,
+                        name=str(row.get("名称", row.get("name", row.get("股票简称", ticker)))),
                         industry="",
                         concept="",
                         description="",
                     )
                 )
             return universe
-
-        concept_names = ak.stock_board_concept_name_em()
-        industry_names = ak.stock_board_industry_name_em()
-        concept_set = set(concept_names["板块名称"].astype(str).tolist())
-        industry_set = set(industry_names["板块名称"].astype(str).tolist())
-
-        universe_map = {}
-        for name in industries:
-            if name in concept_set:
-                df = self._retry(lambda: ak.stock_board_concept_cons_em(symbol=name))
-                self._sleep()
-                for _, row in df.iterrows():
-                    ticker = str(row.get("代码", row.get("code", "")))
-                    universe_map[ticker] = StockInfo(
-                        ticker=ticker,
-                        name=str(row.get("名称", row.get("name", ticker))),
-                        industry=name,
-                        concept=name,
-                        description="",
-                    )
-            elif name in industry_set:
-                df = self._retry(lambda: ak.stock_board_industry_cons_em(symbol=name))
-                self._sleep()
-                for _, row in df.iterrows():
-                    ticker = str(row.get("代码", row.get("code", "")))
-                    universe_map[ticker] = StockInfo(
-                        ticker=ticker,
-                        name=str(row.get("名称", row.get("name", ticker))),
-                        industry=name,
-                        concept=name,
-                        description="",
-                    )
-
-        if universe_map:
-            return list(universe_map.values())
-
-        spot = ak.stock_zh_a_spot_em()
-        keywords = [kw for kw in industries if kw]
-        if keywords:
-            mask = pd.Series(False, index=spot.index)
-            for kw in keywords:
-                mask = mask | spot["名称"].astype(str).str.contains(kw, na=False)
-            spot = spot[mask]
-        if spot.empty:
-            spot = ak.stock_zh_a_spot_em().head(200)
-        universe = []
-        for _, row in spot.iterrows():
-            universe.append(
-                StockInfo(
-                    ticker=str(row.get("代码", "")),
-                    name=str(row.get("名称", "")),
-                    industry="",
-                    concept="",
-                    description="",
-                )
-            )
-        return universe
 
     def get_price_history(
         self,
@@ -246,51 +437,71 @@ class AkshareProvider(DataProvider):
         start_date = (end_date - pd.Timedelta(days=lookback_days * 2)).strftime("%Y%m%d")
         end_date_str = end_date.strftime("%Y%m%d")
 
-        for ticker, stock in stock_lookup.items():
-            cache_path = self._cache_path(ticker, end_date)
-            if cache_path.exists():
-                df = pd.read_csv(cache_path)
-                df["date"] = pd.to_datetime(df["date"])
-            else:
-                def _fetch():
-                    return ak.stock_zh_a_hist(
-                        symbol=ticker,
-                        period="daily",
-                        start_date=start_date,
-                        end_date=end_date_str,
-                        adjust="",
-                    )
+        with self._akshare_network_context():
+            for ticker, stock in stock_lookup.items():
+                symbol = self._normalize_akshare_symbol(ticker)
+                cache_path = self._cache_path(symbol, end_date)
+                if cache_path.exists():
+                    df = pd.read_csv(cache_path)
+                    df["date"] = pd.to_datetime(df["date"])
+                else:
 
-                df = self._retry(_fetch)
-                self._sleep()
-                if df.empty:
+                    def _fetch():
+                        return ak.stock_zh_a_hist(
+                            symbol=symbol,
+                            period="daily",
+                            start_date=start_date,
+                            end_date=end_date_str,
+                            adjust="",
+                        )
+
+                    try:
+                        df = self._retry(_fetch)
+                        self._sleep()
+                    except Exception:
+                        df = pd.DataFrame()
+
+                    if not df.empty:
+                        df = df.rename(
+                            columns={
+                                "日期": "date",
+                                "开盘": "open",
+                                "收盘": "close",
+                                "最高": "high",
+                                "最低": "low",
+                                "成交量": "volume",
+                            }
+                        )
+                        df = df[["date", "open", "close", "high", "low", "volume"]]
+                    else:
+                        try:
+                            daily_symbol = self._to_daily_symbol(symbol)
+                            df = self._retry(lambda: ak.stock_zh_a_daily(symbol=daily_symbol))
+                            self._sleep()
+                            if df.empty:
+                                continue
+                            needed = ["date", "open", "close", "high", "low", "volume"]
+                            if not set(needed).issubset(df.columns):
+                                continue
+                            df = df[needed]
+                        except Exception:
+                            continue
+
+                    df["date"] = pd.to_datetime(df["date"])
+                    df.to_csv(cache_path, index=False)
+
+                df = df[df["date"] <= end_date].sort_values("date")
+                if len(df) < lookback_days:
                     continue
-                df = df.rename(
-                    columns={
-                        "日期": "date",
-                        "开盘": "open",
-                        "收盘": "close",
-                        "最高": "high",
-                        "最低": "low",
-                        "成交量": "volume",
-                    }
+                df = df.tail(lookback_days)
+                df = df.assign(
+                    ticker=ticker,
+                    name=stock.name,
+                    industry=stock.industry,
+                    concept=stock.concept,
+                    description=stock.description,
                 )
-                df = df[["date", "open", "close", "high", "low", "volume"]]
-                df["date"] = pd.to_datetime(df["date"])
-                df.to_csv(cache_path, index=False)
-
-            df = df[df["date"] <= end_date].sort_values("date")
-            if len(df) < lookback_days:
-                continue
-            df = df.tail(lookback_days)
-            df = df.assign(
-                ticker=ticker,
-                name=stock.name,
-                industry=stock.industry,
-                concept=stock.concept,
-                description=stock.description,
-            )
-            records.append(df)
+                records.append(df)
 
         if not records:
             return pd.DataFrame(
