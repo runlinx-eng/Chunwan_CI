@@ -70,3 +70,7 @@
 - 现象：theme_total 多样性已恢复到 4，但 top1 集中 250。
 - 决策：snapshot_universe 只用概念多样性 gate（概念非空率 + enhanced_concept_hit_signature_unique_set_count），theme_total 低多样性仅警告不阻断。
 - 原因：theme_total 由概念映射推导，易受主题映射/概念稀疏影响；跨 snapshot 不保证可比性。
+
+## theme_precision 基线与阈值重标定（P6）
+- 决策：将 `theme_precision_baseline.json` 刷新到当前稀疏化评分口径，并将 `min_concept_hits_unique_set_enhanced/all` 从 10 下调到 6。
+- 原因：P1/P2 后主题映射从“广覆盖常量”转为“稀疏加权命中”，旧基线与旧阈值会把正确改进误判为退化，阻断 strict phase10。

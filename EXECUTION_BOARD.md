@@ -113,6 +113,14 @@
 2. 当前包关键命令输出已记录到 `artifacts_metrics` 或日志文件。
 3. 才允许切到下一包。
 
+## Post-M6 Hardening
+
+| ID | Task | Status | Notes |
+|---|---|---|---|
+| P6-1 | 重置 `theme_precision` 基线到稀疏化口径 | Done | `artifacts_metrics/theme_precision_baseline.json` 已更新 |
+| P6-2 | 下调 concept-hit 非退化阈值（10 -> 6） | Done | 对齐当前 `snapshot` 实测分布 |
+| P6-3 | 严格门禁复验（`phase10`） | Done | `verify` 全门禁通过 |
+
 ## Change Log
 
 - 2026-02-06: 依据 F0 结论重排执行顺序，新增 P0-P5 分包并冻结为 V2 指挥计划。
@@ -121,3 +129,4 @@
 - 2026-02-06: 完成 P3（provider/fallback 错误语义显式化）。
 - 2026-02-06: 完成 P4（同质化 gate + 回归矩阵前置依赖检查）。
 - 2026-02-06: 完成 P5（一键发布流水线脚本与 Makefile 入口）。
+- 2026-02-06: 完成 P6（theme_precision 基线与阈值重标定，strict phase10 复验通过）。

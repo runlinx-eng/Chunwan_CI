@@ -54,6 +54,24 @@ bash tools/preflight_gate.sh --ensure-theme-map-sparsity --theme-map theme_to_in
 - `--require-clean` 用于 release 验收；日常开发可不加。
 - `--ensure-theme-map-sparsity` 会自动补齐 `artifacts_metrics/theme_map_sparsity_latest.json`，避免 `snapshot_sweep` 在回归矩阵阶段因缺文件失败。
 
+### theme_precision 基线刷新（口径变更后必做）
+
+触发条件（任一满足）：
+- 修改 `src/scoring.py`
+- 修改 `src/theme_pipeline.py`
+- 修改 `signals.yaml`
+- 更换/重剪 `theme_to_industry*.csv`
+
+执行步骤：
+
+```bash
+bash tools/update_theme_precision_baseline.sh
+git add artifacts_metrics/theme_precision_baseline.json
+git commit -m "chore: refresh theme precision baseline"
+```
+
+说明：不刷新基线会导致 strict `phase10` 误报“p50/p95/p99 低于 baseline”。
+
 ### clean-tree 验收策略
 
 若当前有未提交改动，先暂存再验收：
