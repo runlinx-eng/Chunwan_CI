@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
+source "$ROOT_DIR/tools/resolve_python.sh"
+export PYTHON_BIN
 
 rm -rf .cache || true
 rm -f outputs/report_2026-01-20_top5.json || true
@@ -10,6 +12,7 @@ rm -f outputs/report_2026-01-20_top5.json || true
 python3 - <<'PY'
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 import yaml
@@ -18,8 +21,9 @@ import subprocess
 spec_path = Path("specpack/snapshot_replay/assertions.yaml")
 conf = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
 
-print("[specpack] running: python3 -m pytest -q")
-ret = subprocess.call("python3 -m pytest -q", shell=True)
+python_bin = os.environ.get("PYTHON_BIN", "python3")
+print(f"[specpack] running: {python_bin} -m pytest -q")
+ret = subprocess.call([python_bin, "-m", "pytest", "-q"])
 if ret != 0:
     sys.exit(ret)
 

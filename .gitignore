@@ -34,6 +34,13 @@ artifacts_metrics/screener_topn_latest_meta.json
 artifacts_metrics/screener_candidates_latest.jsonl
 artifacts_metrics/screener_candidates_latest_meta.json
 artifacts_metrics/screener_coverage_latest.json
+artifacts_metrics/real_data_probe_latest.json
+artifacts_metrics/real_data_probe_*.json
+artifacts_metrics/real_data_replay_latest.json
+artifacts_metrics/real_data_replay_*.json
+artifacts_metrics/strategy_effectiveness_latest.json
+artifacts_metrics/strategy_effectiveness_gate_latest.json
+artifacts_metrics/strategy_effectiveness_*.json
 backups/
 theme_precision_latest.json
 theme_map_prune_latest.json
