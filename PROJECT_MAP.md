@@ -26,17 +26,21 @@
 当前阻塞点（进入最终发布前）：
 
 1. 必须完成 GitHub 侧 `CI -> PR -> merge` 留痕。
-2. 合并到 `main` 后需再跑一次 strict 路径并回写留痕。
+2. 当前 `gh` 环境阻塞：token 无效且 `api.github.com` 连通失败，尚未创建 PR。
+3. 合并到 `main` 后需再跑一次 strict 路径并回写留痕。
 
 ## Next Itinerary
 
 执行顺序（从现在开始）：
 
-1. 发布收口清单执行：
-   - 按 `P11_RELEASE_CHECKLIST.md` 完成提交、推送、PR、CI、merge。
-2. 合并后复验：
+1. 修复 GitHub CLI 条件（登录与 API 连通）并创建 PR：
+   - 登录恢复：`gh auth login -h github.com`
+   - PR 快捷链接：`https://github.com/runlinx-eng/Chunwan_CI/compare/main...codex/p0-p5-hardening?expand=1`
+2. 发布收口清单执行：
+   - 按 `P11_RELEASE_CHECKLIST.md` 完成 PR、CI、merge。
+3. 合并后复验：
    - 在 `main` 重新执行 `bash tools/run_release_pipeline.sh`
-3. 留痕回写：
+4. 留痕回写：
    - 把 PR 链接、CI Run ID、merge SHA 写回 `EXECUTION_BOARD.md` Change Log。
 
 ## System Boundary

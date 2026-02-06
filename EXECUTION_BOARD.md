@@ -75,7 +75,7 @@
 | P8-2 | P8 验证与结果入库 | P8 | Done | 已产出 `artifacts_metrics/real_data_probe_latest.json` |
 | P9-1 | 多日期真实数据回放（无 fallback） | P9 | Done | 已产出 `artifacts_metrics/real_data_replay_latest.json` |
 | P10-1 | 策略有效性指标计算与阈值 | P10 | Done | 已新增 `strategy_effectiveness` 指标与双阈值门禁 |
-| P11-1 | GitHub 最终发布流程收口 | P11 | In Progress | 本地 strict 已通过；待 PR/CI/merge 留痕 |
+| P11-1 | GitHub 最终发布流程收口 | P11 | In Progress | 本地 strict 已通过且分支已 push；待修复 gh 后完成 PR/CI/merge 留痕 |
 
 ## Package Checklists
 
@@ -154,3 +154,4 @@
 - 2026-02-06: 重标定 `theme_precision` 概念多样性阈值（enhanced: 6->4, all: 6->5），恢复与当前实测分布一致。
 - 2026-02-06: `run_release_pipeline --skip-phase10` 开发态复验通过，后续进入 P11 strict 发布与 GitHub 闭环。
 - 2026-02-06: 完成 P11 本地 strict 复验（`git_guard --strict`、`run_release_pipeline`、`strategy_effectiveness` 全通过），当前仅剩 GitHub PR/CI/merge 留痕。
+- 2026-02-06: `codex/p0-p5-hardening` 已 push 到 origin；`gh auth` token 无效且 `api.github.com` 连通失败，PR 创建暂时阻塞。

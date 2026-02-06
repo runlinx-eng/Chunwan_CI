@@ -4,15 +4,15 @@
 
 ## 1) 本地验收（必须全过）
 
-- [ ] 分支检查：`bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean`
-- [ ] 发布流水线：`bash tools/run_release_pipeline.sh`
-- [ ] 策略有效性门禁：`bash specpack/strategy_effectiveness/verify.sh`
+- [x] 分支检查：`bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean`
+- [x] 发布流水线：`bash tools/run_release_pipeline.sh`
+- [x] 策略有效性门禁：`bash specpack/strategy_effectiveness/verify.sh`
 
 ## 2) 提交与推送
 
-- [ ] 暂存变更：`git add <changed-files>`
-- [ ] 提交：`git commit -m "chore: finalize p11 release closure"`
-- [ ] 推送并设置 upstream：`git push -u origin <your-branch>`
+- [x] 暂存变更：`git add <changed-files>`
+- [x] 提交：`git commit -m "chore: finalize p11 release closure"`
+- [x] 推送并设置 upstream：`git push -u origin <your-branch>`
 
 ## 3) 发起 PR
 
@@ -22,6 +22,11 @@
   - [ ] 本地门禁结果（关键命令 + 结果）
   - [ ] 风险与回滚方案
   - [ ] 产物路径（`artifacts_metrics/*`）
+
+当前阻塞（2026-02-06）：
+- `gh auth status` 显示 token 无效。
+- `gh pr list` 无法连通 `api.github.com`。
+- 已完成 branch push，待恢复 GitHub CLI 登录/网络后创建 PR。
 
 ## 4) GitHub CI 通过
 
