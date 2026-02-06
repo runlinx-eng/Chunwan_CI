@@ -32,6 +32,7 @@
 | P11 | 发布收口包 | 完成最终交付闭环 | CI 通过、PR 合并、发布说明 | 主分支可复现执行并通过门禁 |
 | R1 | 真实数据解阻包 | 最终目标要求真实数据可跑 | 网络/DNS/代理链路修复 + AkShare 回放复验 | `real_data_replay` 不再 `blocked_by_environment` |
 | R2 | 真实数据解释性包（可选） | 让“可跑”升级为“可解释” | AkShare 主题命中来源补齐 + 报告字段增强 | `theme_hits` 不长期为 0 或有明确降级解释 |
+| R3 | 真实数据主题证据恢复包（可选） | 把解释性从“降级可见”升级为“主题命中恢复” | 快照桥接真实代码 + 主题覆盖率回升 | `avg_topn_theme_hit_ratio > 0` 且 `quality_flags` 清空 |
 
 ## Milestones
 
@@ -46,6 +47,7 @@
 | M6 | P5 完成（交付封装） | M5 |
 | M7 | R1 完成（真实数据可跑） | M6, P11 |
 | M8 | R2 完成（真实数据解释性） | M7 |
+| M9 | R3 完成（主题证据恢复） | M8 |
 
 ## Command Contract
 
@@ -82,6 +84,7 @@
 | P11-1 | GitHub 最终发布流程收口 | P11 | Done | PR #1 已合并，main 复验通过（merge=`5b8aca2`） |
 | R1-1 | 真实数据网络链路解阻与回放复验 | R1 | Done | `probe=ok` 且 `replay success_rate=1.0`（2026-02-06） |
 | R2-1 | AkShare 主题命中解释性补齐 | R2 | Done | 报告显式降级解释 + replay 输出 theme_hit_ratio 与 quality_flags |
+| R3-1 | AkShare 主题证据桥接与命中恢复 | R3 | Done | `avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]` |
 
 ## Package Checklists
 
@@ -144,6 +147,7 @@
 | P11-1 | GitHub 最终发布流程收口 | Done | PR #1 merged + CI 通过 + main strict 复验通过 |
 | R1-1 | 真实数据网络链路解阻与回放复验 | Done | probe/replay 全量通过，环境阻塞解除 |
 | R2-1 | AkShare 主题命中解释性补齐 | Done | 主题命中为 0 时已可见可审计；后续可选补数据源提升命中 |
+| R3-1 | AkShare 主题证据桥接与命中恢复 | Done | 主题命中恢复，回放质量指标不再告警 |
 
 ## Change Log
 
@@ -173,3 +177,6 @@
 - 2026-02-06: `tools/probe_real_data_chain.py --strict` 通过（`failure_type=ok`，date=2026-02-05，耗时约 57s）。
 - 2026-02-06: `tools/run_real_data_replay.py --dates 2026-02-05,2026-02-04,2026-02-03 --top 3` 通过（`success_rate=1.0`，`global_status=ok`，耗时约 170s）。
 - 2026-02-06: 完成 R2：`src/report.py` 在无主题命中时写入显式降级解释；`src/run.py` 输出 theme_hit_ratio 告警指标；`tools/run_real_data_replay.py` 汇总 `avg_topn_theme_hit_ratio/quality_flags`。
+- 2026-02-06: 创建 R2 PR：`https://github.com/runlinx-eng/Chunwan_CI/pull/2`。
+- 2026-02-06: 完成 R3：`src/data_provider.py` 引入快照主题桥接（A-ticker -> 6位真实代码并校验可交易代码），AkShare 主题命中恢复。
+- 2026-02-06: R3 验证通过：`real_data_replay` -> `avg_topn_theme_hit_ratio=1.0`、`quality_flags=[]`、`success_rate=1.0`。

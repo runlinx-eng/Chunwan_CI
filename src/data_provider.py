@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional
+from typing import Callable, Iterable, List, Optional, Set
 
 import numpy as np
 import pandas as pd
@@ -183,6 +183,23 @@ class AkshareProvider(DataProvider):
         return normalize_ticker(text)
 
     @staticmethod
+    def _normalize_snapshot_bridge_ticker(raw: object, valid_codes: Optional[Set[str]]) -> str:
+        text = str(raw or "").strip()
+        if not text:
+            return ""
+        if text.isdigit():
+            code = text.zfill(6)
+            if valid_codes is None or code in valid_codes:
+                return code
+            return ""
+        if len(text) >= 2 and text[0].isalpha() and text[1:].isdigit():
+            code = text[1:].zfill(6)
+            if valid_codes is None or code in valid_codes:
+                return code
+            return ""
+        return ""
+
+    @staticmethod
     def _to_daily_symbol(symbol: str) -> str:
         if symbol.startswith(("4", "8", "9")):
             return f"bj{symbol}"
@@ -207,47 +224,56 @@ class AkshareProvider(DataProvider):
             df = df.rename(columns=rename_map)
         return df
 
-    def _snapshot_membership_universe(self, industries: List[str]) -> List[StockInfo]:
+    def _snapshot_membership_universe(
+        self, industries: List[str], valid_codes: Optional[Set[str]] = None
+    ) -> List[StockInfo]:
         root_dir = Path(__file__).resolve().parent.parent
         snapshots_root = root_dir / "data" / "snapshots"
         if not snapshots_root.exists():
             return []
-        membership_paths = sorted(snapshots_root.glob("*/concept_membership.csv"))
+        membership_paths = sorted(snapshots_root.glob("*/concept_membership.csv"), reverse=True)
         if not membership_paths:
             return []
-        latest = membership_paths[-1]
-        try:
-            df = pd.read_csv(latest)
-        except Exception:
-            return []
-        required = {"ticker", "name", "concept", "industry"}
-        if not required.issubset(df.columns):
-            return []
-        df = df.copy()
-        df["ticker_raw"] = df["ticker"].astype(str)
-        df["ticker"] = df["ticker_raw"].map(self._normalize_akshare_symbol)
-        df["concept"] = df["concept"].astype(str).fillna("")
-        df["industry"] = df["industry"].astype(str).fillna("")
-        if industries:
-            allowed = set(str(x) for x in industries if x)
-            filtered = df[df["concept"].isin(allowed) | df["industry"].isin(allowed)]
-            if not filtered.empty:
-                df = filtered
-        df = df[
-            df["ticker"].astype(str).str.fullmatch(r"\d{6}")
-            & ~df["ticker_raw"].astype(str).str.match(r"^[A-Za-z]\d+$")
-        ]
-        if df.empty:
+        best_df = None
+        best_source = ""
+        for path in membership_paths:
+            try:
+                df = pd.read_csv(path)
+            except Exception:
+                continue
+            required = {"ticker", "name", "concept", "industry"}
+            if not required.issubset(df.columns):
+                continue
+            df = df.copy()
+            df["ticker"] = df["ticker"].map(
+                lambda x: self._normalize_snapshot_bridge_ticker(x, valid_codes)
+            )
+            df["concept"] = df["concept"].astype(str).fillna("")
+            df["industry"] = df["industry"].astype(str).fillna("")
+            df["name"] = df["name"].astype(str).fillna("")
+            df = df[df["ticker"].astype(str).str.fullmatch(r"\d{6}")]
+            if valid_codes is not None:
+                df = df[df["ticker"].isin(valid_codes)]
+            if industries:
+                allowed = set(str(x) for x in industries if x)
+                df = df[df["concept"].isin(allowed) | df["industry"].isin(allowed)]
+            if df.empty:
+                continue
+            df = df.drop_duplicates(subset=["ticker"], keep="first")
+            if best_df is None or len(df) > len(best_df):
+                best_df = df
+                best_source = path.parent.name
+
+        if best_df is None or best_df.empty:
             return []
         try:
             limit = int(os.getenv("AKSHARE_UNIVERSE_LIMIT", "80"))
         except ValueError:
             limit = 80
-        if limit > 0 and len(df) > limit:
-            df = df.head(limit)
-        df = df.drop_duplicates(subset=["ticker"], keep="first")
+        if limit > 0 and len(best_df) > limit:
+            best_df = best_df.head(limit)
         universe: List[StockInfo] = []
-        for _, row in df.iterrows():
+        for _, row in best_df.iterrows():
             ticker = str(row["ticker"])
             universe.append(
                 StockInfo(
@@ -255,7 +281,7 @@ class AkshareProvider(DataProvider):
                     name=str(row.get("name", ticker)),
                     industry=str(row.get("industry", "")),
                     concept=str(row.get("concept", "")),
-                    description="snapshot_membership_fallback",
+                    description=f"snapshot_membership_bridge:{best_source}",
                 )
             )
         return universe
@@ -267,11 +293,20 @@ class AkshareProvider(DataProvider):
             raise RuntimeError("akshare not available") from exc
 
         with self._akshare_network_context():
+            valid_codes: Optional[Set[str]] = None
+            codes_df: Optional[pd.DataFrame] = None
+            try:
+                codes_df = self._fetch_code_name(ak)
+                if "代码" in codes_df.columns:
+                    valid_codes = set(codes_df["代码"].astype(str).str.zfill(6).tolist())
+            except Exception:
+                valid_codes = None
+
             if not industries:
                 try:
                     spot = self._fetch_spot(ak)
                 except Exception:
-                    spot = self._fetch_code_name(ak)
+                    spot = codes_df if codes_df is not None else self._fetch_code_name(ak)
                 universe = []
                 for _, row in spot.iterrows():
                     ticker = self._normalize_akshare_symbol(
@@ -306,7 +341,9 @@ class AkshareProvider(DataProvider):
                 concept_catalog_available = False
 
             if not concept_catalog_available:
-                snapshot_universe = self._snapshot_membership_universe(industries)
+                snapshot_universe = self._snapshot_membership_universe(
+                    industries, valid_codes=valid_codes
+                )
                 if snapshot_universe:
                     return snapshot_universe
 
@@ -344,14 +381,16 @@ class AkshareProvider(DataProvider):
             if universe_map:
                 return list(universe_map.values())
 
-            snapshot_universe = self._snapshot_membership_universe(industries)
+            snapshot_universe = self._snapshot_membership_universe(
+                industries, valid_codes=valid_codes
+            )
             if snapshot_universe:
                 return snapshot_universe
 
             try:
                 spot = self._fetch_spot(ak)
             except Exception:
-                spot = self._fetch_code_name(ak)
+                spot = codes_df if codes_df is not None else self._fetch_code_name(ak)
             keywords = [kw for kw in industries if kw]
             if keywords:
                 mask = pd.Series(False, index=spot.index)

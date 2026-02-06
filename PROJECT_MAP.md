@@ -16,6 +16,7 @@
 1. `P0-P11` 已完成（含真实数据探针/回放、策略有效性门禁、GitHub 发布收口）。
 2. `R1` 已完成：真实数据链路可运行（AkShare probe/replay 均为 `ok`）。
 3. `R2` 已完成：AkShare 路径在 `theme_hits=0` 时给出显式降级解释，并在回放产物输出主题命中覆盖率。
+4. `R3` 已完成：AkShare 主题证据桥接上线，`avg_topn_theme_hit_ratio` 从 `0.0` 提升到 `1.0`。
 
 当前验证状态：
 
@@ -26,29 +27,28 @@
 5. GitHub 侧 `phase10_verify` 已通过：Run `21750613821`。
 6. 合并后已在 `origin/main` 基线复验（worktree 分支 `codex/p11-main-verify`）。
 7. 真实数据探针：`artifacts_metrics/real_data_probe_latest.json` -> `status=ok`, `failure_type=ok`（2026-02-06 17:12 UTC）。
-8. 三日真实数据回放：`artifacts_metrics/real_data_replay_latest.json` -> `success_rate=1.0`, `global_status=ok`（2026-02-06 17:04 UTC）。
-9. 回放质量指标已落盘：`quality_flags=['theme_hits_zero_all_success_runs']`，可见“可跑但主题命中缺失”。
-10. 当前工作区存在未提交改动（R1/R2 修复与地图回写中）。
+8. 三日真实数据回放：`artifacts_metrics/real_data_replay_latest.json` -> `success_rate=1.0`, `global_status=ok`（2026-02-06 17:45 UTC）。
+9. 回放质量指标已更新：`avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]`（主题证据恢复）。
+10. 当前工作区存在未提交改动（R3 修复与地图回写中）。
 
 当前阻塞点（进入最终目标前）：
 
-1. “真实数据可跑”目标已达成，无硬阻塞。
-2. 当前剩余项为可选优化：补齐 AkShare 主题命中数据源（非发布阻塞）。
+1. 当前无硬阻塞。
+2. 可选后续为策略层优化（非链路问题）。
 
 当前点位（YOU ARE HERE）：
 
 1. 已完成 `P11` 全部步骤（本地 strict -> PR -> CI -> merge -> main 复验 -> 留痕）。
 2. 已完成 `R1`（真实数据链路可运行、回放成功率 100%）。
 3. 已完成 `R2`（解释性降级可见、回放质量指标可审计）。
+4. 已完成 `R3`（主题证据桥接生效，AkShare 路径主题命中恢复）。
 
 ## Next Itinerary
 
 执行顺序（从现在开始）：
 
-1. R2-1（可选）：补齐 AkShare 路径主题命中来源（可用行业/概念替代源或可用快照桥接）。
-2. R2-2（已完成）：为 AkShare 报告增加“无主题命中”显式解释字段，避免误读。
-3. R2-3（已完成）：把 R2 指标（theme_hit_ratio）接入 `run_real_data_replay` 摘要。
-4. 后续若要提升策略质量，再开 R3（主题证据源补齐）。
+1. 当前可直接进入发布/合并流程（PR #2）。
+2. 后续如需继续优化，可开策略 alpha 包（例如收益与稳定性优化）。
 
 ## System Boundary
 
