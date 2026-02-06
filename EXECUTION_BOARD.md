@@ -75,7 +75,7 @@
 | P8-2 | P8 验证与结果入库 | P8 | Done | 已产出 `artifacts_metrics/real_data_probe_latest.json` |
 | P9-1 | 多日期真实数据回放（无 fallback） | P9 | Done | 已产出 `artifacts_metrics/real_data_replay_latest.json` |
 | P10-1 | 策略有效性指标计算与阈值 | P10 | Done | 已新增 `strategy_effectiveness` 指标与双阈值门禁 |
-| P11-1 | GitHub 最终发布流程收口 | P11 | In Progress | API 连通已恢复，PR/CI 已完成；当前阻塞为 base branch merge policy |
+| P11-1 | GitHub 最终发布流程收口 | P11 | In Progress | PR #1 checks clean（smoke+bundle）；待 merge 与 main 复验 |
 
 ## Package Checklists
 
@@ -157,3 +157,4 @@
 - 2026-02-06: `codex/p0-p5-hardening` 已 push 到 origin；`gh auth` token 无效且 `api.github.com` 连通失败，PR 创建暂时阻塞。
 - 2026-02-06: 已确认 Git SSH 代码通道可用（`git push`/`git ls-remote`），但 GitHub API 通道受 `gh` token 无效与 DNS 解析失败共同阻塞。
 - 2026-02-06: GitHub API 已恢复（`gh auth status` 正常，DNS 可解析），PR 已创建：`#1`，`ci_smoke` 与 `release_bundle` 均通过；当前剩余阻塞为 base branch policy（`mergeStateStatus=BLOCKED`）。
+- 2026-02-06: 修复 `release_bundle` 触发机制（支持 `pull_request` + 自动 audit_tag），`bundle` required check 已纳入 PR 状态汇总并通过，PR #1 状态切换为 `CLEAN`。

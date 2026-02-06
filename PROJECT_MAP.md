@@ -28,13 +28,13 @@
 1. 必须完成 GitHub 侧 `CI -> PR -> merge` 留痕。
 2. 认证与网络已恢复：`gh auth status` 正常，`github.com/api.github.com` DNS 可解析。
 3. PR 已创建：`https://github.com/runlinx-eng/Chunwan_CI/pull/1`。
-4. `ci_smoke` 与 `release_bundle` 已通过，但 PR 仍被 base branch policy 阻断（`mergeStateStatus=BLOCKED`）。
-5. 合并到 `main` 后需再跑一次 strict 路径并回写留痕。
+4. `ci_smoke` 与 `release_bundle` 已通过，PR 当前为 `mergeStateStatus=CLEAN`。
+5. 待执行 merge；合并到 `main` 后需再跑一次 strict 路径并回写留痕。
 
 当前点位（YOU ARE HERE）：
 
-1. 已到 `P11-4`（PR + 核心 CI 已完成）。
-2. 卡点不在代码、不在本地门禁、也不在 API 连通；当前卡在仓库 merge 策略。
+1. 已到 `P11-5`（PR #1 checks clean，可执行 merge）。
+2. 当前不再卡在 API/DNS，也不再卡在 `bundle` required check。
 
 ## Next Itinerary
 
@@ -49,9 +49,8 @@
    - PR: `https://github.com/runlinx-eng/Chunwan_CI/pull/1`
    - `ci_smoke` pass
    - `release_bundle` workflow_dispatch pass
-4. 处理 merge policy 阻断：
-   - 检查保护策略与实际 required checks 绑定关系（当前 required contexts: `smoke`, `bundle`）。
-   - 若策略确认为管理员门槛，使用仓库管理员在 Web 上完成 merge（或 `gh pr merge --admin`）。
+4. 执行 merge（PR #1）：
+   - `gh pr merge 1 --squash --delete-branch`（或 Web 合并）
 5. 合并后复验：
    - 在 `main` 重新执行 `bash tools/run_release_pipeline.sh`
 6. 留痕回写：

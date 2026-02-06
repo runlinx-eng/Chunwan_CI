@@ -33,7 +33,7 @@ PR 信息（2026-02-06）：
 - [x] （如触发）`release_bundle` 通过
 
 当前状态（2026-02-06）：
-- PR 校验和 `release_bundle` 已通过，但 PR 仍显示 `mergeStateStatus=BLOCKED`。
+- PR 校验和 `release_bundle` 已通过，当前 `mergeStateStatus=CLEAN`。
 
 建议命令（已登录 gh CLI 时）：
 
