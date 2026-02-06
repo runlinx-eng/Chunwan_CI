@@ -16,23 +16,24 @@
 
 ## 3) 发起 PR
 
-- [ ] 目标分支：`main`
-- [ ] PR 描述必须包含：
-  - [ ] 本次变更范围（P8-P10/P11）
-  - [ ] 本地门禁结果（关键命令 + 结果）
-  - [ ] 风险与回滚方案
-  - [ ] 产物路径（`artifacts_metrics/*`）
+- [x] 目标分支：`main`
+- [x] PR 描述必须包含：
+  - [x] 本次变更范围（P8-P10/P11）
+  - [x] 本地门禁结果（关键命令 + 结果）
+  - [x] 风险与回滚方案
+  - [x] 产物路径（`artifacts_metrics/*`）
 
-当前阻塞（2026-02-06）：
-- `gh auth status` 显示 token 无效。
-- `gh pr list` 无法连通 `api.github.com`。
-- 已完成 branch push，待恢复 GitHub CLI 登录/网络后创建 PR。
+PR 信息（2026-02-06）：
+- PR: `https://github.com/runlinx-eng/Chunwan_CI/pull/1`
 
 ## 4) GitHub CI 通过
 
-- [ ] `ci_smoke` 通过
+- [x] `ci_smoke` 通过
 - [ ] `phase10_verify` 通过
-- [ ] （如触发）`release_bundle` 通过
+- [x] （如触发）`release_bundle` 通过
+
+当前状态（2026-02-06）：
+- PR 校验和 `release_bundle` 已通过，但 PR 仍显示 `mergeStateStatus=BLOCKED`。
 
 建议命令（已登录 gh CLI 时）：
 
