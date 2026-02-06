@@ -23,13 +23,13 @@
 1. `bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean` 已通过。
 2. `bash tools/run_release_pipeline.sh` 已通过（strict 路径，含 `phase10`）。
 3. `bash specpack/strategy_effectiveness/verify.sh` 已通过（hard 阈值通过，target 阈值告警）。
-4. PR 已合并：`https://github.com/runlinx-eng/Chunwan_CI/pull/1`，merge commit=`5b8aca2d76b1544b7bed128222616ea17024639c`。
+4. PR 已合并：`https://github.com/runlinx-eng/Chunwan_CI/pull/2`，merge commit=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`。
 5. GitHub 侧 `phase10_verify` 已通过：Run `21750613821`。
 6. 合并后已在 `origin/main` 基线复验（worktree 分支 `codex/p11-main-verify`）。
 7. 真实数据探针：`artifacts_metrics/real_data_probe_latest.json` -> `status=ok`, `failure_type=ok`（2026-02-06 17:12 UTC）。
 8. 三日真实数据回放：`artifacts_metrics/real_data_replay_latest.json` -> `success_rate=1.0`, `global_status=ok`（2026-02-06 17:45 UTC）。
 9. 回放质量指标已更新：`avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]`（主题证据恢复）。
-10. 当前工作区存在未提交改动（R3 修复与地图回写中）。
+10. 当前 worktree 已 clean（post-merge strict 复验已通过）。
 
 当前阻塞点（进入最终目标前）：
 
@@ -47,8 +47,8 @@
 
 执行顺序（从现在开始）：
 
-1. 当前可直接进入发布/合并流程（PR #2）。
-2. 后续如需继续优化，可开策略 alpha 包（例如收益与稳定性优化）。
+1. 发布/合并流程已闭环完成（PR #2 merged + post-merge strict 复验通过）。
+2. 后续进入策略 alpha 包（收益、稳定性、分层持仓与回撤控制优化）。
 
 ## System Boundary
 

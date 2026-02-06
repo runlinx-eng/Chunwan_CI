@@ -180,3 +180,4 @@
 - 2026-02-06: 创建 R2 PR：`https://github.com/runlinx-eng/Chunwan_CI/pull/2`。
 - 2026-02-06: 完成 R3：`src/data_provider.py` 引入快照主题桥接（A-ticker -> 6位真实代码并校验可交易代码），AkShare 主题命中恢复。
 - 2026-02-06: R3 验证通过：`real_data_replay` -> `avg_topn_theme_hit_ratio=1.0`、`quality_flags=[]`、`success_rate=1.0`。
+- 2026-02-06: PR #2 已合并（merge=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`），并在 `origin/main` 上完成 post-merge strict 复验（`run_release_pipeline` + `strategy_effectiveness` 全通过）。
