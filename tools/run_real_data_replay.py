@@ -59,6 +59,44 @@ def _git_rev(repo_root: Path) -> str:
         return ""
 
 
+def _extract_report_theme_metrics(report_path: Path) -> Dict[str, object]:
+    if not report_path.exists():
+        return {
+            "report_exists": False,
+            "results_count": 0,
+            "topn_theme_hit_nonempty": 0,
+            "topn_theme_hit_ratio": 0.0,
+        }
+    try:
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {
+            "report_exists": True,
+            "results_count": 0,
+            "topn_theme_hit_nonempty": 0,
+            "topn_theme_hit_ratio": 0.0,
+            "report_parse_error": True,
+        }
+    results = payload.get("results", [])
+    if not isinstance(results, list):
+        results = []
+    total = len(results)
+    nonempty = 0
+    for row in results:
+        if not isinstance(row, dict):
+            continue
+        hits = row.get("theme_hits")
+        if isinstance(hits, list) and len(hits) > 0:
+            nonempty += 1
+    ratio = float(nonempty) / float(total) if total else 0.0
+    return {
+        "report_exists": True,
+        "results_count": total,
+        "topn_theme_hit_nonempty": nonempty,
+        "topn_theme_hit_ratio": ratio,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Replay akshare runs across dates and summarize failure types")
     parser.add_argument("--dates", required=True, help="comma-separated as-of dates")
@@ -119,6 +157,8 @@ def main() -> None:
         if status == "ok":
             success_count += 1
         failure_hist[failure_type] = failure_hist.get(failure_type, 0) + 1
+        report_path = repo_root / "outputs" / f"report_{as_of}_top{args.top}.json"
+        report_metrics = _extract_report_theme_metrics(report_path)
         runs.append(
             {
                 "date": as_of,
@@ -128,6 +168,12 @@ def main() -> None:
                 "started_at": started.isoformat().replace("+00:00", "Z"),
                 "finished_at": finished.isoformat().replace("+00:00", "Z"),
                 "stderr_excerpt": (proc.stderr or "")[-1500:],
+                "report_path": str(report_path),
+                "report_exists": report_metrics.get("report_exists", False),
+                "results_count": int(report_metrics.get("results_count", 0)),
+                "topn_theme_hit_nonempty": int(report_metrics.get("topn_theme_hit_nonempty", 0)),
+                "topn_theme_hit_ratio": float(report_metrics.get("topn_theme_hit_ratio", 0.0)),
+                "report_parse_error": bool(report_metrics.get("report_parse_error", False)),
             }
         )
 
@@ -136,6 +182,26 @@ def main() -> None:
     global_status = "ok" if success_count == total else "degraded"
     if total > 0 and failure_hist.get("network_blocked", 0) == total:
         global_status = "blocked_by_environment"
+    successful_runs = [row for row in runs if row.get("status") == "ok"]
+    theme_ratio_values = [float(row.get("topn_theme_hit_ratio", 0.0)) for row in successful_runs]
+    avg_topn_theme_hit_ratio = (
+        float(sum(theme_ratio_values)) / float(len(theme_ratio_values)) if theme_ratio_values else 0.0
+    )
+    zero_theme_hit_success_runs = sum(
+        1
+        for row in successful_runs
+        if int(row.get("results_count", 0)) > 0 and int(row.get("topn_theme_hit_nonempty", 0)) == 0
+    )
+    empty_result_success_runs = sum(
+        1 for row in successful_runs if int(row.get("results_count", 0)) == 0
+    )
+    quality_flags: List[str] = []
+    if successful_runs and zero_theme_hit_success_runs == len(successful_runs):
+        quality_flags.append("theme_hits_zero_all_success_runs")
+    if empty_result_success_runs > 0:
+        quality_flags.append("empty_results_present")
+    if any(bool(row.get("report_parse_error", False)) for row in successful_runs):
+        quality_flags.append("report_parse_error_present")
 
     payload: Dict[str, object] = {
         "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -145,6 +211,10 @@ def main() -> None:
         "success_rate": success_rate,
         "global_status": global_status,
         "failure_histogram": failure_hist,
+        "avg_topn_theme_hit_ratio": avg_topn_theme_hit_ratio,
+        "zero_theme_hit_success_runs": zero_theme_hit_success_runs,
+        "empty_result_success_runs": empty_result_success_runs,
+        "quality_flags": quality_flags,
         "runs": runs,
     }
 

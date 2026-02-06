@@ -30,6 +30,8 @@
 | P9 | 真实数据稳态包 | 在真实数据下验证稳定运行 | 多日期 `provider=akshare --no-fallback` 回放结果 | 成功率达标且失败可归因 |
 | P10 | 策略有效性包 | 从“能跑”升级到“有效” | 收益/命中/回撤指标与阈值 | 指标达到预设阈值 |
 | P11 | 发布收口包 | 完成最终交付闭环 | CI 通过、PR 合并、发布说明 | 主分支可复现执行并通过门禁 |
+| R1 | 真实数据解阻包 | 最终目标要求真实数据可跑 | 网络/DNS/代理链路修复 + AkShare 回放复验 | `real_data_replay` 不再 `blocked_by_environment` |
+| R2 | 真实数据解释性包（可选） | 让“可跑”升级为“可解释” | AkShare 主题命中来源补齐 + 报告字段增强 | `theme_hits` 不长期为 0 或有明确降级解释 |
 
 ## Milestones
 
@@ -42,6 +44,8 @@
 | M4 | P3 完成（真实链路稳定） | M2, M3 |
 | M5 | P4 完成（门禁升级） | M4 |
 | M6 | P5 完成（交付封装） | M5 |
+| M7 | R1 完成（真实数据可跑） | M6, P11 |
+| M8 | R2 完成（真实数据解释性） | M7 |
 
 ## Command Contract
 
@@ -75,7 +79,9 @@
 | P8-2 | P8 验证与结果入库 | P8 | Done | 已产出 `artifacts_metrics/real_data_probe_latest.json` |
 | P9-1 | 多日期真实数据回放（无 fallback） | P9 | Done | 已产出 `artifacts_metrics/real_data_replay_latest.json` |
 | P10-1 | 策略有效性指标计算与阈值 | P10 | Done | 已新增 `strategy_effectiveness` 指标与双阈值门禁 |
-| P11-1 | GitHub 最终发布流程收口 | P11 | In Progress | PR #1 checks clean（smoke+bundle）；待 merge 与 main 复验 |
+| P11-1 | GitHub 最终发布流程收口 | P11 | Done | PR #1 已合并，main 复验通过（merge=`5b8aca2`） |
+| R1-1 | 真实数据网络链路解阻与回放复验 | R1 | Done | `probe=ok` 且 `replay success_rate=1.0`（2026-02-06） |
+| R2-1 | AkShare 主题命中解释性补齐 | R2 | Done | 报告显式降级解释 + replay 输出 theme_hit_ratio 与 quality_flags |
 
 ## Package Checklists
 
@@ -132,9 +138,12 @@
 | P6-3 | 严格门禁复验（`phase10`） | Done | `verify` 全门禁通过 |
 | P7-1 | `snapshot_sweep` 主题签名改为读取 `theme_hits/signal_themes` | Done | 2026-01-20 警告清零，主题签名集合数恢复 |
 | P8-1 | AkShare 连通性探针与错误分型脚本 | Done | failure_type 已可自动分类 |
-| P8-2 | P8 验证与结果入库 | Done | 当前环境分类结果为 `network_blocked` |
-| P9-1 | 多日期真实数据回放（无 fallback） | Done | success_rate=0，global_status=`blocked_by_environment` |
+| P8-2 | P8 验证与结果入库 | Done | 已恢复为 `failure_type=ok`（最新 probe） |
+| P9-1 | 多日期真实数据回放（无 fallback） | Done | 已恢复为 `success_rate=1.0`, `global_status=ok` |
 | P10-1 | 策略有效性指标计算与阈值 | Done | hard 阈值通过，target 阈值告警待后续优化 |
+| P11-1 | GitHub 最终发布流程收口 | Done | PR #1 merged + CI 通过 + main strict 复验通过 |
+| R1-1 | 真实数据网络链路解阻与回放复验 | Done | probe/replay 全量通过，环境阻塞解除 |
+| R2-1 | AkShare 主题命中解释性补齐 | Done | 主题命中为 0 时已可见可审计；后续可选补数据源提升命中 |
 
 ## Change Log
 
@@ -158,3 +167,9 @@
 - 2026-02-06: 已确认 Git SSH 代码通道可用（`git push`/`git ls-remote`），但 GitHub API 通道受 `gh` token 无效与 DNS 解析失败共同阻塞。
 - 2026-02-06: GitHub API 已恢复（`gh auth status` 正常，DNS 可解析），PR 已创建：`#1`，`ci_smoke` 与 `release_bundle` 均通过；当前剩余阻塞为 base branch policy（`mergeStateStatus=BLOCKED`）。
 - 2026-02-06: 修复 `release_bundle` 触发机制（支持 `pull_request` + 自动 audit_tag），`bundle` required check 已纳入 PR 状态汇总并通过，PR #1 状态切换为 `CLEAN`。
+- 2026-02-06: PR #1 已合并到 `main`（merge commit=`5b8aca2d76b1544b7bed128222616ea17024639c`），`ci_smoke`(run=`21750195343`) 与 `phase10_verify`(run=`21750613821`) 在 `main` 通过。
+- 2026-02-06: 在 `origin/main` 基线（分支 `codex/p11-main-verify`）完成本地 strict 复验：`git_guard --strict` 与 `run_release_pipeline` 均通过；进入 R1（真实数据环境解阻）阶段。
+- 2026-02-06: `src/data_provider.py` 增加 AkShare 抗阻断策略（默认绕开系统代理、EM/spot 接口降级、历史行情降级 `stock_zh_a_daily`、无效 ticker 过滤）。
+- 2026-02-06: `tools/probe_real_data_chain.py --strict` 通过（`failure_type=ok`，date=2026-02-05，耗时约 57s）。
+- 2026-02-06: `tools/run_real_data_replay.py --dates 2026-02-05,2026-02-04,2026-02-03 --top 3` 通过（`success_rate=1.0`，`global_status=ok`，耗时约 170s）。
+- 2026-02-06: 完成 R2：`src/report.py` 在无主题命中时写入显式降级解释；`src/run.py` 输出 theme_hit_ratio 告警指标；`tools/run_real_data_replay.py` 汇总 `avg_topn_theme_hit_ratio/quality_flags`。

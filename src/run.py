@@ -143,6 +143,21 @@ def _log_enhanced_candidate_concepts(report: dict, mode_label: str) -> None:
             )
 
 
+def _theme_hit_metrics(results: object) -> Tuple[int, int, float]:
+    if not isinstance(results, list):
+        return 0, 0, 0.0
+    total = len(results)
+    if total == 0:
+        return 0, 0, 0.0
+    nonempty = 0
+    for row in results:
+        theme_hits = row.get("theme_hits") if isinstance(row, dict) else None
+        if isinstance(theme_hits, list) and len(theme_hits) > 0:
+            nonempty += 1
+    ratio = float(nonempty) / float(total)
+    return total, nonempty, ratio
+
+
 def read_manifest(snapshot_as_of: Optional[pd.Timestamp]) -> dict:
     if snapshot_as_of is None:
         return {}
@@ -254,6 +269,10 @@ def main() -> None:
     n_candidates_after_history_filter = None
     n_candidates_scored = None
     n_theme_hit_tickers = None
+    topn_theme_hit_nonempty = None
+    topn_theme_hit_ratio = None
+    candidate_theme_hit_nonempty = None
+    candidate_theme_hit_ratio = None
     debug_data = {}
     provider_fallback = False
     provider_fallback_reason = None
@@ -508,6 +527,27 @@ def main() -> None:
             candidates_report["data_date"] = as_of.strftime("%Y-%m-%d")
 
         report["meta"] = report.get("meta", {})
+        topn_total, topn_theme_hit_nonempty, topn_theme_hit_ratio = _theme_hit_metrics(
+            report.get("results", [])
+        )
+        report["meta"]["topn_count"] = int(topn_total)
+        report["meta"]["topn_theme_hit_nonempty"] = int(topn_theme_hit_nonempty)
+        report["meta"]["topn_theme_hit_ratio"] = float(topn_theme_hit_ratio)
+        if candidates_report is not None:
+            cand_total, candidate_theme_hit_nonempty, candidate_theme_hit_ratio = _theme_hit_metrics(
+                candidates_report.get("results", [])
+            )
+            report["meta"]["candidate_count"] = int(cand_total)
+            report["meta"]["candidate_theme_hit_nonempty"] = int(candidate_theme_hit_nonempty)
+            report["meta"]["candidate_theme_hit_ratio"] = float(candidate_theme_hit_ratio)
+        if (
+            args.provider == "akshare"
+            and float(args.theme_weight) > 0.0
+            and int(report.get("count", 0)) > 0
+            and float(topn_theme_hit_ratio) == 0.0
+        ):
+            warnings.append("akshare_theme_hits_unavailable")
+            report["meta"]["ranking_mode"] = "tech_only_due_to_no_theme_hits"
         report["meta"]["excluded"] = {"insufficient_history_60": insufficient_history_60}
         if min_history != 61:
             report["meta"]["excluded"]["insufficient_history_min"] = insufficient_history_min
@@ -556,6 +596,10 @@ def main() -> None:
             "n_candidates_after_history_filter": n_candidates_after_history_filter,
             "n_candidates_scored": n_candidates_scored,
             "n_theme_hit_tickers": n_theme_hit_tickers or 0,
+            "topn_theme_hit_nonempty": topn_theme_hit_nonempty,
+            "topn_theme_hit_ratio": topn_theme_hit_ratio,
+            "candidate_theme_hit_nonempty": candidate_theme_hit_nonempty,
+            "candidate_theme_hit_ratio": candidate_theme_hit_ratio,
             "top5_theme_totals": [
                 row.get("score_breakdown", {}).get("score_theme_total") for row in results[:5]
             ],
@@ -631,6 +675,10 @@ def main() -> None:
     debug_data.setdefault("n_candidates_after_history_filter", n_candidates_after_history_filter)
     debug_data.setdefault("n_candidates_scored", n_candidates_scored)
     debug_data.setdefault("n_theme_hit_tickers", n_theme_hit_tickers)
+    debug_data.setdefault("topn_theme_hit_nonempty", topn_theme_hit_nonempty)
+    debug_data.setdefault("topn_theme_hit_ratio", topn_theme_hit_ratio)
+    debug_data.setdefault("candidate_theme_hit_nonempty", candidate_theme_hit_nonempty)
+    debug_data.setdefault("candidate_theme_hit_ratio", candidate_theme_hit_ratio)
     debug_data["top5_theme_totals"] = [
         row.get("score_breakdown", {}).get("score_theme_total") for row in results[:5]
     ]

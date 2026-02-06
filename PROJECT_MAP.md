@@ -13,48 +13,42 @@
 
 当前全局阶段：
 
-1. `P0-P10` 已完成（含真实数据探针/回放、策略有效性门禁）。
-2. `P11` 进行中，目标是完成 GitHub 侧闭环（CI/PR/merge 留痕）。
+1. `P0-P11` 已完成（含真实数据探针/回放、策略有效性门禁、GitHub 发布收口）。
+2. `R1` 已完成：真实数据链路可运行（AkShare probe/replay 均为 `ok`）。
+3. `R2` 已完成：AkShare 路径在 `theme_hits=0` 时给出显式降级解释，并在回放产物输出主题命中覆盖率。
 
 当前验证状态：
 
 1. `bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean` 已通过。
 2. `bash tools/run_release_pipeline.sh` 已通过（strict 路径，含 `phase10`）。
 3. `bash specpack/strategy_effectiveness/verify.sh` 已通过（hard 阈值通过，target 阈值告警）。
-4. 当前工作区 `git status` 为 clean。
+4. PR 已合并：`https://github.com/runlinx-eng/Chunwan_CI/pull/1`，merge commit=`5b8aca2d76b1544b7bed128222616ea17024639c`。
+5. GitHub 侧 `phase10_verify` 已通过：Run `21750613821`。
+6. 合并后已在 `origin/main` 基线复验（worktree 分支 `codex/p11-main-verify`）。
+7. 真实数据探针：`artifacts_metrics/real_data_probe_latest.json` -> `status=ok`, `failure_type=ok`（2026-02-06 17:12 UTC）。
+8. 三日真实数据回放：`artifacts_metrics/real_data_replay_latest.json` -> `success_rate=1.0`, `global_status=ok`（2026-02-06 17:04 UTC）。
+9. 回放质量指标已落盘：`quality_flags=['theme_hits_zero_all_success_runs']`，可见“可跑但主题命中缺失”。
+10. 当前工作区存在未提交改动（R1/R2 修复与地图回写中）。
 
-当前阻塞点（进入最终发布前）：
+当前阻塞点（进入最终目标前）：
 
-1. 必须完成 GitHub 侧 `CI -> PR -> merge` 留痕。
-2. 认证与网络已恢复：`gh auth status` 正常，`github.com/api.github.com` DNS 可解析。
-3. PR 已创建：`https://github.com/runlinx-eng/Chunwan_CI/pull/1`。
-4. `ci_smoke` 与 `release_bundle` 已通过，PR 当前为 `mergeStateStatus=CLEAN`。
-5. 待执行 merge；合并到 `main` 后需再跑一次 strict 路径并回写留痕。
+1. “真实数据可跑”目标已达成，无硬阻塞。
+2. 当前剩余项为可选优化：补齐 AkShare 主题命中数据源（非发布阻塞）。
 
 当前点位（YOU ARE HERE）：
 
-1. 已到 `P11-5`（PR #1 checks clean，可执行 merge）。
-2. 当前不再卡在 API/DNS，也不再卡在 `bundle` required check。
+1. 已完成 `P11` 全部步骤（本地 strict -> PR -> CI -> merge -> main 复验 -> 留痕）。
+2. 已完成 `R1`（真实数据链路可运行、回放成功率 100%）。
+3. 已完成 `R2`（解释性降级可见、回放质量指标可审计）。
 
 ## Next Itinerary
 
 执行顺序（从现在开始）：
 
-1. 先用 SSH 保持代码通道（已完成）：
-   - `origin=git@github.com:runlinx-eng/Chunwan_CI.git`
-   - `git push` 已成功。
-2. GitHub API 条件已恢复（已完成）：
-   - `gh auth status`、`gh api user` 正常。
-3. PR 创建与 CI（已完成）：
-   - PR: `https://github.com/runlinx-eng/Chunwan_CI/pull/1`
-   - `ci_smoke` pass
-   - `release_bundle` workflow_dispatch pass
-4. 执行 merge（PR #1）：
-   - `gh pr merge 1 --squash --delete-branch`（或 Web 合并）
-5. 合并后复验：
-   - 在 `main` 重新执行 `bash tools/run_release_pipeline.sh`
-6. 留痕回写：
-   - 把 PR 链接、CI Run ID、merge SHA 写回 `EXECUTION_BOARD.md` Change Log。
+1. R2-1（可选）：补齐 AkShare 路径主题命中来源（可用行业/概念替代源或可用快照桥接）。
+2. R2-2（已完成）：为 AkShare 报告增加“无主题命中”显式解释字段，避免误读。
+3. R2-3（已完成）：把 R2 指标（theme_hit_ratio）接入 `run_real_data_replay` 摘要。
+4. 后续若要提升策略质量，再开 R3（主题证据源补齐）。
 
 ## System Boundary
 
