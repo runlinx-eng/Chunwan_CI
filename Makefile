@@ -33,3 +33,6 @@ real-data-replay:
 
 release:
 	bash tools/run_release_pipeline.sh $(if $(SNAPSHOTS),--snapshots "$(SNAPSHOTS)",) $(if $(TOP_N),--top-n "$(TOP_N)",)
+
+ui:
+	./.venv/bin/streamlit run ui/streamlit_app.py

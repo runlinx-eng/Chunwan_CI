@@ -205,6 +205,12 @@ python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
 ```
 
+## 图形界面启动（本地交互）
+```bash
+./.venv/bin/streamlit run ui/streamlit_app.py
+# 或 make ui
+```
+
 ## 可执行工作流
 ```bash
 STRICT_IO=1 bash tools/phase10_prune_verify.sh
