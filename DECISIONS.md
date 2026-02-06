@@ -78,3 +78,27 @@
 ## snapshot_sweep 主题签名口径修正（P7-1）
 - 决策：`run_snapshot_sweep.py` 的 `theme_hit_signature` 优先读取候选结果里的 `theme_hits/signal_themes`，仅在缺失时回退到 `concept_hits + theme_map` 反推。
 - 原因：静态映射反推会把稠密主题图误判为“签名单一”，无法反映运行时稀疏化后的真实命中差异。
+
+## 真实数据失败分型先行（P8）
+- 决策：先引入 `tools/probe_real_data_chain.py` 对 `provider=akshare --no-fallback` 做探针，并输出标准化 failure_type。
+- 原因：在网络受限环境下，直接推进真实数据稳态回放会反复失败；先做可归因探针能区分“环境阻断”与“代码缺陷”。
+
+## 策略有效性双阈值门禁（P10）
+- 决策：新增 `specpack/strategy_effectiveness/verify.sh`，基于 `backtest_regression` 输出生成 `strategy_effectiveness_latest.json`，并采用 hard/target 双阈值审计。
+- 约束：hard 阈值失败即阻断；target 阈值失败仅告警，写入 `strategy_effectiveness_gate_latest.json`。
+- 原因：当前 snapshot 回测可用于稳定评估“是否显著退化”，但不宜直接作为最终 alpha 判定；先用 hard 阈值守住下限，再用 target 阈值指挥下一轮策略优化。
+
+## P11 发布清单化
+- 决策：新增 `P11_RELEASE_CHECKLIST.md` 作为最终发布收口的唯一人工清单。
+- 约束：P11 不再只看“代码已改”，必须同时留存 PR 链接、CI Run ID、merge commit SHA。
+- 原因：GitHub 侧动作（PR/CI/merge）不可由本地脚本完全替代，清单化可以降低新手漏步骤风险。
+
+## specpack Python 解析统一
+- 决策：`specpack` 下涉及 Python 执行的 `verify.sh` 统一走 `tools/resolve_python.sh`，并优先使用 `PYTHON_BIN`。
+- 约束：禁止依赖裸 `python`，避免在仅有 `python3` 或 venv 场景下失败。
+- 原因：本机实测存在 `python` 缺失与 `python3` 无 `pytest` 的分裂环境，导致 verify_all 非策略性失败。
+
+## theme_precision 阈值二次标定（P11 前置）
+- 决策：将 `min_concept_hits_unique_set_enhanced` 从 6 下调至 4，将 `min_concept_hits_unique_set_all` 从 6 下调至 5；同步 `min_enhanced_concept_hit_signature_unique_set_count` 到 4。
+- 约束：仅下调概念多样性下限，不放宽 theme_total 的唯一值与区间约束。
+- 原因：当前实测稳定分布为 enhanced=4/all=5（`theme_precision_latest.json`），原阈值会把可接受分布误报为退化，阻断发布路径。

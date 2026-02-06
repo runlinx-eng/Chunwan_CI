@@ -115,6 +115,78 @@ bash tools/run_release_pipeline.sh
 bash tools/run_release_pipeline.sh --skip-phase10 --snapshots 2026-01-20,2026-01-16 --top-n 10
 ```
 
+## P8 真实数据探针（AkShare）
+
+执行：
+
+```bash
+./.venv/bin/python tools/probe_real_data_chain.py --date 2026-02-05 --top 3
+```
+
+产物：
+- `artifacts_metrics/real_data_probe_latest.json`
+- `artifacts_metrics/real_data_probe_YYYYMMDD_HHMMSS.json`
+
+失败分型：
+- `network_blocked`：当前运行环境 DNS/网络策略阻断（非策略逻辑问题）
+- `dependency_missing`：依赖缺失
+- `ssl_or_cert_error`：证书或 SSL 栈问题
+- `provider_rate_limit`：数据源限流
+- `unknown_runtime_error`：其余错误
+
+## P9 多日期真实数据回放（AkShare）
+
+执行：
+
+```bash
+./.venv/bin/python tools/run_real_data_replay.py --dates 2026-02-05,2026-02-04 --top 3
+```
+
+产物：
+- `artifacts_metrics/real_data_replay_latest.json`
+
+关键字段：
+- `success_rate`
+- `global_status`（`ok` / `degraded` / `blocked_by_environment`）
+- `failure_histogram`
+
+## P10 策略有效性门禁（snapshot 回测）
+
+执行：
+
+```bash
+bash specpack/strategy_effectiveness/verify.sh
+# 或 make strategy-effectiveness
+```
+
+产物：
+- `artifacts_metrics/strategy_effectiveness_latest.json`
+- `artifacts_metrics/strategy_effectiveness_gate_latest.json`
+- `artifacts_metrics/strategy_effectiveness_YYYYMMDD_HHMMSS.json`
+
+门禁语义：
+- hard 阈值：不达标直接失败（阻断发布）
+- target 阈值：不达标仅告警（用于后续策略优化）
+
+关键字段：
+- `per_horizon.<h>.mean_excess_return`
+- `per_horizon.<h>.excess_win_rate`
+- `per_horizon.<h>.cumulative_spread`
+- `per_horizon.<h>.max_drawdown_enhanced`
+
+## P11 GitHub 发布收口
+
+发布收口清单见：
+- `P11_RELEASE_CHECKLIST.md`
+
+最短本地入口：
+
+```bash
+bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean
+bash tools/run_release_pipeline.sh
+bash specpack/strategy_effectiveness/verify.sh
+```
+
 ## 执行指挥文档（V2）
 
 - 总指挥：`EXECUTION_BOARD.md`

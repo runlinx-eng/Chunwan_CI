@@ -9,6 +9,38 @@
 3. 运行模式与门禁关系
 4. 已知风险点
 
+## Current Stage (2026-02-06)
+
+当前全局阶段：
+
+1. `P0-P10` 已完成（含真实数据探针/回放、策略有效性门禁）。
+2. `P11` 进行中，目标是完成 GitHub 侧闭环（CI/PR/merge 留痕）。
+
+当前验证状态：
+
+1. `specpack/strategy_effectiveness/verify.sh` 已通过（hard 阈值通过，target 阈值告警）。
+2. `tools/run_release_pipeline.sh --skip-phase10` 已通过（开发态链路可执行）。
+3. `specpack/verify_all.sh` 直跑不是发布主路径，当前会受 `theme_map_sparsity` 严格阈值影响。
+
+当前阻塞点（进入最终发布前）：
+
+1. 必须在 clean tree 下执行 strict 发布路径（`phase10`）。
+2. 必须完成 GitHub 侧 `CI -> PR -> merge` 留痕。
+
+## Next Itinerary
+
+执行顺序（从现在开始）：
+
+1. 本地 strict 验收：
+   - `bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean`
+   - `bash tools/run_release_pipeline.sh`
+2. 发布收口清单执行：
+   - 按 `P11_RELEASE_CHECKLIST.md` 完成提交、推送、PR、CI、merge。
+3. 合并后复验：
+   - 在 `main` 重新执行 `bash tools/run_release_pipeline.sh`
+4. 留痕回写：
+   - 把 PR 链接、CI Run ID、merge SHA 写回 `EXECUTION_BOARD.md` Change Log。
+
 ## System Boundary
 
 - 输入：
