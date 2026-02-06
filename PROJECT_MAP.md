@@ -18,27 +18,25 @@
 
 当前验证状态：
 
-1. `specpack/strategy_effectiveness/verify.sh` 已通过（hard 阈值通过，target 阈值告警）。
-2. `tools/run_release_pipeline.sh --skip-phase10` 已通过（开发态链路可执行）。
-3. `specpack/verify_all.sh` 直跑不是发布主路径，当前会受 `theme_map_sparsity` 严格阈值影响。
+1. `bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean` 已通过。
+2. `bash tools/run_release_pipeline.sh` 已通过（strict 路径，含 `phase10`）。
+3. `bash specpack/strategy_effectiveness/verify.sh` 已通过（hard 阈值通过，target 阈值告警）。
+4. 当前工作区 `git status` 为 clean。
 
 当前阻塞点（进入最终发布前）：
 
-1. 必须在 clean tree 下执行 strict 发布路径（`phase10`）。
-2. 必须完成 GitHub 侧 `CI -> PR -> merge` 留痕。
+1. 必须完成 GitHub 侧 `CI -> PR -> merge` 留痕。
+2. 合并到 `main` 后需再跑一次 strict 路径并回写留痕。
 
 ## Next Itinerary
 
 执行顺序（从现在开始）：
 
-1. 本地 strict 验收：
-   - `bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean`
-   - `bash tools/run_release_pipeline.sh`
-2. 发布收口清单执行：
+1. 发布收口清单执行：
    - 按 `P11_RELEASE_CHECKLIST.md` 完成提交、推送、PR、CI、merge。
-3. 合并后复验：
+2. 合并后复验：
    - 在 `main` 重新执行 `bash tools/run_release_pipeline.sh`
-4. 留痕回写：
+3. 留痕回写：
    - 把 PR 链接、CI Run ID、merge SHA 写回 `EXECUTION_BOARD.md` Change Log。
 
 ## System Boundary
