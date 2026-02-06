@@ -26,6 +26,20 @@ def _to_int(value: Any, field_name: str) -> int:
         raise ValueError(f"invalid integer value for {field_name}: {value!r}") from exc
 
 
+def _to_bool(value: Any, field_name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "y"}:
+            return True
+        if normalized in {"0", "false", "no", "n"}:
+            return False
+    raise ValueError(f"invalid boolean value for {field_name}: {value!r}")
+
+
 def _append_error(errors: List[str], msg: str) -> None:
     errors.append(msg)
 
@@ -81,6 +95,17 @@ def main() -> None:
         config.get("min_horizons_with_non_negative_mean_excess_hard", 0),
         "config.min_horizons_with_non_negative_mean_excess_hard",
     )
+    hard_min_objective_alpha = _to_float(
+        config.get("min_objective_alpha_hard", -1.0), "config.min_objective_alpha_hard"
+    )
+    hard_max_avg_turnover_enhanced = _to_float(
+        config.get("max_avg_turnover_enhanced_hard", 1.0),
+        "config.max_avg_turnover_enhanced_hard",
+    )
+    require_drawdown_constraint = _to_bool(
+        config.get("require_drawdown_constraint_pass", True),
+        "config.require_drawdown_constraint_pass",
+    )
 
     target_min_excess_mean = _to_float(
         config.get("min_excess_mean_return_target", 0.0), "config.min_excess_mean_return_target"
@@ -94,6 +119,13 @@ def main() -> None:
     target_min_horizons_non_negative = _to_int(
         config.get("min_horizons_with_non_negative_mean_excess_target", 0),
         "config.min_horizons_with_non_negative_mean_excess_target",
+    )
+    target_min_objective_alpha = _to_float(
+        config.get("min_objective_alpha_target", 0.0), "config.min_objective_alpha_target"
+    )
+    target_max_avg_turnover_enhanced = _to_float(
+        config.get("max_avg_turnover_enhanced_target", 1.0),
+        "config.max_avg_turnover_enhanced_target",
     )
 
     horizons_with_non_negative_mean_excess = 0
@@ -117,6 +149,16 @@ def main() -> None:
         )
         max_drawdown_enhanced = _to_float(
             row.get("max_drawdown_enhanced"), f"horizon[{horizon_key}].max_drawdown_enhanced"
+        )
+        objective_alpha = _to_float(
+            row.get("objective_alpha"), f"horizon[{horizon_key}].objective_alpha"
+        )
+        avg_turnover_enhanced = _to_float(
+            row.get("avg_turnover_enhanced"), f"horizon[{horizon_key}].avg_turnover_enhanced"
+        )
+        drawdown_constraint_passed = _to_bool(
+            row.get("drawdown_constraint_passed"),
+            f"horizon[{horizon_key}].drawdown_constraint_passed",
         )
 
         if mean_excess >= 0.0:
@@ -152,6 +194,23 @@ def main() -> None:
                 f"h{horizon_key} cumulative_spread below hard threshold: "
                 f"{cumulative_spread:.6f} < {hard_min_cumulative_spread:.6f}",
             )
+        if objective_alpha < hard_min_objective_alpha:
+            _append_error(
+                errors,
+                f"h{horizon_key} objective_alpha below hard threshold: "
+                f"{objective_alpha:.6f} < {hard_min_objective_alpha:.6f}",
+            )
+        if avg_turnover_enhanced > hard_max_avg_turnover_enhanced:
+            _append_error(
+                errors,
+                f"h{horizon_key} avg_turnover_enhanced above hard threshold: "
+                f"{avg_turnover_enhanced:.6f} > {hard_max_avg_turnover_enhanced:.6f}",
+            )
+        if require_drawdown_constraint and (not drawdown_constraint_passed):
+            _append_error(
+                errors,
+                f"h{horizon_key} drawdown_constraint_passed is false",
+            )
 
         if mean_excess < target_min_excess_mean:
             _append_warning(
@@ -170,6 +229,18 @@ def main() -> None:
                 warnings,
                 f"h{horizon_key} cumulative_spread below target: "
                 f"{cumulative_spread:.6f} < {target_min_cumulative_spread:.6f}",
+            )
+        if objective_alpha < target_min_objective_alpha:
+            _append_warning(
+                warnings,
+                f"h{horizon_key} objective_alpha below target: "
+                f"{objective_alpha:.6f} < {target_min_objective_alpha:.6f}",
+            )
+        if avg_turnover_enhanced > target_max_avg_turnover_enhanced:
+            _append_warning(
+                warnings,
+                f"h{horizon_key} avg_turnover_enhanced above target: "
+                f"{avg_turnover_enhanced:.6f} > {target_max_avg_turnover_enhanced:.6f}",
             )
 
     if horizons_with_non_negative_mean_excess < hard_min_horizons_non_negative:

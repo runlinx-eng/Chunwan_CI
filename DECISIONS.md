@@ -102,3 +102,8 @@
 - 决策：将 `min_concept_hits_unique_set_enhanced` 从 6 下调至 4，将 `min_concept_hits_unique_set_all` 从 6 下调至 5；同步 `min_enhanced_concept_hit_signature_unique_set_count` 到 4。
 - 约束：仅下调概念多样性下限，不放宽 theme_total 的唯一值与区间约束。
 - 原因：当前实测稳定分布为 enhanced=4/all=5（`theme_precision_latest.json`），原阈值会把可接受分布误报为退化，阻断发布路径。
+
+## 策略 Alpha-1：组合构建口径升级
+- 决策：`backtest_regression` 改为“按持仓权重”计算 forward return，`enhanced` 采用分层持仓（头部/中层/尾部）而非单层归一化。
+- 约束：回测输出必须包含 `turnover` 和 `weighting_mode`，并在 `strategy_effectiveness` 产物输出 `objective_alpha`、`avg_turnover_enhanced`、`drawdown_constraint_passed`。
+- 原因：旧口径虽然计算了权重，但收益按等权均值统计，无法反映真实组合构建质量，也无法对回撤约束与交易稳定性做门禁。

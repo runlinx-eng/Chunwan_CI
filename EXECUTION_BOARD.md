@@ -33,6 +33,7 @@
 | R1 | 真实数据解阻包 | 最终目标要求真实数据可跑 | 网络/DNS/代理链路修复 + AkShare 回放复验 | `real_data_replay` 不再 `blocked_by_environment` |
 | R2 | 真实数据解释性包（可选） | 让“可跑”升级为“可解释” | AkShare 主题命中来源补齐 + 报告字段增强 | `theme_hits` 不长期为 0 或有明确降级解释 |
 | R3 | 真实数据主题证据恢复包（可选） | 把解释性从“降级可见”升级为“主题命中恢复” | 快照桥接真实代码 + 主题覆盖率回升 | `avg_topn_theme_hit_ratio > 0` 且 `quality_flags` 清空 |
+| A1 | 策略 Alpha-1 包 | 在链路稳定后提升组合构建质量 | 分层持仓 + 目标函数 + 回撤约束 | 产物输出 objective/turnover/constraint，门禁通过 |
 
 ## Milestones
 
@@ -48,6 +49,7 @@
 | M7 | R1 完成（真实数据可跑） | M6, P11 |
 | M8 | R2 完成（真实数据解释性） | M7 |
 | M9 | R3 完成（主题证据恢复） | M8 |
+| M10 | A1 完成（策略 alpha 第一包） | M9 |
 
 ## Command Contract
 
@@ -85,6 +87,7 @@
 | R1-1 | 真实数据网络链路解阻与回放复验 | R1 | Done | `probe=ok` 且 `replay success_rate=1.0`（2026-02-06） |
 | R2-1 | AkShare 主题命中解释性补齐 | R2 | Done | 报告显式降级解释 + replay 输出 theme_hit_ratio 与 quality_flags |
 | R3-1 | AkShare 主题证据桥接与命中恢复 | R3 | Done | `avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]` |
+| A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | A1 | Done | `strategy_effectiveness` 新增 objective/turnover/constraint 字段并通过 verify |
 
 ## Package Checklists
 
@@ -148,6 +151,7 @@
 | R1-1 | 真实数据网络链路解阻与回放复验 | Done | probe/replay 全量通过，环境阻塞解除 |
 | R2-1 | AkShare 主题命中解释性补齐 | Done | 主题命中为 0 时已可见可审计；后续可选补数据源提升命中 |
 | R3-1 | AkShare 主题证据桥接与命中恢复 | Done | 主题命中恢复，回放质量指标不再告警 |
+| A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | Done | 回测已按持仓权重计收益，新增 alpha 指标并入门禁 |
 
 ## Change Log
 
@@ -181,3 +185,4 @@
 - 2026-02-06: 完成 R3：`src/data_provider.py` 引入快照主题桥接（A-ticker -> 6位真实代码并校验可交易代码），AkShare 主题命中恢复。
 - 2026-02-06: R3 验证通过：`real_data_replay` -> `avg_topn_theme_hit_ratio=1.0`、`quality_flags=[]`、`success_rate=1.0`。
 - 2026-02-06: PR #2 已合并（merge=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`），并在 `origin/main` 上完成 post-merge strict 复验（`run_release_pipeline` + `strategy_effectiveness` 全通过）。
+- 2026-02-06: 启动并完成 A1-1：`backtest_regression` 接入分层持仓与权重收益回测，`strategy_effectiveness` 接入 `objective_alpha/avg_turnover_enhanced/drawdown_constraint_passed` 并通过门禁。

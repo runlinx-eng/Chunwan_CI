@@ -7,8 +7,13 @@
   "min_excess_win_rate_hard": 0.0,
   "min_cumulative_spread_hard": -0.25,
   "min_horizons_with_non_negative_mean_excess_hard": 0,
+  "min_objective_alpha_hard": -0.2,
+  "max_avg_turnover_enhanced_hard": 1.0,
+  "require_drawdown_constraint_pass": true,
   "min_excess_mean_return_target": 0.0,
   "min_excess_win_rate_target": 0.45,
   "min_cumulative_spread_target": 0.0,
-  "min_horizons_with_non_negative_mean_excess_target": 1
+  "min_horizons_with_non_negative_mean_excess_target": 1,
+  "min_objective_alpha_target": -0.05,
+  "max_avg_turnover_enhanced_target": 0.7
 }

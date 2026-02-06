@@ -173,6 +173,10 @@ bash specpack/strategy_effectiveness/verify.sh
 - `per_horizon.<h>.excess_win_rate`
 - `per_horizon.<h>.cumulative_spread`
 - `per_horizon.<h>.max_drawdown_enhanced`
+- `per_horizon.<h>.objective_alpha`
+- `per_horizon.<h>.avg_turnover_enhanced`
+- `per_horizon.<h>.drawdown_constraint_passed`
+- `overall.mean_objective_alpha`
 
 ## P11 GitHub 发布收口
 

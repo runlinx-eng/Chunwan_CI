@@ -70,7 +70,49 @@ def _resolve_horizons(report: Dict[str, Any]) -> List[str]:
     return []
 
 
-def _summarize_horizon(results: List[Dict[str, Any]], horizon: str) -> Dict[str, Any]:
+def _resolve_alpha_objective(report: Dict[str, Any]) -> Dict[str, float]:
+    config = report.get("config", {})
+    config_obj = config if isinstance(config, dict) else {}
+    raw = config_obj.get("alpha_objective", {})
+    objective = raw if isinstance(raw, dict) else {}
+
+    return {
+        "excess_return_weight": _to_float(
+            objective.get("excess_return_weight", 1.0), "alpha_objective.excess_return_weight"
+        ),
+        "drawdown_penalty_weight": _to_float(
+            objective.get("drawdown_penalty_weight", 0.35),
+            "alpha_objective.drawdown_penalty_weight",
+        ),
+        "turnover_penalty_weight": _to_float(
+            objective.get("turnover_penalty_weight", 0.10),
+            "alpha_objective.turnover_penalty_weight",
+        ),
+        "max_drawdown_constraint": _to_float(
+            objective.get("max_drawdown_constraint", 0.25),
+            "alpha_objective.max_drawdown_constraint",
+        ),
+    }
+
+
+def _collect_turnovers(results: List[Dict[str, Any]], section: str) -> List[float]:
+    values: List[float] = []
+    for idx, row in enumerate(results):
+        section_obj = row.get(section, {})
+        if not isinstance(section_obj, dict):
+            raise ValueError(f"row[{idx}].{section} invalid object")
+        turnover = section_obj.get("turnover")
+        if turnover is None:
+            continue
+        values.append(_to_float(turnover, f"row[{idx}].{section}.turnover"))
+    return values
+
+
+def _summarize_horizon(
+    results: List[Dict[str, Any]],
+    horizon: str,
+    alpha_objective: Dict[str, float],
+) -> Dict[str, Any]:
     baseline_returns: List[float] = []
     enhanced_returns: List[float] = []
     dates: List[str] = []
@@ -96,6 +138,8 @@ def _summarize_horizon(results: List[Dict[str, Any]], horizon: str) -> Dict[str,
     cumulative_baseline, max_drawdown_baseline = _compound_and_drawdown(baseline_returns)
     cumulative_enhanced, max_drawdown_enhanced = _compound_and_drawdown(enhanced_returns)
     cumulative_excess_curve, max_drawdown_excess = _compound_and_drawdown(excess_returns)
+    baseline_turnovers = _collect_turnovers(results, "baseline")
+    enhanced_turnovers = _collect_turnovers(results, "enhanced")
 
     n = len(excess_returns)
     win_rate_excess = sum(1 for x in excess_returns if x > 0.0) / n
@@ -106,6 +150,17 @@ def _summarize_horizon(results: List[Dict[str, Any]], horizon: str) -> Dict[str,
     mean_baseline = statistics.fmean(baseline_returns)
     mean_enhanced = statistics.fmean(enhanced_returns)
     mean_excess = statistics.fmean(excess_returns)
+    avg_turnover_baseline = statistics.fmean(baseline_turnovers) if baseline_turnovers else 0.0
+    avg_turnover_enhanced = statistics.fmean(enhanced_turnovers) if enhanced_turnovers else 0.0
+
+    objective_alpha = (
+        alpha_objective["excess_return_weight"] * mean_excess
+        - alpha_objective["drawdown_penalty_weight"] * max_drawdown_enhanced
+        - alpha_objective["turnover_penalty_weight"] * avg_turnover_enhanced
+    )
+    drawdown_constraint_passed = (
+        max_drawdown_enhanced <= alpha_objective["max_drawdown_constraint"] + EPS
+    )
 
     summary = {
         "horizon": int(horizon),
@@ -127,6 +182,11 @@ def _summarize_horizon(results: List[Dict[str, Any]], horizon: str) -> Dict[str,
         "max_drawdown_baseline": max_drawdown_baseline,
         "max_drawdown_enhanced": max_drawdown_enhanced,
         "max_drawdown_excess_curve": max_drawdown_excess,
+        "avg_turnover_baseline": avg_turnover_baseline,
+        "avg_turnover_enhanced": avg_turnover_enhanced,
+        "max_turnover_enhanced": max(enhanced_turnovers) if enhanced_turnovers else 0.0,
+        "objective_alpha": objective_alpha,
+        "drawdown_constraint_passed": bool(drawdown_constraint_passed),
     }
     return summary
 
@@ -167,14 +227,20 @@ def main() -> None:
         raise ValueError("invalid backtest report: missing horizons")
 
     per_horizon: Dict[str, Dict[str, Any]] = {}
+    alpha_objective = _resolve_alpha_objective(report)
     for horizon in horizons:
-        per_horizon[horizon] = _summarize_horizon(results, horizon)
+        per_horizon[horizon] = _summarize_horizon(results, horizon, alpha_objective)
 
     mean_excess_values = [float(m["mean_excess_return"]) for m in per_horizon.values()]
     mean_enhanced_values = [float(m["mean_enhanced_return"]) for m in per_horizon.values()]
     cumulative_spreads = [float(m["cumulative_spread"]) for m in per_horizon.values()]
     enhanced_drawdowns = [float(m["max_drawdown_enhanced"]) for m in per_horizon.values()]
     excess_win_rates = [float(m["excess_win_rate"]) for m in per_horizon.values()]
+    objective_values = [float(m["objective_alpha"]) for m in per_horizon.values()]
+    avg_turnover_enhanced_values = [float(m["avg_turnover_enhanced"]) for m in per_horizon.values()]
+    drawdown_constraint_passed_count = sum(
+        1 for m in per_horizon.values() if bool(m.get("drawdown_constraint_passed"))
+    )
 
     overall = {
         "dates_count": len(results),
@@ -186,6 +252,11 @@ def main() -> None:
         "worst_cumulative_spread": min(cumulative_spreads),
         "worst_max_drawdown_enhanced": max(enhanced_drawdowns),
         "all_horizons_enhanced_mean_positive": all(x > 0.0 for x in mean_enhanced_values),
+        "mean_objective_alpha": statistics.fmean(objective_values),
+        "worst_objective_alpha": min(objective_values),
+        "avg_turnover_enhanced": statistics.fmean(avg_turnover_enhanced_values),
+        "worst_avg_turnover_enhanced": max(avg_turnover_enhanced_values),
+        "horizons_passing_drawdown_constraint": drawdown_constraint_passed_count,
     }
 
     finished_at = datetime.now(timezone.utc)
@@ -194,6 +265,7 @@ def main() -> None:
         "git_rev": _git_rev(repo_root),
         "snapshot_as_of": report.get("snapshot_as_of"),
         "source_path": str(input_path),
+        "alpha_objective": alpha_objective,
         "per_horizon": per_horizon,
         "overall": overall,
     }

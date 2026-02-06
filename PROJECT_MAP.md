@@ -17,6 +17,7 @@
 2. `R1` 已完成：真实数据链路可运行（AkShare probe/replay 均为 `ok`）。
 3. `R2` 已完成：AkShare 路径在 `theme_hits=0` 时给出显式降级解释，并在回放产物输出主题命中覆盖率。
 4. `R3` 已完成：AkShare 主题证据桥接上线，`avg_topn_theme_hit_ratio` 从 `0.0` 提升到 `1.0`。
+5. `A1` 已启动并完成第一步：分层持仓 + 目标函数 + 回撤约束门禁字段已接入并通过验证。
 
 当前验证状态：
 
@@ -29,7 +30,8 @@
 7. 真实数据探针：`artifacts_metrics/real_data_probe_latest.json` -> `status=ok`, `failure_type=ok`（2026-02-06 17:12 UTC）。
 8. 三日真实数据回放：`artifacts_metrics/real_data_replay_latest.json` -> `success_rate=1.0`, `global_status=ok`（2026-02-06 17:45 UTC）。
 9. 回放质量指标已更新：`avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]`（主题证据恢复）。
-10. 当前 worktree 已 clean（post-merge strict 复验已通过）。
+10. `strategy_effectiveness` 已升级 alpha 指标：`objective_alpha`、`avg_turnover_enhanced`、`drawdown_constraint_passed`。
+11. 当前工作区存在 A1 改动（待提交）。
 
 当前阻塞点（进入最终目标前）：
 
@@ -42,13 +44,14 @@
 2. 已完成 `R1`（真实数据链路可运行、回放成功率 100%）。
 3. 已完成 `R2`（解释性降级可见、回放质量指标可审计）。
 4. 已完成 `R3`（主题证据桥接生效，AkShare 路径主题命中恢复）。
+5. 已完成 `A1-1`（组合分层持仓、回测按持仓权重计收益、策略目标函数与回撤约束门禁生效）。
 
 ## Next Itinerary
 
 执行顺序（从现在开始）：
 
 1. 发布/合并流程已闭环完成（PR #2 merged + post-merge strict 复验通过）。
-2. 后续进入策略 alpha 包（收益、稳定性、分层持仓与回撤控制优化）。
+2. 继续策略 alpha：A1-2（用真实快照分层收益/回撤优化阈值，降低 target 告警数）。
 
 ## System Boundary
 

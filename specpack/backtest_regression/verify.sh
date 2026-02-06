@@ -26,11 +26,13 @@ for key in ("dates", "results", "config"):
 if len(report.get("dates", [])) != 30:
     raise AssertionError("dates count != 30")
 
-for row in report.get("results", []):
+for idx, row in enumerate(report.get("results", [])):
     for section in ("baseline", "enhanced"):
         data = row.get(section, {})
         tickers = data.get("tickers", [])
         weights = data.get("weights", [])
+        weighting_mode = data.get("weighting_mode")
+        turnover = data.get("turnover")
         if len(tickers) != 5 or len(weights) != 5:
             raise AssertionError("invalid selection size")
         weight_sum = sum(weights)
@@ -39,6 +41,14 @@ for row in report.get("results", []):
         for w in weights:
             if w is None or (isinstance(w, float) and math.isnan(w)):
                 raise AssertionError("invalid weight")
+        if not isinstance(weighting_mode, str) or not weighting_mode:
+            raise AssertionError("missing weighting_mode")
+        if idx == 0:
+            if turnover is not None:
+                raise AssertionError("first row turnover should be null")
+        else:
+            if turnover is None or (isinstance(turnover, float) and math.isnan(turnover)):
+                raise AssertionError("invalid turnover")
     for h, data in row.get("horizons", {}).items():
         for key in ("baseline_return", "enhanced_return"):
             value = data.get(key)
