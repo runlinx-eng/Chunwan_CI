@@ -234,8 +234,8 @@ make ui
 
 执行顺序：
 1. `A2-1` 真实股盘池接入：统一证券主表（A 股可交易列表、退市/停牌过滤、最小成交额过滤）。
-2. `A2-2` 行情特征扩展：在现有动量/波动基础上增加流动性、换手、趋势稳定性、波动收缩等特征。
-3. `A2-3` 门禁升级：新增“真实股盘池覆盖率”和“特征缺失率”门禁，接入 `specpack`。
+2. `A2-2` 行情特征扩展（已完成）：在现有动量/波动基础上增加流动性、换手、趋势稳定性、波动收缩等特征。
+3. `A2-3` 门禁升级（已完成）：新增“真实股盘池覆盖率”和“特征缺失率”门禁，接入 `specpack`。
 4. `A2-4` 回放验证：固定多日期回放，比较 `enhanced` 与 `tech_only` 的稳定增益与告警变化。
 
 起步命令（A2 入口）：
@@ -243,6 +243,13 @@ make ui
 bash tools/git_guard.sh --require-prefix --require-upstream
 bash tools/run_release_pipeline.sh --skip-phase10 --snapshots 2026-01-20,2026-01-16 --top-n 10
 bash specpack/strategy_effectiveness/verify.sh
+bash specpack/real_pool_feature_health/verify.sh
+```
+
+A2-2/A2-3 验证命令（已通过）：
+```bash
+./.venv/bin/python -m src.run --date 2026-02-07 --top 20 --provider akshare --no-fallback --no-cache
+bash specpack/real_pool_feature_health/verify.sh
 ```
 
 ## 可执行工作流

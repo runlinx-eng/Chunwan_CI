@@ -1,0 +1,28 @@
+{
+  "min_universe_count": 30,
+  "min_scored_count": 20,
+  "min_coverage_ratio": 0.5,
+  "max_feature_missing_ratio": 0.0,
+  "required_indicator_fields": [
+    "momentum_20",
+    "momentum_60",
+    "volatility_20",
+    "volatility_60",
+    "avg_volume_20",
+    "avg_amount_20",
+    "volume_ratio_20",
+    "trend_stability_20",
+    "volatility_contraction_20_60"
+  ],
+  "required_score_breakdown_fields": [
+    "score_total",
+    "score_tech_total",
+    "score_theme_total",
+    "momentum_20_rank",
+    "momentum_60_rank",
+    "volume_rank",
+    "liquidity_rank",
+    "trend_stability_rank",
+    "volatility_contraction_rank"
+  ]
+}

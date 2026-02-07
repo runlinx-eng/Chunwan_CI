@@ -69,7 +69,7 @@ python -m src.run --date 2026-01-12 --top 20 --provider akshare
 - 命中主题（`theme_hits`，含 `signal_id/weight/match_paths/signal_theme`）
 - `matched_terms`（关键词/概念/行业名）与 `matched_source`（signals/map）
 - `score_breakdown`（评分拆解）
-- 指标数值（`momentum_20`/`momentum_60`/`volatility_20`/`avg_volume_20`）
+- 指标数值（`momentum_20`/`momentum_60`/`volatility_20`/`volatility_60`/`avg_volume_20`/`avg_amount_20`/`volume_ratio_20`/`trend_stability_20`/`volatility_contraction_20_60`）
 - 数据日期（`data_date`）
 
 ## 缓存与可复现

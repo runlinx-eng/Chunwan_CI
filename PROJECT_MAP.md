@@ -20,6 +20,8 @@
 5. `A1` 已启动并完成第一步：分层持仓 + 目标函数 + 回撤约束门禁字段已接入并通过验证。
 6. 图形界面封装已完成：`ui/streamlit_app.py` 可交互运行（参数输入 + 一键执行 + 报告下载）。
 7. `A2-1` 已启动：完成真实股盘池首轮基线采样（`artifacts_metrics/a2_real_pool_baseline_latest.json`）。
+8. `A2-2` 已完成：行情特征扩展（成交额分位、量能比、趋势稳定性、波动收缩）已接入评分与报告。
+9. `A2-3` 已完成：实盘池覆盖率/特征缺失率门禁上线（`specpack/real_pool_feature_health`）。
 
 当前验证状态：
 
@@ -36,6 +38,7 @@
 11. UI 本机烟测通过：`streamlit` 可启动并返回本地访问地址。
 12. 当前工作区 clean。
 13. A2 基线：`as_of=2026-02-06`，`universe_count=72`，`scored_count=72`，`topn_theme_hit_ratio=1.0`。
+14. A2 门禁：`bash specpack/real_pool_feature_health/verify.sh` 已通过（`status=passed`）。
 
 当前阻塞点（进入最终目标前）：
 
@@ -50,6 +53,7 @@
 4. 已完成 `R3`（主题证据桥接生效，AkShare 路径主题命中恢复）。
 5. 已完成 `A1-1`（组合分层持仓、回测按持仓权重计收益、策略目标函数与回撤约束门禁生效）。
 6. 已完成封装任务收尾（CLI + Streamlit UI 双入口就绪）。
+7. 已完成 `A2-2`（行情特征扩展）与 `A2-3`（覆盖率/缺失率门禁）。
 
 ## Next Itinerary
 
@@ -57,8 +61,8 @@
 
 1. 发布/合并流程已闭环完成（PR #2 merged + post-merge strict 复验通过）。
 2. 已进入策略 alpha：A1-2（用真实快照分层收益/回撤优化阈值，降低 target 告警数）。
-3. A2（真实股盘池/行情特征）已开工，当前执行 A2-1（真实股盘池治理）。
-4. 下一步执行 A2-2（行情特征扩展）并补 A2-3 覆盖率/缺失率门禁。
+3. A2（真实股盘池/行情特征）已完成 A2-2/A2-3，当前剩余 A2-1 收尾（可交易主表与过滤规则收口）。
+4. A2 收尾后进入 A1-2 参数调优（压降 `strategy_effectiveness` target 告警）。
 
 ## System Boundary
 
@@ -101,7 +105,7 @@
 ## Current Scoring Fact (As-Is)
 
 - 技术分：
-  - `0.5 * momentum_20_rank + 0.3 * momentum_60_rank + 0.2 * volume_rank`
+  - `0.35*momentum_20_rank + 0.20*momentum_60_rank + 0.15*volume_rank + 0.15*liquidity_rank + 0.10*trend_stability_rank + 0.05*volatility_contraction_rank`
 - 主题分：
   - 对每个 signal，按命中强度（map/keyword + concept权重）加分
 - 风险分：

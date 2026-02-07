@@ -92,8 +92,8 @@
 | A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | A1 | Done | `strategy_effectiveness` 新增 objective/turnover/constraint 字段并通过 verify |
 | A1-2 | Alpha 参数调优（降低 target 告警） | A1 | In Progress | 以 `mean_excess_return/objective_alpha` 为主目标，迭代层权重与约束参数 |
 | A2-1 | 真实股盘池接入与治理 | A2 | In Progress | 已完成基线采样（as_of=2026-02-06, universe=72），下一步补全可交易主表与过滤规则 |
-| A2-2 | 行情特征扩展 | A2 | Pending | 新增换手、成交额分位、趋势稳定性、波动收缩等特征 |
-| A2-3 | 实盘池覆盖率与特征缺失率门禁 | A2 | Pending | 新增 specpack 审计并纳入 release 流程 |
+| A2-2 | 行情特征扩展 | A2 | Done | `src/scoring.py` 新增 `avg_amount_20/volume_ratio_20/trend_stability_20/volatility_contraction_20_60` 并接入技术评分 |
+| A2-3 | 实盘池覆盖率与特征缺失率门禁 | A2 | Done | 新增 `specpack/real_pool_feature_health`，产物 `artifacts_metrics/real_pool_feature_health_latest.json` 已通过 |
 
 ## Package Checklists
 
@@ -195,3 +195,5 @@
 - 2026-02-07: 完成封装任务收尾：新增 Streamlit 交互入口（`ui/streamlit_app.py`），并通过本机启动烟测；进入 A1-2 参数调优阶段。
 - 2026-02-07: 操作说明已记录“封装跑通”步骤；新增 A2（真实股盘池/行情特征）阶段与任务拆解（A2-1/A2-2/A2-3）。
 - 2026-02-07: A2-1 启动并完成首轮基线采样，产物 `artifacts_metrics/a2_real_pool_baseline_latest.json`（as_of=2026-02-06, universe/scored=72, theme_hit_ratio=1.0）。
+- 2026-02-07: 完成 A2-2：技术因子扩展到成交额分位、量能比、趋势稳定性、波动收缩，并在报告输出对应解释字段。
+- 2026-02-07: 完成 A2-3：新增 `real_pool_feature_health` 门禁并接入 `specpack/verify_all.sh`；门禁产物 `real_pool_feature_health_latest.json` 状态为 `passed`。

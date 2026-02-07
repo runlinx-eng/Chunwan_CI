@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "error_count": 0,
+  "warning_count": 0,
+  "errors": [],
+  "warnings": [],
+  "report_path": "/Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener/outputs/report_2026-01-20_top5_techonly.json",
+  "as_of": "2026-01-20",
+  "provider": null,
+  "universe_count": 450,
+  "scored_count": 450,
+  "coverage_ratio": 1.0,
+  "results_count": 5,
+  "indicator_missing_ratio": {
+    "momentum_20": 0.0,
+    "momentum_60": 0.0,
+    "volatility_20": 0.0,
+    "volatility_60": 0.0,
+    "avg_volume_20": 0.0,
+    "avg_amount_20": 0.0,
+    "volume_ratio_20": 0.0,
+    "trend_stability_20": 0.0,
+    "volatility_contraction_20_60": 0.0
+  },
+  "score_breakdown_missing_ratio": {
+    "score_total": 0.0,
+    "score_tech_total": 0.0,
+    "score_theme_total": 0.0,
+    "momentum_20_rank": 0.0,
+    "momentum_60_rank": 0.0,
+    "volume_rank": 0.0,
+    "liquidity_rank": 0.0,
+    "trend_stability_rank": 0.0,
+    "volatility_contraction_rank": 0.0
+  },
+  "git_rev": "07e8a8003a786496949f73234f5a96ce8d09b0a3"
+}

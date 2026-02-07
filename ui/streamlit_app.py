@@ -165,7 +165,7 @@ def _results_table(report: dict[str, Any]) -> pd.DataFrame:
                 "name": item.get("name", ""),
                 "final_score": score_breakdown.get("final_score", ""),
                 "theme_score": score_breakdown.get("score_theme_total", ""),
-                "tech_score": score_breakdown.get("score_technical", ""),
+                "tech_score": score_breakdown.get("score_tech_total", ""),
                 "theme_hit_count": len(theme_hits) if isinstance(theme_hits, list) else 0,
                 "reason": item.get("reason", ""),
             }
