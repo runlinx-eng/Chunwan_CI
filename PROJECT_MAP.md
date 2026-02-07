@@ -19,6 +19,7 @@
 4. `R3` 已完成：AkShare 主题证据桥接上线，`avg_topn_theme_hit_ratio` 从 `0.0` 提升到 `1.0`。
 5. `A1` 已启动并完成第一步：分层持仓 + 目标函数 + 回撤约束门禁字段已接入并通过验证。
 6. 图形界面封装已完成：`ui/streamlit_app.py` 可交互运行（参数输入 + 一键执行 + 报告下载）。
+7. `A2-1` 已启动：完成真实股盘池首轮基线采样（`artifacts_metrics/a2_real_pool_baseline_latest.json`）。
 
 当前验证状态：
 
@@ -34,6 +35,7 @@
 10. `strategy_effectiveness` 已升级 alpha 指标：`objective_alpha`、`avg_turnover_enhanced`、`drawdown_constraint_passed`。
 11. UI 本机烟测通过：`streamlit` 可启动并返回本地访问地址。
 12. 当前工作区 clean。
+13. A2 基线：`as_of=2026-02-06`，`universe_count=72`，`scored_count=72`，`topn_theme_hit_ratio=1.0`。
 
 当前阻塞点（进入最终目标前）：
 
@@ -55,7 +57,8 @@
 
 1. 发布/合并流程已闭环完成（PR #2 merged + post-merge strict 复验通过）。
 2. 已进入策略 alpha：A1-2（用真实快照分层收益/回撤优化阈值，降低 target 告警数）。
-3. 下一阶段已规划：A2（真实股盘池/行情特征），用于把输入与特征从演示级提升到实盘级。
+3. A2（真实股盘池/行情特征）已开工，当前执行 A2-1（真实股盘池治理）。
+4. 下一步执行 A2-2（行情特征扩展）并补 A2-3 覆盖率/缺失率门禁。
 
 ## System Boundary
 
