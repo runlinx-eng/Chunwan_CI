@@ -198,3 +198,4 @@
 - 2026-02-07: 完成 A2-2：技术因子扩展到成交额分位、量能比、趋势稳定性、波动收缩，并在报告输出对应解释字段。
 - 2026-02-07: 完成 A2-3：新增 `real_pool_feature_health` 门禁并接入 `specpack/verify_all.sh`；门禁产物 `real_pool_feature_health_latest.json` 状态为 `passed`。
 - 2026-02-07: A2 改造后 strict 验证通过：`STRICT_IO=1 bash tools/phase10_prune_verify.sh`（包含 `specpack` 全包通过）。
+- 2026-02-07: 按封装全流程复验（依赖安装 -> AkShare 实跑 -> strict release）完成，`run_release_pipeline` 通过且 `snapshot_sweep` 成功 `2/2`。
