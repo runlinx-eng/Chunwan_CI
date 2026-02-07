@@ -88,6 +88,7 @@
 | R2-1 | AkShare 主题命中解释性补齐 | R2 | Done | 报告显式降级解释 + replay 输出 theme_hit_ratio 与 quality_flags |
 | R3-1 | AkShare 主题证据桥接与命中恢复 | R3 | Done | `avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]` |
 | A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | A1 | Done | `strategy_effectiveness` 新增 objective/turnover/constraint 字段并通过 verify |
+| A1-2 | Alpha 参数调优（降低 target 告警） | A1 | In Progress | 以 `mean_excess_return/objective_alpha` 为主目标，迭代层权重与约束参数 |
 
 ## Package Checklists
 
@@ -186,3 +187,4 @@
 - 2026-02-06: R3 验证通过：`real_data_replay` -> `avg_topn_theme_hit_ratio=1.0`、`quality_flags=[]`、`success_rate=1.0`。
 - 2026-02-06: PR #2 已合并（merge=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`），并在 `origin/main` 上完成 post-merge strict 复验（`run_release_pipeline` + `strategy_effectiveness` 全通过）。
 - 2026-02-06: 启动并完成 A1-1：`backtest_regression` 接入分层持仓与权重收益回测，`strategy_effectiveness` 接入 `objective_alpha/avg_turnover_enhanced/drawdown_constraint_passed` 并通过门禁。
+- 2026-02-07: 完成封装任务收尾：新增 Streamlit 交互入口（`ui/streamlit_app.py`），并通过本机启动烟测；进入 A1-2 参数调优阶段。
