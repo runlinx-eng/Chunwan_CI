@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from .signals import Signal
+from .utils import to_exchange_ticker
 
 
 def normalize_themes_used(base_themes: List[str], theme_map_path: str) -> List[str]:
@@ -100,10 +101,19 @@ def build_report(
             if theme_name and theme_name not in hit_theme_names:
                 hit_theme_names.append(theme_name)
         has_theme_hits = len(hit_theme_names) > 0
+        momentum_20_rank = float(row.get("momentum_20_rank", 0.0))
+        momentum_60_rank = float(row.get("momentum_60_rank", 0.0))
+        volume_rank = float(row.get("volume_rank", 0.0))
+        liquidity_rank = float(row.get("liquidity_rank", 0.0))
+        trend_stability_rank = float(row.get("trend_stability_rank", 0.0))
+        volatility_contraction_rank = float(row.get("volatility_contraction_rank", 0.0))
         tech_components = {
-            "momentum_20": float(0.5 * row["momentum_20_rank"]),
-            "momentum_60": float(0.3 * row["momentum_60_rank"]),
-            "volume": float(0.2 * row["volume_rank"]),
+            "momentum_20": float(0.35 * momentum_20_rank),
+            "momentum_60": float(0.20 * momentum_60_rank),
+            "volume": float(0.15 * volume_rank),
+            "liquidity": float(0.15 * liquidity_rank),
+            "trend_stability": float(0.10 * trend_stability_rank),
+            "volatility_contraction": float(0.05 * volatility_contraction_rank),
         }
         theme_components = [
             {
@@ -167,6 +177,21 @@ def build_report(
                 f"tech_momentum_60:+{tech_components['momentum_60']:.3f}",
             ),
             ("volume", tech_components["volume"], f"tech_volume:+{tech_components['volume']:.3f}"),
+            (
+                "liquidity",
+                tech_components["liquidity"],
+                f"tech_liquidity:+{tech_components['liquidity']:.3f}",
+            ),
+            (
+                "trend_stability",
+                tech_components["trend_stability"],
+                f"tech_trend_stability:+{tech_components['trend_stability']:.3f}",
+            ),
+            (
+                "volatility_contraction",
+                tech_components["volatility_contraction"],
+                f"tech_vol_contraction:+{tech_components['volatility_contraction']:.3f}",
+            ),
         ]
         if score_risk_total > 0:
             contributions.append(("risk", -score_risk_total, f"risk:-{score_risk_total:.3f}"))
@@ -200,14 +225,25 @@ def build_report(
         reason_parts.append(f"20日动量: {row['momentum_20']:.4f}")
         reason_parts.append(f"60日动量: {row['momentum_60']:.4f}")
         reason_parts.append(f"20日波动率: {row['volatility_20']:.4f}")
+        reason_parts.append(f"60日波动率: {float(row.get('volatility_60', 0.0)):.4f}")
         reason_parts.append(f"20日均量: {row['avg_volume_20']:.0f}")
+        reason_parts.append(f"20日均额: {float(row.get('avg_amount_20', 0.0)):.0f}")
+        reason_parts.append(f"量能比(当日/20日均量): {float(row.get('volume_ratio_20', 0.0)):.3f}")
+        reason_parts.append(
+            f"趋势稳定性(20日动量/20日波动): {float(row.get('trend_stability_20', 0.0)):.4f}"
+        )
+        reason_parts.append(
+            f"波动收缩(20日相对60日): {float(row.get('volatility_contraction_20_60', 0.0)):.4f}"
+        )
         provider_value = provider or "unknown"
-        snapshot_value = snapshot_as_of or "none"
+        snapshot_value = snapshot_as_of or as_of.strftime("%Y-%m-%d")
         reason_parts.append(f"命中路径: provider={provider_value};as_of={snapshot_value}")
         reason = "; ".join(reason_parts)
+        ticker = str(row["ticker"])
         rows.append(
             {
-                "ticker": row["ticker"],
+                "ticker": ticker,
+                "exchange_ticker": to_exchange_ticker(ticker),
                 "name": row["name"],
                 "industry": row["industry"],
                 "final_score": float(row["final_score"]),
@@ -228,9 +264,12 @@ def build_report(
                         "tech": float(score_w_tech),
                         "risk": float(score_w_risk),
                     },
-                    "momentum_20_rank": float(row["momentum_20_rank"]),
-                    "momentum_60_rank": float(row["momentum_60_rank"]),
-                    "volume_rank": float(row["volume_rank"]),
+                    "momentum_20_rank": momentum_20_rank,
+                    "momentum_60_rank": momentum_60_rank,
+                    "volume_rank": volume_rank,
+                    "liquidity_rank": liquidity_rank,
+                    "trend_stability_rank": trend_stability_rank,
+                    "volatility_contraction_rank": volatility_contraction_rank,
                     "final_score": float(row["final_score"]),
                 },
                 "data_date": as_of.strftime("%Y-%m-%d"),
@@ -239,6 +278,13 @@ def build_report(
                     "momentum_60": float(row["momentum_60"]),
                     "volatility_20": float(row["volatility_20"]),
                     "avg_volume_20": float(row["avg_volume_20"]),
+                    "volatility_60": float(row.get("volatility_60", 0.0)),
+                    "avg_amount_20": float(row.get("avg_amount_20", 0.0)),
+                    "volume_ratio_20": float(row.get("volume_ratio_20", 0.0)),
+                    "trend_stability_20": float(row.get("trend_stability_20", 0.0)),
+                    "volatility_contraction_20_60": float(
+                        row.get("volatility_contraction_20_60", 0.0)
+                    ),
                 },
                 "reason": reason,
                 "reason_struct": reason_struct,

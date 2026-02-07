@@ -19,7 +19,7 @@ from .theme_pipeline import (
     DefaultThemeScorer,
     build_snapshot_candidates,
 )
-from .utils import parse_date, previous_trading_date, stable_hash
+from .utils import parse_date, previous_trading_date, stable_hash, to_exchange_ticker
 
 
 def read_text_hash(path: str) -> str:
@@ -410,7 +410,7 @@ def main() -> None:
                     concept = str(info.get("concept", ""))
                     industry = str(info.get("industry", ""))
                     description = str(info.get("description", ""))
-                name = str(info.get("name", "")) if info.get("name", "") else f"STOCK_{ticker}"
+                name = str(info.get("name", "")).strip() or ticker
                 stocks.append(
                     StockInfo(
                         ticker=ticker,
@@ -722,8 +722,9 @@ def main() -> None:
     if excluded:
         print(f"Excluded (insufficient_history_60): {excluded}")
     for idx, row in enumerate(report["results"], 1):
+        display_ticker = row.get("exchange_ticker") or to_exchange_ticker(row.get("ticker", ""))
         print(
-            f"{idx:02d} {row['ticker']} {row['name']} | {row['reason']} | data_date={row['data_date']}"
+            f"{idx:02d} {display_ticker} {row['name']} | {row['reason']} | data_date={row['data_date']}"
         )
 
 

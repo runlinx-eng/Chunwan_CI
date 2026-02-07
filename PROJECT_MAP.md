@@ -9,7 +9,7 @@
 3. 运行模式与门禁关系
 4. 已知风险点
 
-## Current Stage (2026-02-06)
+## Current Stage (2026-02-07)
 
 当前全局阶段：
 
@@ -17,19 +17,31 @@
 2. `R1` 已完成：真实数据链路可运行（AkShare probe/replay 均为 `ok`）。
 3. `R2` 已完成：AkShare 路径在 `theme_hits=0` 时给出显式降级解释，并在回放产物输出主题命中覆盖率。
 4. `R3` 已完成：AkShare 主题证据桥接上线，`avg_topn_theme_hit_ratio` 从 `0.0` 提升到 `1.0`。
+5. `A1` 已启动并完成第一步：分层持仓 + 目标函数 + 回撤约束门禁字段已接入并通过验证。
+6. 图形界面封装已完成：`ui/streamlit_app.py` 可交互运行（参数输入 + 一键执行 + 报告下载）。
+7. `A2-1` 已启动：完成真实股盘池首轮基线采样（`artifacts_metrics/a2_real_pool_baseline_latest.json`）。
+8. `A2-2` 已完成：行情特征扩展（成交额分位、量能比、趋势稳定性、波动收缩）已接入评分与报告。
+9. `A2-3` 已完成：实盘池覆盖率/特征缺失率门禁上线（`specpack/real_pool_feature_health`）。
 
 当前验证状态：
 
 1. `bash tools/git_guard.sh --strict --require-prefix --require-upstream --require-clean` 已通过。
 2. `bash tools/run_release_pipeline.sh` 已通过（strict 路径，含 `phase10`）。
 3. `bash specpack/strategy_effectiveness/verify.sh` 已通过（hard 阈值通过，target 阈值告警）。
-4. PR 已合并：`https://github.com/runlinx-eng/Chunwan_CI/pull/1`，merge commit=`5b8aca2d76b1544b7bed128222616ea17024639c`。
+4. PR 已合并：`https://github.com/runlinx-eng/Chunwan_CI/pull/2`，merge commit=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`。
 5. GitHub 侧 `phase10_verify` 已通过：Run `21750613821`。
 6. 合并后已在 `origin/main` 基线复验（worktree 分支 `codex/p11-main-verify`）。
 7. 真实数据探针：`artifacts_metrics/real_data_probe_latest.json` -> `status=ok`, `failure_type=ok`（2026-02-06 17:12 UTC）。
 8. 三日真实数据回放：`artifacts_metrics/real_data_replay_latest.json` -> `success_rate=1.0`, `global_status=ok`（2026-02-06 17:45 UTC）。
 9. 回放质量指标已更新：`avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]`（主题证据恢复）。
-10. 当前工作区存在未提交改动（R3 修复与地图回写中）。
+10. `strategy_effectiveness` 已升级 alpha 指标：`objective_alpha`、`avg_turnover_enhanced`、`drawdown_constraint_passed`。
+11. UI 本机烟测通过：`streamlit` 可启动并返回本地访问地址。
+12. 当前工作区 clean。
+13. A2 基线：`as_of=2026-02-06`，`universe_count=72`，`scored_count=72`，`topn_theme_hit_ratio=1.0`。
+14. A2 门禁：`bash specpack/real_pool_feature_health/verify.sh` 已通过（`status=passed`）。
+15. A2 改造后 strict 复验：`STRICT_IO=1 bash tools/phase10_prune_verify.sh` 已通过（2026-02-07）。
+16. 本轮真实数据封装实跑：`./.venv/bin/python -m src.run --date 2026-02-07 --top 20 --provider akshare --no-fallback --no-cache` 已通过（`issues=0`，`universe/scored=72`）。
+17. 本轮严格发布门禁：`bash tools/run_release_pipeline.sh` 已通过（2026-02-07，`snapshot_sweep` 成功 `2/2`）。
 
 当前阻塞点（进入最终目标前）：
 
@@ -42,13 +54,18 @@
 2. 已完成 `R1`（真实数据链路可运行、回放成功率 100%）。
 3. 已完成 `R2`（解释性降级可见、回放质量指标可审计）。
 4. 已完成 `R3`（主题证据桥接生效，AkShare 路径主题命中恢复）。
+5. 已完成 `A1-1`（组合分层持仓、回测按持仓权重计收益、策略目标函数与回撤约束门禁生效）。
+6. 已完成封装任务收尾（CLI + Streamlit UI 双入口就绪）。
+7. 已完成 `A2-2`（行情特征扩展）与 `A2-3`（覆盖率/缺失率门禁）。
 
 ## Next Itinerary
 
 执行顺序（从现在开始）：
 
-1. 当前可直接进入发布/合并流程（PR #2）。
-2. 后续如需继续优化，可开策略 alpha 包（例如收益与稳定性优化）。
+1. 发布/合并流程已闭环完成（PR #2 merged + post-merge strict 复验通过）。
+2. 已进入策略 alpha：A1-2（用真实快照分层收益/回撤优化阈值，降低 target 告警数）。
+3. A2（真实股盘池/行情特征）已完成 A2-2/A2-3，当前剩余 A2-1 收尾（可交易主表与过滤规则收口）。
+4. A2 收尾后进入 A1-2 参数调优（压降 `strategy_effectiveness` target 告警）。
 
 ## System Boundary
 
@@ -91,7 +108,7 @@
 ## Current Scoring Fact (As-Is)
 
 - 技术分：
-  - `0.5 * momentum_20_rank + 0.3 * momentum_60_rank + 0.2 * volume_rank`
+  - `0.35*momentum_20_rank + 0.20*momentum_60_rank + 0.15*volume_rank + 0.15*liquidity_rank + 0.10*trend_stability_rank + 0.05*volatility_contraction_rank`
 - 主题分：
   - 对每个 signal，按命中强度（map/keyword + concept权重）加分
 - 风险分：

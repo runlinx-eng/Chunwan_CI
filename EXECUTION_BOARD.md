@@ -33,6 +33,8 @@
 | R1 | 真实数据解阻包 | 最终目标要求真实数据可跑 | 网络/DNS/代理链路修复 + AkShare 回放复验 | `real_data_replay` 不再 `blocked_by_environment` |
 | R2 | 真实数据解释性包（可选） | 让“可跑”升级为“可解释” | AkShare 主题命中来源补齐 + 报告字段增强 | `theme_hits` 不长期为 0 或有明确降级解释 |
 | R3 | 真实数据主题证据恢复包（可选） | 把解释性从“降级可见”升级为“主题命中恢复” | 快照桥接真实代码 + 主题覆盖率回升 | `avg_topn_theme_hit_ratio > 0` 且 `quality_flags` 清空 |
+| A1 | 策略 Alpha-1 包 | 在链路稳定后提升组合构建质量 | 分层持仓 + 目标函数 + 回撤约束 | 产物输出 objective/turnover/constraint，门禁通过 |
+| A2 | 真实股盘池/行情特征包 | 把策略输入从演示级提升到实盘级 | 真实股票池治理 + 特征扩展 + 覆盖率门禁 | 实盘池覆盖稳定且特征缺失受控 |
 
 ## Milestones
 
@@ -48,6 +50,8 @@
 | M7 | R1 完成（真实数据可跑） | M6, P11 |
 | M8 | R2 完成（真实数据解释性） | M7 |
 | M9 | R3 完成（主题证据恢复） | M8 |
+| M10 | A1 完成（策略 alpha 第一包） | M9 |
+| M11 | A2 完成（实盘池与特征升级） | M10 |
 
 ## Command Contract
 
@@ -85,6 +89,11 @@
 | R1-1 | 真实数据网络链路解阻与回放复验 | R1 | Done | `probe=ok` 且 `replay success_rate=1.0`（2026-02-06） |
 | R2-1 | AkShare 主题命中解释性补齐 | R2 | Done | 报告显式降级解释 + replay 输出 theme_hit_ratio 与 quality_flags |
 | R3-1 | AkShare 主题证据桥接与命中恢复 | R3 | Done | `avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]` |
+| A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | A1 | Done | `strategy_effectiveness` 新增 objective/turnover/constraint 字段并通过 verify |
+| A1-2 | Alpha 参数调优（降低 target 告警） | A1 | In Progress | 以 `mean_excess_return/objective_alpha` 为主目标，迭代层权重与约束参数 |
+| A2-1 | 真实股盘池接入与治理 | A2 | In Progress | 已完成基线采样（as_of=2026-02-06, universe=72），下一步补全可交易主表与过滤规则 |
+| A2-2 | 行情特征扩展 | A2 | Done | `src/scoring.py` 新增 `avg_amount_20/volume_ratio_20/trend_stability_20/volatility_contraction_20_60` 并接入技术评分 |
+| A2-3 | 实盘池覆盖率与特征缺失率门禁 | A2 | Done | 新增 `specpack/real_pool_feature_health`，产物 `artifacts_metrics/real_pool_feature_health_latest.json` 已通过 |
 
 ## Package Checklists
 
@@ -148,6 +157,7 @@
 | R1-1 | 真实数据网络链路解阻与回放复验 | Done | probe/replay 全量通过，环境阻塞解除 |
 | R2-1 | AkShare 主题命中解释性补齐 | Done | 主题命中为 0 时已可见可审计；后续可选补数据源提升命中 |
 | R3-1 | AkShare 主题证据桥接与命中恢复 | Done | 主题命中恢复，回放质量指标不再告警 |
+| A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | Done | 回测已按持仓权重计收益，新增 alpha 指标并入门禁 |
 
 ## Change Log
 
@@ -180,3 +190,12 @@
 - 2026-02-06: 创建 R2 PR：`https://github.com/runlinx-eng/Chunwan_CI/pull/2`。
 - 2026-02-06: 完成 R3：`src/data_provider.py` 引入快照主题桥接（A-ticker -> 6位真实代码并校验可交易代码），AkShare 主题命中恢复。
 - 2026-02-06: R3 验证通过：`real_data_replay` -> `avg_topn_theme_hit_ratio=1.0`、`quality_flags=[]`、`success_rate=1.0`。
+- 2026-02-06: PR #2 已合并（merge=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`），并在 `origin/main` 上完成 post-merge strict 复验（`run_release_pipeline` + `strategy_effectiveness` 全通过）。
+- 2026-02-06: 启动并完成 A1-1：`backtest_regression` 接入分层持仓与权重收益回测，`strategy_effectiveness` 接入 `objective_alpha/avg_turnover_enhanced/drawdown_constraint_passed` 并通过门禁。
+- 2026-02-07: 完成封装任务收尾：新增 Streamlit 交互入口（`ui/streamlit_app.py`），并通过本机启动烟测；进入 A1-2 参数调优阶段。
+- 2026-02-07: 操作说明已记录“封装跑通”步骤；新增 A2（真实股盘池/行情特征）阶段与任务拆解（A2-1/A2-2/A2-3）。
+- 2026-02-07: A2-1 启动并完成首轮基线采样，产物 `artifacts_metrics/a2_real_pool_baseline_latest.json`（as_of=2026-02-06, universe/scored=72, theme_hit_ratio=1.0）。
+- 2026-02-07: 完成 A2-2：技术因子扩展到成交额分位、量能比、趋势稳定性、波动收缩，并在报告输出对应解释字段。
+- 2026-02-07: 完成 A2-3：新增 `real_pool_feature_health` 门禁并接入 `specpack/verify_all.sh`；门禁产物 `real_pool_feature_health_latest.json` 状态为 `passed`。
+- 2026-02-07: A2 改造后 strict 验证通过：`STRICT_IO=1 bash tools/phase10_prune_verify.sh`（包含 `specpack` 全包通过）。
+- 2026-02-07: 按封装全流程复验（依赖安装 -> AkShare 实跑 -> strict release）完成，`run_release_pipeline` 通过且 `snapshot_sweep` 成功 `2/2`。

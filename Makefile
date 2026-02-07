@@ -1,4 +1,7 @@
 PY?=python3
+STREAMLIT?=./.venv/bin/streamlit
+
+.PHONY: snapshot run verify strategy-effectiveness git-guard real-data-probe real-data-replay release ui
 
 snapshot:
 	@test -n "$(AS_OF)" || (echo "AS_OF is required" && exit 1)
@@ -33,3 +36,10 @@ real-data-replay:
 
 release:
 	bash tools/run_release_pipeline.sh $(if $(SNAPSHOTS),--snapshots "$(SNAPSHOTS)",) $(if $(TOP_N),--top-n "$(TOP_N)",)
+
+ui:
+	@mkdir -p "$$HOME/.streamlit"
+	@if [ ! -f "$$HOME/.streamlit/credentials.toml" ]; then \
+		printf "[general]\nemail = \"\"\n" > "$$HOME/.streamlit/credentials.toml"; \
+	fi
+	$(STREAMLIT) run ui/streamlit_app.py --browser.gatherUsageStats false

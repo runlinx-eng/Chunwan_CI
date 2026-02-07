@@ -1,4 +1,5 @@
 import hashlib
+import re
 from datetime import datetime
 from typing import Iterable
 
@@ -27,3 +28,23 @@ def stable_hash(parts: Iterable[str]) -> str:
     for part in parts:
         m.update(part.encode("utf-8"))
     return m.hexdigest()
+
+
+def to_exchange_ticker(ticker: str) -> str:
+    text = str(ticker or "").strip().upper()
+    if not text:
+        return ""
+    # Keep synthetic/mock ids unchanged.
+    if text.startswith("A") and text[1:].isdigit():
+        return text
+    if re.fullmatch(r"\d{6}\.(SH|SZ|BJ)", text):
+        return text
+    if re.fullmatch(r"(SH|SZ|BJ)\d{6}", text):
+        return f"{text[2:]}.{text[:2]}"
+    if re.fullmatch(r"\d{6}", text):
+        if text.startswith(("4", "8")):
+            return f"{text}.BJ"
+        if text.startswith(("5", "6", "9")):
+            return f"{text}.SH"
+        return f"{text}.SZ"
+    return text

@@ -19,6 +19,7 @@
 - `outputs/`：结果输出
 - `notebooks/`：Notebook 示例
 - `scripts/fetch_snapshot.py`：一次性抓取快照数据
+- `ui/streamlit_app.py`：图形界面入口（本地交互运行）
 
 ## 安装
 ```bash
@@ -47,6 +48,19 @@ AkShare 示例：
 python -m src.run --date 2026-01-12 --top 20 --provider akshare
 ```
 
+## 图形界面（Streamlit）
+安装依赖后可直接启动可交互页面：
+
+```bash
+./.venv/bin/streamlit run ui/streamlit_app.py
+# 或 make ui
+```
+
+打开浏览器后可：
+- 选择日期、Top N、provider、signals、theme_map
+- 一键运行并查看 Top N 表格与解释字段
+- 下载 JSON/CSV 报告
+
 ## 输出说明
 - `outputs/report_YYYY-MM-DD_topN.json`
 - `outputs/report_YYYY-MM-DD_topN.csv`
@@ -55,7 +69,7 @@ python -m src.run --date 2026-01-12 --top 20 --provider akshare
 - 命中主题（`theme_hits`，含 `signal_id/weight/match_paths/signal_theme`）
 - `matched_terms`（关键词/概念/行业名）与 `matched_source`（signals/map）
 - `score_breakdown`（评分拆解）
-- 指标数值（`momentum_20`/`momentum_60`/`volatility_20`/`avg_volume_20`）
+- 指标数值（`momentum_20`/`momentum_60`/`volatility_20`/`volatility_60`/`avg_volume_20`/`avg_amount_20`/`volume_ratio_20`/`trend_stability_20`/`volatility_contraction_20_60`）
 - 数据日期（`data_date`）
 
 ## 缓存与可复现
@@ -96,6 +110,7 @@ Makefile 快捷命令：
 make snapshot AS_OF=2026-01-20 CONCEPTS="云计算 互动传媒 数字藏品"
 make run DATE=2026-01-20 TOP=20 SNAPSHOT_AS_OF=2026-01-20
 make verify
+make ui
 ```
 
 ## 单测

@@ -173,6 +173,10 @@ bash specpack/strategy_effectiveness/verify.sh
 - `per_horizon.<h>.excess_win_rate`
 - `per_horizon.<h>.cumulative_spread`
 - `per_horizon.<h>.max_drawdown_enhanced`
+- `per_horizon.<h>.objective_alpha`
+- `per_horizon.<h>.avg_turnover_enhanced`
+- `per_horizon.<h>.drawdown_constraint_passed`
+- `overall.mean_objective_alpha`
 
 ## P11 GitHub 发布收口
 
@@ -199,6 +203,53 @@ bash specpack/strategy_effectiveness/verify.sh
 ```bash
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
+```
+
+## 图形界面启动（本地交互）
+```bash
+./.venv/bin/streamlit run ui/streamlit_app.py
+# 或 make ui
+```
+
+### 封装跑通记录（2026-02-07）
+已确认在当前设备可跑通：
+
+```bash
+cd /Users/zj1-6/.codex/worktrees/1bb8/Chunwan_ByteDance_PreHoliday_Screener
+make ui
+```
+
+预期结果：
+- 终端输出 `Local URL: http://localhost:8501`
+- 浏览器可打开并交互执行（输入参数 -> 运行 -> 下载 JSON/CSV）
+
+备注：
+- `Makefile` 已用 `.PHONY` 解决 `make: 'ui' is up to date` 冲突。
+- 已处理首次 Streamlit 邮箱提示，`make ui` 可直接启动。
+
+## 下一阶段操作说明（真实股盘池/行情特征）
+
+阶段目标：
+- 从“能跑 UI”推进到“用真实股票池和更丰富行情特征做稳定筛选”。
+
+执行顺序：
+1. `A2-1` 真实股盘池接入：统一证券主表（A 股可交易列表、退市/停牌过滤、最小成交额过滤）。
+2. `A2-2` 行情特征扩展（已完成）：在现有动量/波动基础上增加流动性、换手、趋势稳定性、波动收缩等特征。
+3. `A2-3` 门禁升级（已完成）：新增“真实股盘池覆盖率”和“特征缺失率”门禁，接入 `specpack`。
+4. `A2-4` 回放验证：固定多日期回放，比较 `enhanced` 与 `tech_only` 的稳定增益与告警变化。
+
+起步命令（A2 入口）：
+```bash
+bash tools/git_guard.sh --require-prefix --require-upstream
+bash tools/run_release_pipeline.sh --skip-phase10 --snapshots 2026-01-20,2026-01-16 --top-n 10
+bash specpack/strategy_effectiveness/verify.sh
+bash specpack/real_pool_feature_health/verify.sh
+```
+
+A2-2/A2-3 验证命令（已通过）：
+```bash
+./.venv/bin/python -m src.run --date 2026-02-07 --top 20 --provider akshare --no-fallback --no-cache
+bash specpack/real_pool_feature_health/verify.sh
 ```
 
 ## 可执行工作流

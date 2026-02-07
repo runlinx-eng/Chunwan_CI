@@ -17,10 +17,28 @@ def compute_indicators(price_df: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFr
     # 60 trading days inclusive -> 59-period change to allow exactly 60 rows
     df["momentum_60"] = df.groupby("ticker")["close"].pct_change(59)
     df["volatility_20"] = df.groupby("ticker")["return"].rolling(20).std().reset_index(level=0, drop=True)
+    df["volatility_60"] = df.groupby("ticker")["return"].rolling(60).std().reset_index(level=0, drop=True)
     df["avg_volume_20"] = df.groupby("ticker")["volume"].rolling(20).mean().reset_index(level=0, drop=True)
+    df["amount"] = df["close"] * df["volume"]
+    df["avg_amount_20"] = df.groupby("ticker")["amount"].rolling(20).mean().reset_index(level=0, drop=True)
+    df["volume_ratio_20"] = df["volume"] / df["avg_volume_20"].replace(0, np.nan)
+    df["trend_stability_20"] = df["momentum_20"] / df["volatility_20"].replace(0, np.nan)
+    df["volatility_contraction_20_60"] = 1.0 - (
+        df["volatility_20"] / df["volatility_60"].replace(0, np.nan)
+    )
 
     latest = df[df["date"] == as_of].copy()
-    indicator_cols = ["momentum_20", "momentum_60", "volatility_20", "avg_volume_20"]
+    indicator_cols = [
+        "momentum_20",
+        "momentum_60",
+        "volatility_20",
+        "volatility_60",
+        "avg_volume_20",
+        "avg_amount_20",
+        "volume_ratio_20",
+        "trend_stability_20",
+        "volatility_contraction_20_60",
+    ]
     latest["indicator_missing"] = latest[indicator_cols].isna().any(axis=1)
     latest[indicator_cols] = latest[indicator_cols].fillna(0)
     return latest
@@ -159,10 +177,18 @@ def compute_technical_score(indicator_df: pd.DataFrame) -> Tuple[pd.Series, pd.D
     enriched["momentum_20_rank"] = _rank_series(enriched["momentum_20"].fillna(0))
     enriched["momentum_60_rank"] = _rank_series(enriched["momentum_60"].fillna(0))
     enriched["volume_rank"] = _rank_series(enriched["avg_volume_20"].fillna(0))
+    enriched["liquidity_rank"] = _rank_series(enriched["avg_amount_20"].fillna(0))
+    enriched["trend_stability_rank"] = _rank_series(enriched["trend_stability_20"].fillna(0))
+    enriched["volatility_contraction_rank"] = _rank_series(
+        enriched["volatility_contraction_20_60"].fillna(0)
+    )
     technical_score = (
-        0.5 * enriched["momentum_20_rank"]
-        + 0.3 * enriched["momentum_60_rank"]
-        + 0.2 * enriched["volume_rank"]
+        0.35 * enriched["momentum_20_rank"]
+        + 0.20 * enriched["momentum_60_rank"]
+        + 0.15 * enriched["volume_rank"]
+        + 0.15 * enriched["liquidity_rank"]
+        + 0.10 * enriched["trend_stability_rank"]
+        + 0.05 * enriched["volatility_contraction_rank"]
     )
     return technical_score, enriched
 
