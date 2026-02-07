@@ -34,6 +34,7 @@
 | R2 | 真实数据解释性包（可选） | 让“可跑”升级为“可解释” | AkShare 主题命中来源补齐 + 报告字段增强 | `theme_hits` 不长期为 0 或有明确降级解释 |
 | R3 | 真实数据主题证据恢复包（可选） | 把解释性从“降级可见”升级为“主题命中恢复” | 快照桥接真实代码 + 主题覆盖率回升 | `avg_topn_theme_hit_ratio > 0` 且 `quality_flags` 清空 |
 | A1 | 策略 Alpha-1 包 | 在链路稳定后提升组合构建质量 | 分层持仓 + 目标函数 + 回撤约束 | 产物输出 objective/turnover/constraint，门禁通过 |
+| A2 | 真实股盘池/行情特征包 | 把策略输入从演示级提升到实盘级 | 真实股票池治理 + 特征扩展 + 覆盖率门禁 | 实盘池覆盖稳定且特征缺失受控 |
 
 ## Milestones
 
@@ -50,6 +51,7 @@
 | M8 | R2 完成（真实数据解释性） | M7 |
 | M9 | R3 完成（主题证据恢复） | M8 |
 | M10 | A1 完成（策略 alpha 第一包） | M9 |
+| M11 | A2 完成（实盘池与特征升级） | M10 |
 
 ## Command Contract
 
@@ -89,6 +91,9 @@
 | R3-1 | AkShare 主题证据桥接与命中恢复 | R3 | Done | `avg_topn_theme_hit_ratio=1.0`，`quality_flags=[]` |
 | A1-1 | 分层持仓 + 目标函数 + 回撤约束门禁 | A1 | Done | `strategy_effectiveness` 新增 objective/turnover/constraint 字段并通过 verify |
 | A1-2 | Alpha 参数调优（降低 target 告警） | A1 | In Progress | 以 `mean_excess_return/objective_alpha` 为主目标，迭代层权重与约束参数 |
+| A2-1 | 真实股盘池接入与治理 | A2 | Pending | 建立可交易 A 股主表，过滤停牌/退市/低流动性 |
+| A2-2 | 行情特征扩展 | A2 | Pending | 新增换手、成交额分位、趋势稳定性、波动收缩等特征 |
+| A2-3 | 实盘池覆盖率与特征缺失率门禁 | A2 | Pending | 新增 specpack 审计并纳入 release 流程 |
 
 ## Package Checklists
 
@@ -188,3 +193,4 @@
 - 2026-02-06: PR #2 已合并（merge=`a088cc1efb0ccd8c996b45b51a27c5323628adaf`），并在 `origin/main` 上完成 post-merge strict 复验（`run_release_pipeline` + `strategy_effectiveness` 全通过）。
 - 2026-02-06: 启动并完成 A1-1：`backtest_regression` 接入分层持仓与权重收益回测，`strategy_effectiveness` 接入 `objective_alpha/avg_turnover_enhanced/drawdown_constraint_passed` 并通过门禁。
 - 2026-02-07: 完成封装任务收尾：新增 Streamlit 交互入口（`ui/streamlit_app.py`），并通过本机启动烟测；进入 A1-2 参数调优阶段。
+- 2026-02-07: 操作说明已记录“封装跑通”步骤；新增 A2（真实股盘池/行情特征）阶段与任务拆解（A2-1/A2-2/A2-3）。
