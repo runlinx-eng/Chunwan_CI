@@ -161,7 +161,7 @@ def _results_table(report: dict[str, Any]) -> pd.DataFrame:
         rows.append(
             {
                 "rank": idx,
-                "ticker": item.get("ticker", ""),
+                "ticker": item.get("exchange_ticker", item.get("ticker", "")),
                 "name": item.get("name", ""),
                 "final_score": score_breakdown.get("final_score", ""),
                 "theme_score": score_breakdown.get("score_theme_total", ""),

@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 
 from .signals import Signal
+from .utils import to_exchange_ticker
 
 
 def normalize_themes_used(base_themes: List[str], theme_map_path: str) -> List[str]:
@@ -235,12 +236,14 @@ def build_report(
             f"波动收缩(20日相对60日): {float(row.get('volatility_contraction_20_60', 0.0)):.4f}"
         )
         provider_value = provider or "unknown"
-        snapshot_value = snapshot_as_of or "none"
+        snapshot_value = snapshot_as_of or as_of.strftime("%Y-%m-%d")
         reason_parts.append(f"命中路径: provider={provider_value};as_of={snapshot_value}")
         reason = "; ".join(reason_parts)
+        ticker = str(row["ticker"])
         rows.append(
             {
-                "ticker": row["ticker"],
+                "ticker": ticker,
+                "exchange_ticker": to_exchange_ticker(ticker),
                 "name": row["name"],
                 "industry": row["industry"],
                 "final_score": float(row["final_score"]),

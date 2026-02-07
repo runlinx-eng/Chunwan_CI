@@ -41,6 +41,8 @@ def test_report_marks_no_theme_hit_reason():
     )
     row = report["results"][0]
     assert "命中主题: 无（当前样本未命中主题映射，按技术因子排序）" in row["reason"]
+    assert "as_of=2026-02-05" in row["reason"]
+    assert row["exchange_ticker"] == "000001.SZ"
     assert row["reason_struct"]["theme_evidence_status"] == "missing"
     assert row["reason_struct"]["ranking_mode"] == "tech_only_due_to_no_theme_hits"
     assert row["reason_struct"]["theme_hit_count"] == 0
@@ -74,6 +76,8 @@ def test_report_marks_theme_hit_reason():
     row = report["results"][0]
     assert "命中主题: 测试主题" in row["reason"]
     assert "命中主题: 无（当前样本未命中主题映射，按技术因子排序）" not in row["reason"]
+    assert "as_of=2026-02-05" in row["reason"]
+    assert row["exchange_ticker"] == "000001.SZ"
     assert row["reason_struct"]["theme_evidence_status"] == "hit"
     assert row["reason_struct"]["ranking_mode"] == "theme_tech"
     assert row["reason_struct"]["theme_hit_count"] == 1

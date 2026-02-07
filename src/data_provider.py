@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Set
+from typing import Callable, Dict, Iterable, List, Optional, Set
 
 import numpy as np
 import pandas as pd
@@ -200,6 +200,48 @@ class AkshareProvider(DataProvider):
         return ""
 
     @staticmethod
+    def _build_code_name_map(codes_df: Optional[pd.DataFrame]) -> Dict[str, str]:
+        if codes_df is None or codes_df.empty:
+            return {}
+        mapping: Dict[str, str] = {}
+        for _, row in codes_df.iterrows():
+            ticker = AkshareProvider._normalize_akshare_symbol(row.get("代码", row.get("code", "")))
+            name = str(row.get("名称", row.get("name", ""))).strip()
+            if not ticker:
+                continue
+            if not name or name.lower() in {"nan", "none", "null"}:
+                continue
+            mapping[ticker] = name
+        return mapping
+
+    @staticmethod
+    def _is_placeholder_name(name: str, ticker: str) -> bool:
+        text = str(name or "").strip()
+        if not text:
+            return True
+        if text.lower() in {"nan", "none", "null"}:
+            return True
+        if text.upper().startswith("STOCK_"):
+            return True
+        if text == str(ticker or "").strip():
+            return True
+        return False
+
+    def _resolve_name(self, row: pd.Series, ticker: str, code_name_map: Dict[str, str]) -> str:
+        for key in ("名称", "name", "股票简称"):
+            candidate = str(row.get(key, "")).strip()
+            if not self._is_placeholder_name(candidate, ticker):
+                return candidate
+        fallback = str(code_name_map.get(ticker, "")).strip()
+        if fallback:
+            return fallback
+        for key in ("名称", "name", "股票简称"):
+            candidate = str(row.get(key, "")).strip()
+            if candidate and candidate.lower() not in {"nan", "none", "null"}:
+                return candidate
+        return ticker
+
+    @staticmethod
     def _to_daily_symbol(symbol: str) -> str:
         if symbol.startswith(("4", "8", "9")):
             return f"bj{symbol}"
@@ -225,8 +267,12 @@ class AkshareProvider(DataProvider):
         return df
 
     def _snapshot_membership_universe(
-        self, industries: List[str], valid_codes: Optional[Set[str]] = None
+        self,
+        industries: List[str],
+        valid_codes: Optional[Set[str]] = None,
+        code_name_map: Optional[Dict[str, str]] = None,
     ) -> List[StockInfo]:
+        name_map = code_name_map or {}
         root_dir = Path(__file__).resolve().parent.parent
         snapshots_root = root_dir / "data" / "snapshots"
         if not snapshots_root.exists():
@@ -275,10 +321,11 @@ class AkshareProvider(DataProvider):
         universe: List[StockInfo] = []
         for _, row in best_df.iterrows():
             ticker = str(row["ticker"])
+            name = self._resolve_name(row, ticker, name_map)
             universe.append(
                 StockInfo(
                     ticker=ticker,
-                    name=str(row.get("name", ticker)),
+                    name=name,
                     industry=str(row.get("industry", "")),
                     concept=str(row.get("concept", "")),
                     description=f"snapshot_membership_bridge:{best_source}",
@@ -295,12 +342,15 @@ class AkshareProvider(DataProvider):
         with self._akshare_network_context():
             valid_codes: Optional[Set[str]] = None
             codes_df: Optional[pd.DataFrame] = None
+            code_name_map: Dict[str, str] = {}
             try:
                 codes_df = self._fetch_code_name(ak)
+                code_name_map = self._build_code_name_map(codes_df)
                 if "代码" in codes_df.columns:
                     valid_codes = set(codes_df["代码"].astype(str).str.zfill(6).tolist())
             except Exception:
                 valid_codes = None
+                code_name_map = {}
 
             if not industries:
                 try:
@@ -317,7 +367,7 @@ class AkshareProvider(DataProvider):
                     universe.append(
                         StockInfo(
                             ticker=ticker,
-                            name=str(row.get("名称", row.get("name", row.get("股票简称", ticker)))),
+                            name=self._resolve_name(row, ticker, code_name_map),
                             industry="",
                             concept="",
                             description="",
@@ -342,7 +392,7 @@ class AkshareProvider(DataProvider):
 
             if not concept_catalog_available:
                 snapshot_universe = self._snapshot_membership_universe(
-                    industries, valid_codes=valid_codes
+                    industries, valid_codes=valid_codes, code_name_map=code_name_map
                 )
                 if snapshot_universe:
                     return snapshot_universe
@@ -358,7 +408,7 @@ class AkshareProvider(DataProvider):
                             continue
                         universe_map[ticker] = StockInfo(
                             ticker=ticker,
-                            name=str(row.get("名称", row.get("name", ticker))),
+                            name=self._resolve_name(row, ticker, code_name_map),
                             industry=name,
                             concept=name,
                             description="",
@@ -372,7 +422,7 @@ class AkshareProvider(DataProvider):
                             continue
                         universe_map[ticker] = StockInfo(
                             ticker=ticker,
-                            name=str(row.get("名称", row.get("name", ticker))),
+                            name=self._resolve_name(row, ticker, code_name_map),
                             industry=name,
                             concept=name,
                             description="",
@@ -382,7 +432,7 @@ class AkshareProvider(DataProvider):
                 return list(universe_map.values())
 
             snapshot_universe = self._snapshot_membership_universe(
-                industries, valid_codes=valid_codes
+                industries, valid_codes=valid_codes, code_name_map=code_name_map
             )
             if snapshot_universe:
                 return snapshot_universe
@@ -412,7 +462,7 @@ class AkshareProvider(DataProvider):
                 universe.append(
                     StockInfo(
                         ticker=ticker,
-                        name=str(row.get("名称", row.get("name", row.get("股票简称", ticker)))),
+                        name=self._resolve_name(row, ticker, code_name_map),
                         industry="",
                         concept="",
                         description="",
