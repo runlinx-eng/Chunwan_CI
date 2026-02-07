@@ -39,6 +39,7 @@
 12. 当前工作区 clean。
 13. A2 基线：`as_of=2026-02-06`，`universe_count=72`，`scored_count=72`，`topn_theme_hit_ratio=1.0`。
 14. A2 门禁：`bash specpack/real_pool_feature_health/verify.sh` 已通过（`status=passed`）。
+15. A2 改造后 strict 复验：`STRICT_IO=1 bash tools/phase10_prune_verify.sh` 已通过（2026-02-07）。
 
 当前阻塞点（进入最终目标前）：
 

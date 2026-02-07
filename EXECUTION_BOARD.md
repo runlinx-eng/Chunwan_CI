@@ -197,3 +197,4 @@
 - 2026-02-07: A2-1 启动并完成首轮基线采样，产物 `artifacts_metrics/a2_real_pool_baseline_latest.json`（as_of=2026-02-06, universe/scored=72, theme_hit_ratio=1.0）。
 - 2026-02-07: 完成 A2-2：技术因子扩展到成交额分位、量能比、趋势稳定性、波动收缩，并在报告输出对应解释字段。
 - 2026-02-07: 完成 A2-3：新增 `real_pool_feature_health` 门禁并接入 `specpack/verify_all.sh`；门禁产物 `real_pool_feature_health_latest.json` 状态为 `passed`。
+- 2026-02-07: A2 改造后 strict 验证通过：`STRICT_IO=1 bash tools/phase10_prune_verify.sh`（包含 `specpack` 全包通过）。
